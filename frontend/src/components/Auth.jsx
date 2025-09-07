@@ -20,7 +20,7 @@ export default function Auth({ onLogin }) {
         alert('Registration not implemented yet. Use testuser/testpass123 to login.')
       }
     } catch (error) {
-      alert('Login failed: ' + error.message + '\nTry: testuser/testpass123')
+      alert('Login failed: ' + error.message + '\nFull User: testuser/testpass123\nMemory User: memoryuser/memorypass123')
     }
   }
 
