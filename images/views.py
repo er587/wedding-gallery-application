@@ -15,6 +15,24 @@ class ImageListCreateView(generics.ListCreateAPIView):
             return ImageCreateSerializer
         return ImageSerializer
     
+    def create(self, request, *args, **kwargs):
+        # Check if user has upload permissions
+        from django.contrib.auth.models import User
+        from .models import UserProfile
+        user = request.user if request.user.is_authenticated else User.objects.get(username='testuser')
+        
+        # Ensure user has a profile
+        if not hasattr(user, 'profile'):
+            UserProfile.objects.create(user=user)
+        
+        if not user.profile.can_upload_images:
+            return Response(
+                {"error": "You don't have permission to upload images. You can only add memories to existing images."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        return super().create(request, *args, **kwargs)
+    
     def perform_create(self, serializer):
         # Use the test user if no user is authenticated
         from django.contrib.auth.models import User
@@ -26,6 +44,24 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Image.objects.all()
     serializer_class = ImageSerializer
     permission_classes = [permissions.AllowAny]  # Allow for testing
+    
+    def destroy(self, request, *args, **kwargs):
+        # Check if user has delete permissions
+        from django.contrib.auth.models import User
+        from .models import UserProfile
+        user = request.user if request.user.is_authenticated else User.objects.get(username='testuser')
+        
+        # Ensure user has a profile
+        if not hasattr(user, 'profile'):
+            UserProfile.objects.create(user=user)
+        
+        if not user.profile.can_delete_images:
+            return Response(
+                {"error": "You don't have permission to delete images. You can only add memories to existing images."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        return super().destroy(request, *args, **kwargs)
     
     def perform_destroy(self, instance):
         # Delete the physical file when deleting the database record

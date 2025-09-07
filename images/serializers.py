@@ -4,9 +4,14 @@ from .models import Image, Comment
 
 
 class UserSerializer(serializers.ModelSerializer):
+    role = serializers.CharField(source='profile.role', read_only=True)
+    can_upload_images = serializers.BooleanField(source='profile.can_upload_images', read_only=True)
+    can_delete_images = serializers.BooleanField(source='profile.can_delete_images', read_only=True)
+    can_comment = serializers.BooleanField(source='profile.can_comment', read_only=True)
+    
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'can_upload_images', 'can_delete_images', 'can_comment']
         read_only_fields = ['id']
 
 
