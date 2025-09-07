@@ -1,7 +1,10 @@
 import axios from 'axios'
 
-// Get the backend URL from environment or use localhost for development
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+// Get the backend URL from environment or use Replit domain
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+  (window.location.hostname.includes('.replit.dev') 
+    ? window.location.origin.replace(':5000', ':8000') 
+    : 'http://localhost:8000')
 
 // Create axios instance with default config
 const api = axios.create({

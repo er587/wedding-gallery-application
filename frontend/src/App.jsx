@@ -2,17 +2,20 @@ import { useState, useEffect } from 'react'
 import ImageGallery from './components/ImageGallery'
 import ImageUpload from './components/ImageUpload'
 import Auth from './components/Auth'
+import UserProfile from './components/UserProfile'
+import { authService } from './services/auth'
 
 function App() {
   const [user, setUser] = useState(null)
   const [showUpload, setShowUpload] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
   const [refreshGallery, setRefreshGallery] = useState(0)
 
   useEffect(() => {
-    // Check if user is logged in (placeholder for now)
-    const savedUser = localStorage.getItem('user')
-    if (savedUser) {
-      setUser(JSON.parse(savedUser))
+    // Check if user is already logged in
+    const currentUser = authService.getCurrentUser()
+    if (currentUser) {
+      setUser(currentUser)
     }
   }, [])
 
@@ -22,8 +25,10 @@ function App() {
   }
 
   const handleLogout = () => {
+    authService.logout()
     setUser(null)
-    localStorage.removeItem('user')
+    setShowUpload(false)
+    setShowProfile(false)
   }
 
   const handleImageUploaded = () => {
@@ -40,7 +45,12 @@ function App() {
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
-                  <span className="text-gray-700">Welcome, {user.username}</span>
+                  <button
+                    onClick={() => setShowProfile(true)}
+                    className="text-gray-700 hover:text-gray-900 transition-colors"
+                  >
+                    Welcome, {user.first_name || user.username}
+                  </button>
                   <button
                     onClick={() => setShowUpload(!showUpload)}
                     className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
@@ -74,6 +84,13 @@ function App() {
         )}
         <ImageGallery user={user} refresh={refreshGallery} />
       </main>
+
+      {showProfile && user && (
+        <UserProfile 
+          user={user}
+          onClose={() => setShowProfile(false)}
+        />
+      )}
     </div>
   )
 }
