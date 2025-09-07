@@ -57,6 +57,25 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
 
   const canDeleteImage = user && image.uploader && user.username === image.uploader.username && user.can_delete_images
 
+  const handleSaveImage = async () => {
+    try {
+      const response = await fetch(image.image_file)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${image.title || 'image'}.${blob.type.split('/')[1] || 'jpg'}`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error saving image:', error)
+      alert('Failed to save image. Please try again.')
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex">
@@ -79,6 +98,13 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
                 <p className="text-sm text-gray-600">by {image.uploader.username}</p>
               </div>
               <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleSaveImage}
+                  className="text-blue-500 hover:text-blue-700 text-sm px-2 py-1 rounded border border-blue-500 hover:border-blue-700 transition-colors"
+                  title="Save image to device"
+                >
+                  💾 Save
+                </button>
                 {canDeleteImage && (
                   <button
                     onClick={handleDeleteImage}
