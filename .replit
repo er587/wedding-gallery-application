@@ -15,13 +15,14 @@ language = "python3"
 run = ["python", "manage.py", "runserver", "0.0.0.0:3000"]
 deploymentTarget = "gce"
 
-[[ports]]
-localPort = 3000
-externalPort = 80
 
 [[ports]]
 localPort = 5000
-externalPort = 80
+externalPort = 5000
+
+[[ports]]
+localPort = 8000
+externalPort = 8000
 
 [agent]
 expertMode = true
