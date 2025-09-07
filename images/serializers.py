@@ -29,6 +29,7 @@ class ImageSerializer(serializers.ModelSerializer):
     uploader = UserSerializer(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
     comment_count = serializers.SerializerMethodField()
+    image_file = serializers.SerializerMethodField()
     
     class Meta:
         model = Image
@@ -38,6 +39,14 @@ class ImageSerializer(serializers.ModelSerializer):
     
     def get_comment_count(self, obj):
         return obj.comments.count()
+    
+    def get_image_file(self, obj):
+        request = self.context.get('request')
+        if obj.image_file and request:
+            # Force HTTPS for Replit environment
+            url = request.build_absolute_uri(obj.image_file.url)
+            return url.replace('http://', 'https://')
+        return None
 
 
 class ImageCreateSerializer(serializers.ModelSerializer):
