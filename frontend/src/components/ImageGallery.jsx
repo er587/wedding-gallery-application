@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import ImageViewer from './ImageViewer'
+import { apiService } from '../services/api'
 
 export default function ImageGallery({ user, refresh }) {
   const [images, setImages] = useState([])
@@ -13,44 +14,12 @@ export default function ImageGallery({ user, refresh }) {
   const fetchImages = async () => {
     try {
       setLoading(true)
-      // Placeholder for actual API call
-      // const response = await fetch('/api/images/')
-      // const data = await response.json()
-      
-      // Mock data for demonstration
-      const mockImages = [
-        {
-          id: 1,
-          title: "Beautiful Sunset",
-          description: "A memorable evening at the beach",
-          image_file: "https://picsum.photos/400/300?random=1",
-          uploader: { username: "photographer1" },
-          uploaded_at: "2025-09-07T10:00:00Z",
-          comment_count: 3
-        },
-        {
-          id: 2,
-          title: "Mountain Adventure",
-          description: "Hiking trip with friends",
-          image_file: "https://picsum.photos/400/300?random=2",
-          uploader: { username: "adventurer" },
-          uploaded_at: "2025-09-06T15:30:00Z",
-          comment_count: 1
-        },
-        {
-          id: 3,
-          title: "City Lights",
-          description: "Downtown at night",
-          image_file: "https://picsum.photos/400/300?random=3",
-          uploader: { username: "citylover" },
-          uploaded_at: "2025-09-05T20:45:00Z",
-          comment_count: 5
-        }
-      ]
-      
-      setImages(mockImages)
+      const response = await apiService.getImages()
+      setImages(response.data)
     } catch (error) {
       console.error('Error fetching images:', error)
+      // If API fails, show empty state instead of mock data
+      setImages([])
     } finally {
       setLoading(false)
     }

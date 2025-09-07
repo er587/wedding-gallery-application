@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiService } from '../services/api'
 
 export default function ImageUpload({ user, onImageUploaded, onCancel }) {
   const [formData, setFormData] = useState({
@@ -50,26 +51,16 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
 
     setUploading(true)
     try {
-      // Placeholder for actual upload
-      // const formDataToSend = new FormData()
-      // formDataToSend.append('title', formData.title)
-      // formDataToSend.append('description', formData.description)
-      // formDataToSend.append('image_file', formData.image_file)
+      const formDataToSend = new FormData()
+      formDataToSend.append('title', formData.title)
+      formDataToSend.append('description', formData.description)
+      formDataToSend.append('image_file', formData.image_file)
       
-      // const response = await fetch('/api/images/', {
-      //   method: 'POST',
-      //   body: formDataToSend,
-      //   headers: {
-      //     'Authorization': `Bearer ${user.token}`
-      //   }
-      // })
-      
-      // Simulate successful upload
-      setTimeout(() => {
-        onImageUploaded()
-      }, 1000)
+      await apiService.createImage(formDataToSend)
+      onImageUploaded()
     } catch (error) {
       console.error('Upload error:', error)
+      alert('Upload failed. Please make sure you are logged in and try again.')
     } finally {
       setUploading(false)
     }

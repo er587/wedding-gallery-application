@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { apiService } from '../services/api'
 
 export default function CommentSystem({ imageId, comments, user, loading, onCommentAdded }) {
   const [newComment, setNewComment] = useState('')
@@ -12,22 +13,12 @@ export default function CommentSystem({ imageId, comments, user, loading, onComm
 
     setSubmitting(true)
     try {
-      // Placeholder for actual API call
-      // await fetch(`/api/images/${imageId}/comments/`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${user.token}`
-      //   },
-      //   body: JSON.stringify({ content: newComment })
-      // })
-      
+      await apiService.createComment(imageId, { content: newComment })
       setNewComment('')
-      setTimeout(() => {
-        onCommentAdded()
-      }, 500)
+      onCommentAdded()
     } catch (error) {
       console.error('Error posting comment:', error)
+      alert('Failed to post comment. Please make sure you are logged in.')
     } finally {
       setSubmitting(false)
     }
@@ -39,23 +30,13 @@ export default function CommentSystem({ imageId, comments, user, loading, onComm
 
     setSubmitting(true)
     try {
-      // Placeholder for actual API call
-      // await fetch(`/api/comments/${replyTo}/reply/`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${user.token}`
-      //   },
-      //   body: JSON.stringify({ content: replyText })
-      // })
-      
+      await apiService.createReply(replyTo, { content: replyText })
       setReplyText('')
       setReplyTo(null)
-      setTimeout(() => {
-        onCommentAdded()
-      }, 500)
+      onCommentAdded()
     } catch (error) {
       console.error('Error posting reply:', error)
+      alert('Failed to post reply. Please make sure you are logged in.')
     } finally {
       setSubmitting(false)
     }

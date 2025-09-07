@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { authService } from '../services/auth'
 
 export default function Auth({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true)
@@ -8,15 +9,19 @@ export default function Auth({ onLogin }) {
     email: ''
   })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Placeholder for actual authentication
-    // For now, just simulate a successful login
-    onLogin({ 
-      id: 1, 
-      username: formData.username,
-      email: formData.email 
-    })
+    try {
+      if (isLogin) {
+        const userData = await authService.login(formData.username, formData.password)
+        onLogin(userData)
+      } else {
+        // Registration would be implemented here
+        alert('Registration not implemented yet. Use testuser/testpass123 to login.')
+      }
+    } catch (error) {
+      alert('Login failed: ' + error.message + '\nTry: testuser/testpass123')
+    }
   }
 
   const handleInputChange = (e) => {

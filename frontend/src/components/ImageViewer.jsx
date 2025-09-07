@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import CommentSystem from './CommentSystem'
+import { apiService } from '../services/api'
 
 export default function ImageViewer({ image, user, onClose }) {
   const [comments, setComments] = useState([])
@@ -12,46 +13,11 @@ export default function ImageViewer({ image, user, onClose }) {
   const fetchComments = async () => {
     try {
       setLoading(true)
-      // Placeholder for actual API call
-      // const response = await fetch(`/api/images/${image.id}/comments/`)
-      // const data = await response.json()
-      
-      // Mock comments for demonstration
-      const mockComments = [
-        {
-          id: 1,
-          content: "What a beautiful sunset! I remember being there with you that evening. The colors were absolutely breathtaking.",
-          author: { username: "friend1" },
-          created_at: "2025-09-07T11:00:00Z",
-          replies: [
-            {
-              id: 4,
-              content: "Yes! It was such a perfect moment. I'm so glad we captured it.",
-              author: { username: "photographer1" },
-              created_at: "2025-09-07T11:30:00Z",
-              replies: []
-            }
-          ]
-        },
-        {
-          id: 2,
-          content: "This brings back so many memories of our beach trips together.",
-          author: { username: "beachlover" },
-          created_at: "2025-09-07T12:00:00Z",
-          replies: []
-        },
-        {
-          id: 3,
-          content: "I can almost hear the waves crashing. Thanks for sharing this memory!",
-          author: { username: "nostalgic" },
-          created_at: "2025-09-07T13:00:00Z",
-          replies: []
-        }
-      ]
-      
-      setComments(mockComments)
+      const response = await apiService.getComments(image.id)
+      setComments(response.data)
     } catch (error) {
       console.error('Error fetching comments:', error)
+      setComments([])
     } finally {
       setLoading(false)
     }
