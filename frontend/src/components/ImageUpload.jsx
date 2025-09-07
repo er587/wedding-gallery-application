@@ -10,6 +10,15 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
   })
   const [preview, setPreview] = useState(null)
   const [uploading, setUploading] = useState(false)
+  
+  // Bulk upload states
+  const [bulkMode, setBulkMode] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState([])
+  const [uploadQueue, setUploadQueue] = useState([])
+  const [sharedMetadata, setSharedMetadata] = useState({
+    tags: '',
+    description: ''
+  })
 
   const handleInputChange = (e) => {
     setFormData(prev => ({
@@ -19,15 +28,47 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
   }
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      setFormData(prev => ({ ...prev, image_file: file }))
-      
-      // Create preview
-      const reader = new FileReader()
-      reader.onload = (e) => setPreview(e.target.result)
-      reader.readAsDataURL(file)
+    const files = Array.from(e.target.files)
+    
+    if (bulkMode) {
+      handleBulkFileSelection(files)
+    } else {
+      const file = files[0]
+      if (file) {
+        setFormData(prev => ({ ...prev, image_file: file }))
+        
+        // Create preview
+        const reader = new FileReader()
+        reader.onload = (e) => setPreview(e.target.result)
+        reader.readAsDataURL(file)
+      }
     }
+  }
+
+  const handleBulkFileSelection = (files) => {
+    const imageFiles = files.filter(file => file.type.startsWith('image/'))
+    const newFiles = imageFiles.map(file => ({
+      id: Date.now() + Math.random(),
+      file,
+      title: file.name.split('.')[0],
+      preview: null,
+      status: 'ready', // ready, uploading, success, error
+      progress: 0,
+      error: null
+    }))
+    
+    // Create previews for new files
+    newFiles.forEach(fileObj => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setSelectedFiles(prev => 
+          prev.map(f => f.id === fileObj.id ? { ...f, preview: e.target.result } : f)
+        )
+      }
+      reader.readAsDataURL(fileObj.file)
+    })
+    
+    setSelectedFiles(prev => [...prev, ...newFiles])
   }
 
   const handleDragOver = (e) => {
@@ -36,20 +77,34 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
 
   const handleDrop = (e) => {
     e.preventDefault()
-    const file = e.dataTransfer.files[0]
-    if (file && file.type.startsWith('image/')) {
-      setFormData(prev => ({ ...prev, image_file: file }))
-      
-      const reader = new FileReader()
-      reader.onload = (e) => setPreview(e.target.result)
-      reader.readAsDataURL(file)
+    const files = Array.from(e.dataTransfer.files)
+    
+    if (bulkMode) {
+      handleBulkFileSelection(files)
+    } else {
+      const file = files[0]
+      if (file && file.type.startsWith('image/')) {
+        setFormData(prev => ({ ...prev, image_file: file }))
+        
+        const reader = new FileReader()
+        reader.onload = (e) => setPreview(e.target.result)
+        reader.readAsDataURL(file)
+      }
     }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formData.image_file) return
+    
+    if (bulkMode) {
+      handleBulkUpload()
+    } else {
+      if (!formData.image_file) return
+      await handleSingleUpload()
+    }
+  }
 
+  const handleSingleUpload = async () => {
     setUploading(true)
     try {
       const formDataToSend = new FormData()
@@ -73,6 +128,94 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
     } finally {
       setUploading(false)
     }
+  }
+
+  const handleBulkUpload = async () => {
+    if (selectedFiles.length === 0) return
+    
+    setUploading(true)
+    const filesToUpload = selectedFiles.filter(f => f.status === 'ready')
+    
+    // Upload files one by one
+    for (let i = 0; i < filesToUpload.length; i++) {
+      const fileObj = filesToUpload[i]
+      
+      // Update status to uploading
+      setSelectedFiles(prev => 
+        prev.map(f => f.id === fileObj.id ? { ...f, status: 'uploading', progress: 0 } : f)
+      )
+      
+      try {
+        const formDataToSend = new FormData()
+        formDataToSend.append('title', fileObj.title)
+        formDataToSend.append('description', sharedMetadata.description)
+        formDataToSend.append('image_file', fileObj.file)
+        
+        // Add shared tags
+        if (sharedMetadata.tags.trim()) {
+          const tagArray = sharedMetadata.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+          tagArray.forEach(tag => {
+            formDataToSend.append('tag_names', tag)
+          })
+        }
+        
+        await apiService.createImage(formDataToSend)
+        
+        // Update status to success
+        setSelectedFiles(prev => 
+          prev.map(f => f.id === fileObj.id ? { ...f, status: 'success', progress: 100 } : f)
+        )
+      } catch (error) {
+        console.error('Upload error for file:', fileObj.title, error)
+        
+        // Update status to error
+        setSelectedFiles(prev => 
+          prev.map(f => f.id === fileObj.id ? { 
+            ...f, 
+            status: 'error', 
+            error: 'Upload failed',
+            progress: 0
+          } : f)
+        )
+      }
+      
+      // Small delay between uploads
+      if (i < filesToUpload.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+    }
+    
+    setUploading(false)
+    
+    // Check if all uploads were successful
+    const allSuccess = selectedFiles.every(f => f.status === 'success' || f.status === 'ready')
+    if (allSuccess) {
+      onImageUploaded()
+    }
+  }
+
+  const removeFile = (fileId) => {
+    setSelectedFiles(prev => prev.filter(f => f.id !== fileId))
+  }
+
+  const updateFileTitle = (fileId, title) => {
+    setSelectedFiles(prev => 
+      prev.map(f => f.id === fileId ? { ...f, title } : f)
+    )
+  }
+
+  const toggleBulkMode = () => {
+    setBulkMode(!bulkMode)
+    // Reset states when switching modes
+    setSelectedFiles([])
+    setFormData({
+      title: '',
+      description: '',
+      image_file: null,
+      tags: ''
+    })
+    setPreview(null)
+    setSharedMetadata({ tags: '', description: '' })
   }
 
   return (
