@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import ImageViewer from './ImageViewer'
 import SearchBar from './SearchBar'
 import { apiService } from '../services/api'
@@ -11,34 +11,102 @@ export default function ImageGallery({ user, refresh }) {
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedImages, setSelectedImages] = useState(new Set())
   const [downloading, setDownloading] = useState(false)
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 6,
+    hasMore: true,
+    loadingMore: false
+  })
+
+  const fetchImages = async (isInitialLoad = false) => {
+    try {
+      if (isInitialLoad) {
+        setLoading(true)
+        setImages([])
+        setPagination(prev => ({ ...prev, page: 1, hasMore: true, loadingMore: false }))
+      } else {
+        setPagination(prev => ({ ...prev, loadingMore: true }))
+      }
+      
+      // Build query parameters for search and filtering
+      const currentPage = isInitialLoad ? 1 : pagination.page
+      const params = {
+        page: currentPage,
+        page_size: isInitialLoad ? pagination.pageSize : 3 // Load 3 more after initial 6
+      }
+      if (searchParams.search) params.search = searchParams.search
+      if (searchParams.tags) params.tags = searchParams.tags
+      
+      const response = await apiService.getImages(params)
+      
+      // Handle both paginated and non-paginated responses
+      const newImages = response.data.results || response.data
+      const hasMore = response.data.next ? true : false
+      
+      if (isInitialLoad) {
+        setImages(Array.isArray(newImages) ? newImages : [])
+        setPagination(prev => ({ 
+          ...prev, 
+          page: 2, 
+          hasMore: hasMore && newImages.length === pagination.pageSize
+        }))
+      } else {
+        if (Array.isArray(newImages) && newImages.length > 0) {
+          setImages(prev => [...prev, ...newImages])
+          setPagination(prev => ({ 
+            ...prev, 
+            page: prev.page + 1, 
+            hasMore: hasMore && newImages.length === 3
+          }))
+        } else {
+          // No more images to load
+          setPagination(prev => ({ ...prev, hasMore: false }))
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching images:', error)
+      if (isInitialLoad) {
+        setImages([])
+      }
+      // Stop trying to load more on error
+      setPagination(prev => ({ ...prev, hasMore: false }))
+    } finally {
+      setLoading(false)
+      setPagination(prev => ({ ...prev, loadingMore: false }))
+    }
+  }
+
+  const loadMoreImages = () => {
+    if (!pagination.loadingMore && pagination.hasMore) {
+      fetchImages(false)
+    }
+  }
 
   useEffect(() => {
     // Only fetch images if user is logged in
     if (user) {
-      fetchImages()
+      fetchImages(true) // true means reset/initial load
     } else {
       setImages([])
       setLoading(false)
     }
   }, [refresh, user, searchParams])
 
-  const fetchImages = async () => {
-    try {
-      setLoading(true)
-      // Build query parameters for search and filtering
-      const params = {}
-      if (searchParams.search) params.search = searchParams.search
-      if (searchParams.tags) params.tags = searchParams.tags
+  useEffect(() => {
+    // Set up scroll listener for infinite scroll
+    const handleScroll = () => {
+      if (pagination.loadingMore || !pagination.hasMore) return
       
-      const response = await apiService.getImages(params)
-      setImages(response.data)
-    } catch (error) {
-      console.error('Error fetching images:', error)
-      setImages([])
-    } finally {
-      setLoading(false)
+      const scrolledToBottom = window.innerHeight + window.scrollY >= document.documentElement.offsetHeight - 1000
+      
+      if (scrolledToBottom) {
+        loadMoreImages()
+      }
     }
-  }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [pagination.loadingMore, pagination.hasMore])
 
   const handleImageDeleted = (deletedImageId) => {
     // Remove the deleted image from the local state
@@ -279,11 +347,40 @@ export default function ImageGallery({ user, refresh }) {
         ))}
       </div>
 
-      {images.length === 0 && (
+      {images.length === 0 && !loading && (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">📸</div>
           <h2 className="text-2xl font-semibold text-gray-700 mb-2">No memories shared yet</h2>
           <p className="text-gray-400 mt-2">Be the first to share a memory!</p>
+        </div>
+      )}
+
+      {/* Load More Button */}
+      {images.length > 0 && pagination.hasMore && !pagination.loadingMore && (
+        <div className="text-center mt-8">
+          <button
+            onClick={loadMoreImages}
+            className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            Load More Images
+          </button>
+        </div>
+      )}
+
+      {/* Loading More Indicator */}
+      {pagination.loadingMore && (
+        <div className="text-center mt-8">
+          <div className="inline-flex items-center space-x-2 text-gray-600">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            <span>Loading more images...</span>
+          </div>
+        </div>
+      )}
+
+      {/* End of Results */}
+      {images.length > 0 && !pagination.hasMore && (
+        <div className="text-center mt-8 text-gray-500">
+          <p>You've reached the end of the gallery</p>
         </div>
       )}
 

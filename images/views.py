@@ -1,14 +1,22 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth.models import User
 from django.db.models import Q
 from .models import Image, Comment, Tag
 from .serializers import ImageSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer
 
 
+class ImagePagination(PageNumberPagination):
+    page_size = 6
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+
 class ImageListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.AllowAny]  # Temporarily allow uploads for testing
+    pagination_class = ImagePagination
     
     def get_queryset(self):
         queryset = Image.objects.all()
