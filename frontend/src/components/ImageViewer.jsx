@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import CommentSystem from './CommentSystem'
 import { apiService } from '../services/api'
 
@@ -6,9 +6,22 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
+  const intervalRef = useRef(null)
 
   useEffect(() => {
     fetchComments()
+    
+    // Set up real-time comment updates (every 10 seconds)
+    intervalRef.current = setInterval(() => {
+      fetchComments()
+    }, 10000)
+    
+    // Cleanup interval on unmount
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
   }, [image.id])
 
   const fetchComments = async () => {

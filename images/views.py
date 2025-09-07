@@ -2,13 +2,32 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth.models import User
-from .models import Image, Comment
-from .serializers import ImageSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer
+from django.db.models import Q
+from .models import Image, Comment, Tag
+from .serializers import ImageSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer
 
 
 class ImageListCreateView(generics.ListCreateAPIView):
-    queryset = Image.objects.all()
     permission_classes = [permissions.AllowAny]  # Temporarily allow uploads for testing
+    
+    def get_queryset(self):
+        queryset = Image.objects.all()
+        search = self.request.query_params.get('search', None)
+        tags = self.request.query_params.get('tags', None)
+        
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) | 
+                Q(description__icontains=search) |
+                Q(uploader__username__icontains=search)
+            )
+        
+        if tags:
+            tag_list = [tag.strip() for tag in tags.split(',') if tag.strip()]
+            for tag in tag_list:
+                queryset = queryset.filter(tags__name__icontains=tag)
+        
+        return queryset.distinct()
     
     def get_serializer_class(self):
         if self.request.method == 'POST':

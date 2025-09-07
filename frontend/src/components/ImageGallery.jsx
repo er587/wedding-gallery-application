@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import ImageViewer from './ImageViewer'
+import SearchBar from './SearchBar'
 import { apiService } from '../services/api'
 
 export default function ImageGallery({ user, refresh }) {
   const [images, setImages] = useState([])
   const [selectedImage, setSelectedImage] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [searchParams, setSearchParams] = useState({ search: '', tags: '' })
 
   useEffect(() => {
     // Only fetch images if user is logged in
@@ -15,16 +17,20 @@ export default function ImageGallery({ user, refresh }) {
       setImages([])
       setLoading(false)
     }
-  }, [refresh, user])
+  }, [refresh, user, searchParams])
 
   const fetchImages = async () => {
     try {
       setLoading(true)
-      const response = await apiService.getImages()
+      const queryParams = new URLSearchParams()
+      if (searchParams.search) queryParams.append('search', searchParams.search)
+      if (searchParams.tags) queryParams.append('tags', searchParams.tags)
+      
+      const url = queryParams.toString() ? `/api/images/?${queryParams.toString()}` : '/api/images/'
+      const response = await apiService.api.get(url)
       setImages(response.data)
     } catch (error) {
       console.error('Error fetching images:', error)
-      // If API fails, show empty state instead of mock data
       setImages([])
     } finally {
       setLoading(false)
@@ -34,6 +40,14 @@ export default function ImageGallery({ user, refresh }) {
   const handleImageDeleted = (deletedImageId) => {
     // Remove the deleted image from the local state
     setImages(prevImages => prevImages.filter(image => image.id !== deletedImageId))
+  }
+
+  const handleSearch = (searchTerm) => {
+    setSearchParams(prev => ({ ...prev, search: searchTerm }))
+  }
+
+  const handleTagFilter = (tags) => {
+    setSearchParams(prev => ({ ...prev, tags: tags }))
   }
 
   if (loading) {
@@ -65,6 +79,8 @@ export default function ImageGallery({ user, refresh }) {
 
   return (
     <>
+      <SearchBar onSearch={handleSearch} onTagFilter={handleTagFilter} />
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {images.map((image) => (
           <div
@@ -82,6 +98,21 @@ export default function ImageGallery({ user, refresh }) {
             <div className="p-4">
               <h3 className="font-semibold text-gray-900 truncate">{image.title}</h3>
               <p className="text-sm text-gray-600 mt-1 line-clamp-2">{image.description}</p>
+              
+              {/* Display tags */}
+              {image.tags && image.tags.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {image.tags.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                    >
+                      #{tag.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+              
               <div className="flex justify-between items-center mt-3 text-sm text-gray-500">
                 <span>by {image.uploader.username}</span>
                 <span>{image.comment_count} comments</span>

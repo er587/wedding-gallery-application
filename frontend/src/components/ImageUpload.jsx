@@ -5,7 +5,8 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    image_file: null
+    image_file: null,
+    tags: ''
   })
   const [preview, setPreview] = useState(null)
   const [uploading, setUploading] = useState(false)
@@ -55,6 +56,14 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
       formDataToSend.append('title', formData.title)
       formDataToSend.append('description', formData.description)
       formDataToSend.append('image_file', formData.image_file)
+      
+      // Add tags as an array
+      if (formData.tags.trim()) {
+        const tagArray = formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+        tagArray.forEach(tag => {
+          formDataToSend.append('tag_names', tag)
+        })
+      }
       
       await apiService.createImage(formDataToSend)
       onImageUploaded()
@@ -161,6 +170,23 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Share the memory or story behind this image"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Tags
+          </label>
+          <input
+            type="text"
+            name="tags"
+            value={formData.tags}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter tags separated by commas (e.g., family, vacation, birthday)"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Tags help others find and filter images by themes or events
+          </p>
         </div>
 
         <div className="flex justify-end space-x-3">

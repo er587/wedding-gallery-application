@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Image, Comment
+from .models import Image, Comment, Tag
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -30,16 +30,24 @@ class CommentSerializer(serializers.ModelSerializer):
         return []
 
 
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ['id', 'name']
+
+
 class ImageSerializer(serializers.ModelSerializer):
     uploader = UserSerializer(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
     comment_count = serializers.SerializerMethodField()
     image_file = serializers.SerializerMethodField()
+    tags = TagSerializer(many=True, read_only=True)
+    tag_names = serializers.ListField(child=serializers.CharField(), write_only=True, required=False)
     
     class Meta:
         model = Image
         fields = ['id', 'title', 'description', 'image_file', 'uploader', 
-                 'uploaded_at', 'updated_at', 'comments', 'comment_count']
+                 'uploaded_at', 'updated_at', 'comments', 'comment_count', 'tags', 'tag_names']
         read_only_fields = ['id', 'uploader', 'uploaded_at', 'updated_at']
     
     def get_comment_count(self, obj):
@@ -59,6 +67,21 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class ImageCreateSerializer(serializers.ModelSerializer):
+    tag_names = serializers.ListField(child=serializers.CharField(), required=False, allow_empty=True)
+    
     class Meta:
         model = Image
-        fields = ['title', 'description', 'image_file']
+        fields = ['title', 'description', 'image_file', 'tag_names']
+    
+    def create(self, validated_data):
+        tag_names = validated_data.pop('tag_names', [])
+        image = Image.objects.create(**validated_data)
+        
+        # Create or get tags and add to image
+        for tag_name in tag_names:
+            tag_name = tag_name.strip().lower()
+            if tag_name:
+                tag, created = Tag.objects.get_or_create(name=tag_name)
+                image.tags.add(tag)
+        
+        return image
