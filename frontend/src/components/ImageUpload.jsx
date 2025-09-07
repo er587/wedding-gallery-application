@@ -219,9 +219,23 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white rounded-lg shadow-md p-6 max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Upload New Image</h2>
+        <div className="flex items-center space-x-4">
+          <h2 className="text-xl font-semibold">
+            {bulkMode ? 'Bulk Upload Images' : 'Upload New Image'}
+          </h2>
+          <button
+            onClick={toggleBulkMode}
+            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+              bulkMode 
+                ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {bulkMode ? '📄 Single Upload' : '📚 Bulk Upload'}
+          </button>
+        </div>
         <button 
           onClick={onCancel}
           className="text-gray-400 hover:text-gray-600"
@@ -231,16 +245,17 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* File Upload Area */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Image
+            {bulkMode ? 'Images' : 'Image'}
           </label>
           <div
             className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
             onDragOver={handleDragOver}
             onDrop={handleDrop}
           >
-            {preview ? (
+            {!bulkMode && preview ? (
               <div className="space-y-4">
                 <img 
                   src={preview} 
@@ -266,11 +281,12 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                   </svg>
                 </div>
                 <p className="text-gray-600 mb-2">
-                  Drag and drop your image here, or
+                  {bulkMode ? 'Drag and drop multiple images here, or' : 'Drag and drop your image here, or'}
                 </p>
                 <input
                   type="file"
                   accept="image/*"
+                  multiple={bulkMode}
                   onChange={handleFileChange}
                   className="hidden"
                   id="image-upload"
@@ -279,58 +295,166 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                   htmlFor="image-upload"
                   className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
                 >
-                  Choose File
+                  {bulkMode ? 'Choose Multiple Files' : 'Choose File'}
                 </label>
               </>
             )}
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Title
-          </label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleInputChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Give your image a title"
-          />
-        </div>
+        {/* Bulk Upload: Selected Files Preview */}
+        {bulkMode && selectedFiles.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              Selected Images ({selectedFiles.length})
+            </h3>
+            <div className="max-h-96 overflow-y-auto space-y-3">
+              {selectedFiles.map((fileObj) => (
+                <div key={fileObj.id} className="border rounded-lg p-4 flex items-start space-x-4">
+                  {/* Image Preview */}
+                  <div className="flex-shrink-0">
+                    {fileObj.preview ? (
+                      <img 
+                        src={fileObj.preview} 
+                        alt={fileObj.title}
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+                        <span className="text-gray-400 text-xs">Loading...</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* File Info */}
+                  <div className="flex-grow">
+                    <div className="flex items-center justify-between mb-2">
+                      <input
+                        type="text"
+                        value={fileObj.title}
+                        onChange={(e) => updateFileTitle(fileObj.id, e.target.value)}
+                        className="text-sm font-medium text-gray-900 border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent"
+                        placeholder="Image title"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeFile(fileObj.id)}
+                        className="text-red-500 hover:text-red-700 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    
+                    {/* Status and Progress */}
+                    <div className="flex items-center space-x-2">
+                      {fileObj.status === 'ready' && (
+                        <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">Ready</span>
+                      )}
+                      {fileObj.status === 'uploading' && (
+                        <>
+                          <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">Uploading...</span>
+                          <div className="flex-grow h-2 bg-gray-200 rounded">
+                            <div className="h-2 bg-blue-600 rounded animate-pulse" style={{ width: '50%' }}></div>
+                          </div>
+                        </>
+                      )}
+                      {fileObj.status === 'success' && (
+                        <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">✓ Uploaded</span>
+                      )}
+                      {fileObj.status === 'error' && (
+                        <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded">✗ Failed</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description (Memory)
-          </label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Share the memory or story behind this image"
-          />
-        </div>
+        {/* Metadata Fields */}
+        {bulkMode ? (
+          /* Bulk Mode: Shared Metadata */
+          <div className="space-y-4 border-t pt-4">
+            <h3 className="text-lg font-medium text-gray-900">Shared Information</h3>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Description (Memory)
+              </label>
+              <textarea
+                value={sharedMetadata.description}
+                onChange={(e) => setSharedMetadata(prev => ({ ...prev, description: e.target.value }))}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Share the memory or story behind these images (applied to all)"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tags
+              </label>
+              <input
+                type="text"
+                value={sharedMetadata.tags}
+                onChange={(e) => setSharedMetadata(prev => ({ ...prev, tags: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter tags separated by commas (applied to all images)"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                These tags will be applied to all uploaded images
+              </p>
+            </div>
+          </div>
+        ) : (
+          /* Single Mode: Individual Metadata */
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Title
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Give your image a title"
+              />
+            </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tags
-          </label>
-          <input
-            type="text"
-            name="tags"
-            value={formData.tags}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter tags separated by commas (e.g., family, vacation, birthday)"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Tags help others find and filter images by themes or events
-          </p>
-        </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Description (Memory)
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Share the memory or story behind this image"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tags
+              </label>
+              <input
+                type="text"
+                name="tags"
+                value={formData.tags}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter tags separated by commas (e.g., family, vacation, birthday)"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Tags help others find and filter images by themes or events
+              </p>
+            </div>
+          </>
+        )}
 
         <div className="flex justify-end space-x-3">
           <button
@@ -342,10 +466,17 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
           </button>
           <button
             type="submit"
-            disabled={!formData.image_file || uploading}
+            disabled={
+              bulkMode 
+                ? selectedFiles.length === 0 || uploading
+                : !formData.image_file || uploading
+            }
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
-            {uploading ? 'Uploading...' : 'Upload Image'}
+            {uploading 
+              ? (bulkMode ? `Uploading... (${selectedFiles.filter(f => f.status === 'success').length}/${selectedFiles.length})` : 'Uploading...')
+              : (bulkMode ? `Upload ${selectedFiles.length} Images` : 'Upload Image')
+            }
           </button>
         </div>
       </form>
