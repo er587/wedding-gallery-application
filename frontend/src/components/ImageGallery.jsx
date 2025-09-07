@@ -8,8 +8,14 @@ export default function ImageGallery({ user, refresh }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchImages()
-  }, [refresh])
+    // Only fetch images if user is logged in
+    if (user) {
+      fetchImages()
+    } else {
+      setImages([])
+      setLoading(false)
+    }
+  }, [refresh, user])
 
   const fetchImages = async () => {
     try {
@@ -38,20 +44,27 @@ export default function ImageGallery({ user, refresh }) {
     )
   }
 
-  // Show welcome message for logged-out users
-  const showWelcomeMessage = !user && images.length > 0
+  // Show login prompt for logged-out users
+  if (!user) {
+    return (
+      <div className="text-center py-16">
+        <div className="text-6xl mb-6">🔒</div>
+        <h2 className="text-3xl font-bold text-gray-800 mb-4">Welcome to Memory Gallery</h2>
+        <p className="text-xl text-gray-600 mb-8">
+          Please log in to view and share precious memories
+        </p>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md mx-auto">
+          <p className="text-blue-800 font-medium mb-2">Ready to explore?</p>
+          <p className="text-blue-700 text-sm">
+            Log in above to discover shared memories and upload your own special moments.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
-      {showWelcomeMessage && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold text-blue-900 mb-2">Welcome to Memory Gallery</h2>
-          <p className="text-blue-700">
-            Browse shared memories below. Log in to upload your own images and share your memories!
-          </p>
-        </div>
-      )}
-      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {images.map((image) => (
           <div
@@ -80,7 +93,8 @@ export default function ImageGallery({ user, refresh }) {
 
       {images.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-gray-500 text-lg">No images yet</div>
+          <div className="text-6xl mb-4">📸</div>
+          <h2 className="text-2xl font-semibold text-gray-700 mb-2">No memories shared yet</h2>
           <p className="text-gray-400 mt-2">Be the first to share a memory!</p>
         </div>
       )}
