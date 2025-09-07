@@ -45,18 +45,23 @@ function App() {
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
+                  <div className="text-sm text-gray-500">
+                    Role: {user.role === 'full' ? 'Full User' : 'Memory User'}
+                  </div>
                   <button
                     onClick={() => setShowProfile(true)}
                     className="text-gray-700 hover:text-gray-900 transition-colors"
                   >
                     Welcome, {user.first_name || user.username}
                   </button>
-                  <button
-                    onClick={() => setShowUpload(!showUpload)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    {showUpload ? 'Cancel' : 'Upload Image'}
-                  </button>
+                  {user.can_upload_images && (
+                    <button
+                      onClick={() => setShowUpload(!showUpload)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      {showUpload ? 'Cancel' : 'Upload Image'}
+                    </button>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="text-gray-600 hover:text-gray-900 transition-colors"
@@ -73,7 +78,7 @@ function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {showUpload && user && (
+        {showUpload && user && user.can_upload_images && (
           <div className="mb-8">
             <ImageUpload 
               user={user} 

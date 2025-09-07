@@ -42,7 +42,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
     }
   }
 
-  const canDeleteImage = user && image.uploader && user.username === image.uploader.username
+  const canDeleteImage = user && image.uploader && user.username === image.uploader.username && user.can_delete_images
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
