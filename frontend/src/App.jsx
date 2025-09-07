@@ -29,6 +29,12 @@ function App() {
     setUser(null)
     setShowUpload(false)
     setShowProfile(false)
+    // Redirect to default page by refreshing the gallery
+    setRefreshGallery(prev => prev + 1)
+    // Add a brief message to show logout was successful
+    setTimeout(() => {
+      // You could add a toast notification here if needed
+    }, 100)
   }
 
   const handleImageUploaded = () => {

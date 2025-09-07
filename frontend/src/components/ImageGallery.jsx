@@ -38,8 +38,20 @@ export default function ImageGallery({ user, refresh }) {
     )
   }
 
+  // Show welcome message for logged-out users
+  const showWelcomeMessage = !user && images.length > 0
+
   return (
     <>
+      {showWelcomeMessage && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+          <h2 className="text-xl font-semibold text-blue-900 mb-2">Welcome to Memory Gallery</h2>
+          <p className="text-blue-700">
+            Browse shared memories below. Log in to upload your own images and share your memories!
+          </p>
+        </div>
+      )}
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {images.map((image) => (
           <div
