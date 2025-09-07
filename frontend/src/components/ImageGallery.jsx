@@ -25,6 +25,11 @@ export default function ImageGallery({ user, refresh }) {
     }
   }
 
+  const handleImageDeleted = (deletedImageId) => {
+    // Remove the deleted image from the local state
+    setImages(prevImages => prevImages.filter(image => image.id !== deletedImageId))
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -73,6 +78,7 @@ export default function ImageGallery({ user, refresh }) {
           image={selectedImage} 
           user={user}
           onClose={() => setSelectedImage(null)}
+          onImageDeleted={handleImageDeleted}
         />
       )}
     </>

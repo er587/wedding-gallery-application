@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import CommentSystem from './CommentSystem'
 import { apiService } from '../services/api'
 
-export default function ImageViewer({ image, user, onClose }) {
+export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchComments()
@@ -22,6 +23,26 @@ export default function ImageViewer({ image, user, onClose }) {
       setLoading(false)
     }
   }
+
+  const handleDeleteImage = async () => {
+    if (!window.confirm('Are you sure you want to delete this image? This action cannot be undone.')) {
+      return
+    }
+
+    setDeleting(true)
+    try {
+      await apiService.deleteImage(image.id)
+      onImageDeleted(image.id)
+      onClose()
+    } catch (error) {
+      console.error('Error deleting image:', error)
+      alert('Failed to delete image. Please try again.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const canDeleteImage = user && image.uploader && user.username === image.uploader.username
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -44,12 +65,24 @@ export default function ImageViewer({ image, user, onClose }) {
                 <h2 className="font-semibold text-lg">{image.title}</h2>
                 <p className="text-sm text-gray-600">by {image.uploader.username}</p>
               </div>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 text-xl"
-              >
-                ✕
-              </button>
+              <div className="flex items-center space-x-2">
+                {canDeleteImage && (
+                  <button
+                    onClick={handleDeleteImage}
+                    disabled={deleting}
+                    className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded border border-red-500 hover:border-red-700 transition-colors disabled:opacity-50"
+                    title="Delete image"
+                  >
+                    {deleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                )}
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-gray-600 text-xl"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
             {image.description && (
               <p className="text-gray-700 mt-2">{image.description}</p>

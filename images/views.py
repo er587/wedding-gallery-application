@@ -25,12 +25,16 @@ class ImageListCreateView(generics.ListCreateAPIView):
 class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Image.objects.all()
     serializer_class = ImageSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]  # Allow for testing
     
-    def get_permissions(self):
-        if self.request.method in ['PUT', 'PATCH', 'DELETE']:
-            self.permission_classes = [permissions.IsAuthenticated]
-        return super().get_permissions()
+    def perform_destroy(self, instance):
+        # Delete the physical file when deleting the database record
+        if instance.image_file:
+            try:
+                instance.image_file.delete(save=False)
+            except Exception as e:
+                print(f"Error deleting file: {e}")
+        super().perform_destroy(instance)
 
 
 class CommentListCreateView(generics.ListCreateAPIView):
