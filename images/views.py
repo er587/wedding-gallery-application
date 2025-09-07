@@ -23,7 +23,7 @@ class ImageListCreateView(generics.ListCreateAPIView):
             )
         
         if tags:
-            tag_list = [tag.strip() for tag in tags.split(',') if tag.strip()]
+            tag_list = [tag.strip() for tag in str(tags).split(',') if tag.strip()]
             for tag in tag_list:
                 queryset = queryset.filter(tags__name__icontains=tag)
         

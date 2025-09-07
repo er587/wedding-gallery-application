@@ -22,12 +22,12 @@ export default function ImageGallery({ user, refresh }) {
   const fetchImages = async () => {
     try {
       setLoading(true)
-      const queryParams = new URLSearchParams()
-      if (searchParams.search) queryParams.append('search', searchParams.search)
-      if (searchParams.tags) queryParams.append('tags', searchParams.tags)
+      // Build query parameters for search and filtering
+      const params = {}
+      if (searchParams.search) params.search = searchParams.search
+      if (searchParams.tags) params.tags = searchParams.tags
       
-      const url = queryParams.toString() ? `/api/images/?${queryParams.toString()}` : '/api/images/'
-      const response = await apiService.api.get(url)
+      const response = await apiService.getImages(params)
       setImages(response.data)
     } catch (error) {
       console.error('Error fetching images:', error)

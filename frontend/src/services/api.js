@@ -17,7 +17,11 @@ const api = axios.create({
 // API service functions
 export const apiService = {
   // Images
-  getImages: () => api.get('/api/images/'),
+  getImages: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    const url = queryString ? `/api/images/?${queryString}` : '/api/images/'
+    return api.get(url)
+  },
   getImage: (id) => api.get(`/api/images/${id}/`),
   createImage: (formData) => api.post('/api/images/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
