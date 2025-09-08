@@ -54,21 +54,44 @@ export const apiService = {
   createComment: (imageId, data) => api.post(`/api/images/${imageId}/comments/`, data),
   createReply: (commentId, data) => api.post(`/api/comments/${commentId}/reply/`, data),
 
-  // Authentication (placeholder for now)
+  // Authentication
+  getCsrfToken: () => api.get('/api/auth/csrf/'),
   login: (credentials) => api.post('/api/auth/login/', credentials),
   register: (userData) => api.post('/api/auth/register/', userData),
   logout: () => api.post('/api/auth/logout/'),
   getCurrentUser: () => api.get('/api/auth/user/'),
 }
 
-// Request interceptor for auth tokens
-api.interceptors.request.use((config) => {
+// Request interceptor for CSRF tokens and auth
+api.interceptors.request.use(async (config) => {
+  // Get CSRF token from cookie
+  const csrfToken = getCookie('csrftoken')
+  if (csrfToken) {
+    config.headers['X-CSRFToken'] = csrfToken
+  }
+  
   const token = localStorage.getItem('authToken')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
+
+// Helper function to get cookie value
+function getCookie(name) {
+  let cookieValue = null
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';')
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim()
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
+        break
+      }
+    }
+  }
+  return cookieValue
+}
 
 // Response interceptor for error handling
 api.interceptors.response.use(

@@ -151,7 +151,17 @@ def create_reply(request, comment_id):
 
 
 # Authentication Views
-@csrf_exempt
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def get_csrf_token(request):
+    """Get CSRF token for frontend"""
+    from django.middleware.csrf import get_token
+    token = get_token(request)
+    return Response({
+        'csrfToken': token
+    }, status=status.HTTP_200_OK)
+
+
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def login_view(request):

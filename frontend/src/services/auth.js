@@ -6,7 +6,10 @@ export const authService = {
   
   login: async (username, password) => {
     try {
-      // Try to authenticate with Django backend
+      // First get CSRF token
+      await apiService.getCsrfToken()
+      
+      // Then authenticate with Django backend
       const response = await apiService.login({ username, password })
       const userData = response.data
       

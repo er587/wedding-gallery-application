@@ -148,6 +148,13 @@ REST_FRAMEWORK = {
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
+# CSRF settings for API
+CSRF_TRUSTED_ORIGINS = [
+    'https://0e1efad5-cfaf-4762-bbde-543dc8094838-00-2yutrstchfwzz.spock.replit.dev',
+    'https://0e1efad5-cfaf-4762-bbde-543dc8094838-00-2yutrstchfwzz.spock.replit.dev:5000',
+    'https://0e1efad5-cfaf-4762-bbde-543dc8094838-00-2yutrstchfwzz.spock.replit.dev:8000',
+]
+
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
