@@ -6,6 +6,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
+  const [imageData, setImageData] = useState(image) // Local copy for like updates
   const intervalRef = useRef(null)
 
   useEffect(() => {
@@ -22,12 +23,12 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
         clearInterval(intervalRef.current)
       }
     }
-  }, [image.id])
+  }, [imageData.id])
 
   const fetchComments = async () => {
     try {
       setLoading(true)
-      const response = await apiService.getComments(image.id)
+      const response = await apiService.getComments(imageData.id)
       setComments(response.data)
     } catch (error) {
       console.error('Error fetching comments:', error)
@@ -44,8 +45,8 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
 
     setDeleting(true)
     try {
-      await apiService.deleteImage(image.id)
-      onImageDeleted(image.id)
+      await apiService.deleteImage(imageData.id)
+      onImageDeleted(imageData.id)
       onClose()
     } catch (error) {
       console.error('Error deleting image:', error)
@@ -55,17 +56,17 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
     }
   }
 
-  const canDeleteImage = user && image.uploader && user.username === image.uploader.username && user.can_delete_images
+  const canDeleteImage = user && imageData.uploader && user.username === imageData.uploader.username && user.can_delete_images
 
   const handleSaveImage = async () => {
     try {
-      const response = await fetch(image.image_file)
+      const response = await fetch(imageData.image_file)
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       
       const link = document.createElement('a')
       link.href = url
-      link.download = `${image.title || 'image'}.${blob.type.split('/')[1] || 'jpg'}`
+      link.download = `${imageData.title || 'image'}.${blob.type.split('/')[1] || 'jpg'}`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -76,14 +77,30 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
     }
   }
 
+  const handleLike = async () => {
+    if (!user) return
+
+    try {
+      const response = await apiService.toggleLike(imageData.id)
+      
+      setImageData(prev => ({
+        ...prev,
+        like_count: response.data.like_count,
+        user_has_liked: response.data.liked
+      }))
+    } catch (error) {
+      console.error('Error toggling like:', error)
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex">
         {/* Image Section */}
         <div className="flex-1 bg-black flex items-center justify-center">
           <img
-            src={image.image_file}
-            alt={image.title}
+            src={imageData.image_file}
+            alt={imageData.title}
             className="max-w-full max-h-full object-contain"
           />
         </div>
@@ -94,10 +111,35 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
           <div className="p-4 border-b">
             <div className="flex justify-between items-start">
               <div>
-                <h2 className="font-semibold text-lg">{image.title}</h2>
-                <p className="text-sm text-gray-600">by {image.uploader.username}</p>
+                <h2 className="font-semibold text-lg">{imageData.title}</h2>
+                <p className="text-sm text-gray-600">by {imageData.uploader.username}</p>
               </div>
               <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleLike}
+                  className={`flex items-center space-x-1 px-2 py-1 rounded-md transition-colors ${
+                    imageData.user_has_liked 
+                      ? 'text-red-600 hover:text-red-700' 
+                      : 'text-gray-500 hover:text-red-500'
+                  }`}
+                  disabled={!user}
+                  title={imageData.user_has_liked ? 'Unlike' : 'Like'}
+                >
+                  <svg 
+                    className={`w-5 h-5 ${imageData.user_has_liked ? 'fill-current' : ''}`} 
+                    fill={imageData.user_has_liked ? 'currentColor' : 'none'} 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
+                    />
+                  </svg>
+                  <span>{imageData.like_count || 0}</span>
+                </button>
                 <button
                   onClick={handleSaveImage}
                   className="text-blue-500 hover:text-blue-700 text-sm px-2 py-1 rounded border border-blue-500 hover:border-blue-700 transition-colors"
@@ -123,8 +165,8 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
                 </button>
               </div>
             </div>
-            {image.description && (
-              <p className="text-gray-700 mt-2">{image.description}</p>
+            {imageData.description && (
+              <p className="text-gray-700 mt-2">{imageData.description}</p>
             )}
           </div>
 

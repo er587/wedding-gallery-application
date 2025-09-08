@@ -88,6 +88,29 @@ export default function ImageGallery({ user, refresh }) {
     }
   }
 
+  const handleLike = async (imageId) => {
+    if (!user) return
+
+    try {
+      const response = await apiService.toggleLike(imageId)
+      
+      // Update the image in the local state
+      setImages(prevImages => 
+        prevImages.map(img => 
+          img.id === imageId 
+            ? {
+                ...img, 
+                like_count: response.data.like_count,
+                user_has_liked: response.data.liked
+              }
+            : img
+        )
+      )
+    } catch (error) {
+      console.error('Error toggling like:', error)
+    }
+  }
+
   useEffect(() => {
     // Only fetch images if user is logged in
     if (user) {
@@ -431,7 +454,38 @@ export default function ImageGallery({ user, refresh }) {
               
               <div className="flex justify-between items-center mt-3 text-sm text-gray-500">
                 <span>by {image.uploader.username}</span>
-                <span>{image.comment_count} comments</span>
+                <div className="flex items-center space-x-3">
+                  <span>{image.comment_count} comments</span>
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleLike(image.id)
+                      }}
+                      className={`flex items-center space-x-1 px-2 py-1 rounded-md transition-colors ${
+                        image.user_has_liked 
+                          ? 'text-red-600 hover:text-red-700' 
+                          : 'text-gray-500 hover:text-red-500'
+                      }`}
+                      disabled={!user}
+                    >
+                      <svg 
+                        className={`w-4 h-4 ${image.user_has_liked ? 'fill-current' : ''}`} 
+                        fill={image.user_has_liked ? 'currentColor' : 'none'} 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
+                        />
+                      </svg>
+                      <span>{image.like_count || 0}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

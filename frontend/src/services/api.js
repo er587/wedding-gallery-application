@@ -54,6 +54,10 @@ export const apiService = {
   createComment: (imageId, data) => api.post(`/api/images/${imageId}/comments/`, data),
   createReply: (commentId, data) => api.post(`/api/comments/${commentId}/reply/`, data),
 
+  // Like functionality
+  toggleLike: (imageId) => api.post(`/api/images/${imageId}/like/`),
+  getLikedImages: (page = 1) => api.get(`/api/auth/liked-images/?page=${page}`),
+
   // Authentication
   getCsrfToken: () => api.get('/api/auth/csrf/'),
   login: (credentials) => api.post('/api/auth/login/', credentials),
