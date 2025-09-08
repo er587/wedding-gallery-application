@@ -52,16 +52,40 @@ export default function CommentSystem({ imageId, comments, user, loading, onComm
     })
   }
 
+  const getUserAvatar = (username, role) => {
+    const initial = username?.charAt(0).toUpperCase() || '?'
+    const isFullUser = role === 'full'
+    
+    return (
+      <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${
+        isFullUser 
+          ? 'bg-gradient-to-r from-blue-500 to-purple-600' 
+          : 'bg-gradient-to-r from-green-500 to-teal-600'
+      }`}>
+        <span className="text-white font-semibold text-xs">{initial}</span>
+      </div>
+    )
+  }
+
   const renderComment = (comment, isReply = false) => (
-    <div key={comment.id} className={`${isReply ? 'ml-4 border-l-2 border-gray-200 pl-3' : ''}`}>
-      <div className="flex items-start space-x-2 mb-2">
-        <div className="w-6 h-6 bg-gray-300 rounded-full flex-shrink-0"></div>
+    <div key={comment.id} className={`${isReply ? 'bg-gray-50 rounded-lg p-3' : 'bg-white'}`}>
+      <div className="flex items-start space-x-3 mb-2">
+        {getUserAvatar(comment.author?.username, comment.author?.role)}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-2">
-            <span className="font-medium text-sm">{comment.author.username}</span>
-            <span className="text-xs text-gray-500">{formatDate(comment.created_at)}</span>
+          <div className="flex items-center space-x-2 mb-1">
+            <span className="font-semibold text-sm text-gray-900">
+              {comment.author?.username || 'Unknown User'}
+            </span>
+            <span className={`text-xs px-2 py-1 rounded ${
+              comment.author?.role === 'full' 
+                ? 'text-blue-700 bg-blue-100' 
+                : 'text-green-700 bg-green-100'
+            }`}>
+              {comment.author?.role === 'full' ? '📸 Full User' : '💭 Memory User'}
+            </span>
+            <span className="text-xs text-gray-400">{formatDate(comment.created_at)}</span>
           </div>
-          <p className="text-sm text-gray-800 mt-1">{comment.content}</p>
+          <p className="text-sm text-gray-700 leading-relaxed">{comment.content}</p>
           {user && !isReply && (
             <button
               onClick={() => setReplyTo(comment.id)}
@@ -107,7 +131,7 @@ export default function CommentSystem({ imageId, comments, user, loading, onComm
       
       {/* Render replies */}
       {comment.replies && comment.replies.length > 0 && (
-        <div className="ml-6 space-y-3">
+        <div className="ml-8 mt-3 space-y-3 border-l-2 border-blue-100 pl-4">
           {comment.replies.map(reply => renderComment(reply, true))}
         </div>
       )}
