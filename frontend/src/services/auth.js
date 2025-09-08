@@ -68,6 +68,27 @@ export const authService = {
     return user && isAuthenticated ? JSON.parse(user) : null
   },
 
+  register: async (userData) => {
+    try {
+      // First get CSRF token
+      await apiService.getCsrfToken()
+      
+      // Then register with Django backend
+      const response = await apiService.register(userData)
+      const newUserData = response.data.user
+      
+      localStorage.setItem('user', JSON.stringify(newUserData))
+      localStorage.setItem('isAuthenticated', 'true')
+      return newUserData
+    } catch (error) {
+      console.error('Registration error:', error)
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error)
+      }
+      throw new Error('Registration failed. Please try again.')
+    }
+  },
+
   isAuthenticated: () => {
     return localStorage.getItem('isAuthenticated') === 'true'
   }
