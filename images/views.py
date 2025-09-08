@@ -8,7 +8,8 @@ from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
-from .models import Image, Comment, Tag
+from django.utils import timezone
+from .models import Image, Comment, Tag, UserProfile, InvitationCode
 from .serializers import ImageSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer
 
 
@@ -213,6 +214,90 @@ def login_view(request):
     except Exception as e:
         return Response({
             'error': f'Login failed: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def register_view(request):
+    """Handle user registration with invitation code"""
+    try:
+        username = request.data.get('username')
+        password = request.data.get('password')
+        email = request.data.get('email')
+        invitation_code = request.data.get('invitation_code')
+        first_name = request.data.get('first_name', '')
+        last_name = request.data.get('last_name', '')
+        
+        # Validate required fields
+        if not all([username, password, email, invitation_code]):
+            return Response({
+                'error': 'Username, password, email, and invitation code are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if username already exists
+        if User.objects.filter(username=username).exists():
+            return Response({
+                'error': 'Username already exists'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if email already exists
+        if User.objects.filter(email=email).exists():
+            return Response({
+                'error': 'Email already exists'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate invitation code
+        try:
+            invitation = InvitationCode.objects.get(code=invitation_code, is_used=False)
+        except InvitationCode.DoesNotExist:
+            return Response({
+                'error': 'Invalid or expired invitation code'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create user
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            email=email,
+            first_name=first_name,
+            last_name=last_name
+        )
+        
+        # Mark invitation code as used
+        invitation.is_used = True
+        invitation.used_by = user
+        invitation.used_at = timezone.now()
+        invitation.save()
+        
+        # Get or create user profile (should be auto-created by signal)
+        profile = getattr(user, 'profile', None)
+        if not profile:
+            profile = UserProfile.objects.create(user=user)
+        
+        # Build response data
+        user_data = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'role': profile.role,
+            'role_display': profile.get_role_display(),
+            'can_upload_images': profile.can_upload_images,
+            'can_delete_images': profile.can_delete_images,
+            'can_comment': profile.can_comment,
+            'groups': [group.name for group in user.groups.all()]
+        }
+        
+        return Response({
+            'message': 'Registration successful',
+            'user': user_data
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        return Response({
+            'error': f'Registration failed: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

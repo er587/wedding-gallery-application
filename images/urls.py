@@ -11,6 +11,7 @@ urlpatterns = [
     # Authentication endpoints
     path('api/auth/csrf/', views.get_csrf_token, name='csrf-token'),
     path('api/auth/login/', views.login_view, name='login'),
+    path('api/auth/register/', views.register_view, name='register'),
     path('api/auth/logout/', views.logout_view, name='logout'),
     path('api/auth/profile/', views.user_profile_view, name='user-profile'),
 ]
