@@ -53,7 +53,12 @@ export default function ImageGallery({ user, refresh }) {
         }))
       } else {
         if (Array.isArray(newImages) && newImages.length > 0) {
-          setImages(prev => [...prev, ...newImages])
+          // Filter out duplicates by checking existing image IDs
+          setImages(prev => {
+            const existingIds = new Set(prev.map(img => img.id))
+            const uniqueNewImages = newImages.filter(img => !existingIds.has(img.id))
+            return [...prev, ...uniqueNewImages]
+          })
           setPagination(prev => ({ 
             ...prev, 
             page: prev.page + 1, 
@@ -106,8 +111,20 @@ export default function ImageGallery({ user, refresh }) {
       }
     }
 
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
+    // Throttle scroll events to prevent excessive API calls
+    let ticking = false
+    const throttledScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          handleScroll()
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', throttledScroll)
+    return () => window.removeEventListener('scroll', throttledScroll)
   }, [pagination.loadingMore, pagination.hasMore])
 
   const handleImageDeleted = (deletedImageId) => {
@@ -382,7 +399,6 @@ export default function ImageGallery({ user, refresh }) {
           <p className="text-gray-400 mt-2">Be the first to share a memory!</p>
         </div>
       )}
-
 
       {/* Loading More Indicator */}
       {pagination.loadingMore && (
