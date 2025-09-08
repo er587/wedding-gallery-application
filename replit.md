@@ -16,6 +16,8 @@ This is a full-stack wedding gallery application built with Django REST Framewor
 - **Added signup modal with invitation code validation**
 - **Full authentication flow with proper CSRF protection**
 - **Django admin interface for managing invitation codes**
+- **Reusable invitation codes with usage tracking**
+- **Role-based codes (Full User vs Memory User permissions)**
 
 ## User Preferences
 
@@ -54,10 +56,12 @@ Preferred communication style: Simple, everyday language.
 
 ### Authentication & Authorization
 - Django session-based authentication with CSRF protection
-- Invitation-based user registration system
+- Invitation-based user registration system with reusable codes
+- Role-based invitation codes (Full User / Memory User)
 - Permission classes for view-level access control  
 - User ownership validation for update/delete operations
 - Secure invitation code generation and validation
+- Usage tracking and admin management for invitation codes
 - Modal-based signup interface for better UX
 
 ## External Dependencies

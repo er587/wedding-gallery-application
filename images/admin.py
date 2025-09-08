@@ -103,11 +103,11 @@ class GroupAdmin(admin.ModelAdmin):
 
 @admin.register(InvitationCode)
 class InvitationCodeAdmin(admin.ModelAdmin):
-    list_display = ['code', 'role', 'is_used', 'used_by', 'created_by', 'created_at', 'used_at']
-    list_filter = ['role', 'is_used', 'created_at', 'used_at', 'created_by']
-    search_fields = ['code', 'used_by__username', 'created_by__username', 'notes']
-    readonly_fields = ['code', 'used_by', 'used_at', 'created_at']
-    fields = ['role', 'notes', 'code', 'created_by', 'created_at', 'is_used', 'used_by', 'used_at']
+    list_display = ['code', 'role', 'is_active', 'usage_count', 'created_by', 'created_at', 'last_used_at']
+    list_filter = ['role', 'is_active', 'created_at', 'last_used_at', 'created_by']
+    search_fields = ['code', 'created_by__username', 'notes']
+    readonly_fields = ['code', 'usage_count', 'last_used_at', 'created_at']
+    fields = ['role', 'is_active', 'notes', 'code', 'created_by', 'created_at', 'usage_count', 'last_used_at']
     
     def save_model(self, request, obj, form, change):
         """Auto-generate code and set creator on new invitation codes"""

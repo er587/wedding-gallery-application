@@ -249,10 +249,10 @@ def register_view(request):
         
         # Validate invitation code
         try:
-            invitation = InvitationCode.objects.get(code=invitation_code, is_used=False)
+            invitation = InvitationCode.objects.get(code=invitation_code, is_active=True)
         except InvitationCode.DoesNotExist:
             return Response({
-                'error': 'Invalid or expired invitation code'
+                'error': 'Invalid or inactive invitation code'
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Create user
@@ -264,10 +264,9 @@ def register_view(request):
             last_name=last_name
         )
         
-        # Mark invitation code as used
-        invitation.is_used = True
-        invitation.used_by = user
-        invitation.used_at = timezone.now()
+        # Update invitation code usage
+        invitation.usage_count += 1
+        invitation.last_used_at = timezone.now()
         invitation.save()
         
         # Get or create user profile with role from invitation

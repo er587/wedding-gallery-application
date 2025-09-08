@@ -124,30 +124,24 @@ class InvitationCode(models.Model):
     
     code = models.CharField(max_length=20, unique=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='full')
-    is_used = models.BooleanField(default=False)
-    used_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='used_invitation'
-    )
+    is_active = models.BooleanField(default=True, help_text="Whether this code can be used for new registrations")
+    usage_count = models.IntegerField(default=0, help_text="Number of times this code has been used")
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='created_invitations'
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    used_at = models.DateTimeField(null=True, blank=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True, help_text="Admin notes about this invitation")
     
     class Meta:
         ordering = ['-created_at']
     
     def __str__(self):
-        status = "Used" if self.is_used else "Available"
+        status = "Active" if self.is_active else "Inactive"
         role_display = self.get_role_display()
-        return f"{self.code} ({role_display}, {status})"
+        return f"{self.code} ({role_display}, {status}, Used: {self.usage_count})"
     
     @classmethod
     def generate_code(cls):
