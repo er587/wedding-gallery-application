@@ -98,7 +98,8 @@ export default function ImageGallery({ user, refresh }) {
     const handleScroll = () => {
       if (pagination.loadingMore || !pagination.hasMore) return
       
-      const scrolledToBottom = window.innerHeight + window.scrollY >= document.documentElement.offsetHeight - 1000
+      // Trigger loading when user is 800px from bottom
+      const scrolledToBottom = window.innerHeight + window.scrollY >= document.documentElement.offsetHeight - 800
       
       if (scrolledToBottom) {
         loadMoreImages()
@@ -382,21 +383,10 @@ export default function ImageGallery({ user, refresh }) {
         </div>
       )}
 
-      {/* Load More Button */}
-      {images.length > 0 && pagination.hasMore && !pagination.loadingMore && (
-        <div className="text-center mt-8">
-          <button
-            onClick={loadMoreImages}
-            className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Load More Images
-          </button>
-        </div>
-      )}
 
       {/* Loading More Indicator */}
       {pagination.loadingMore && (
-        <div className="text-center mt-8">
+        <div className="text-center mt-8 mb-8">
           <div className="inline-flex items-center space-x-2 text-gray-600">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
             <span>Loading more images...</span>
@@ -406,8 +396,10 @@ export default function ImageGallery({ user, refresh }) {
 
       {/* End of Results */}
       {images.length > 0 && !pagination.hasMore && (
-        <div className="text-center mt-8 text-gray-500">
+        <div className="text-center mt-8 mb-8 text-gray-500">
+          <div className="text-4xl mb-2">🎉</div>
           <p>You've reached the end of the gallery</p>
+          <p className="text-sm">All {images.length} images loaded</p>
         </div>
       )}
 
