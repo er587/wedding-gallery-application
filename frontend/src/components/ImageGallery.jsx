@@ -203,7 +203,7 @@ export default function ImageGallery({ user, refresh }) {
     return (
       <div className="text-center py-16">
         <div className="text-6xl mb-6">🔒</div>
-        <h2 className="text-3xl font-bold text-gray-800 mb-4">Welcome to Memory Gallery</h2>
+        <h2 className="text-3xl font-bold text-gray-800 mb-4">Welcome to Wedding Gallery</h2>
         <p className="text-xl text-gray-600 mb-8">
           Please log in to view and share precious memories
         </p>

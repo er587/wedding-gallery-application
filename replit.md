@@ -1,8 +1,8 @@
-# Image Gallery Application
+# Wedding Gallery Application
 
 ## Overview
 
-This is a full-stack image gallery application built with Django REST Framework backend and React frontend. The application allows users to upload images, view image galleries, and engage with content through nested comments. It features user authentication, file uploads with organized storage, and a modern responsive interface built with React and Tailwind CSS.
+This is a full-stack wedding gallery application built with Django REST Framework backend and React frontend. The application allows users to upload wedding images, view image galleries, and engage with content through nested comments. It features user authentication, file uploads with organized storage, and a modern responsive interface built with React and Tailwind CSS.
 
 ## Recent Changes
 
@@ -10,7 +10,7 @@ This is a full-stack image gallery application built with Django REST Framework 
 - Set up complete Django REST API with Image and Comment models
 - Created React frontend with Tailwind CSS styling  
 - Implemented image upload functionality with drag-and-drop
-- Built threaded comment system for memory sharing
+- Built threaded comment system for sharing wedding memories
 - Configured development workflows for both backend and frontend
 - Added basic authentication system (placeholder implementation)
 
