@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User, Group
-from .models import Image, Comment, Tag, UserProfile, InvitationCode
+from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like
 
 
 # Customize User admin to show groups and roles
@@ -157,3 +157,15 @@ class InvitationCodeAdmin(admin.ModelAdmin):
 # Unregister and register Group with custom admin
 admin.site.unregister(Group)
 admin.site.register(Group, GroupAdmin)
+
+
+@admin.register(Like)
+class LikeAdmin(admin.ModelAdmin):
+    list_display = ['user', 'image', 'created_at']
+    list_filter = ['created_at', 'image__uploader']
+    search_fields = ['user__username', 'image__title']
+    ordering = ['-created_at']
+    raw_id_fields = ['user', 'image']
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'image')

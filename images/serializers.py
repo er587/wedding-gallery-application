@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Image, Comment, Tag
+from .models import Image, Comment, Tag, Like
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -40,6 +40,8 @@ class ImageSerializer(serializers.ModelSerializer):
     uploader = UserSerializer(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
     comment_count = serializers.SerializerMethodField()
+    like_count = serializers.SerializerMethodField()
+    user_has_liked = serializers.SerializerMethodField()
     image_file = serializers.SerializerMethodField()
     tags = TagSerializer(many=True, read_only=True)
     tag_names = serializers.ListField(child=serializers.CharField(), write_only=True, required=False)
@@ -47,11 +49,21 @@ class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
         fields = ['id', 'title', 'description', 'image_file', 'uploader', 
-                 'uploaded_at', 'updated_at', 'comments', 'comment_count', 'tags', 'tag_names']
+                 'uploaded_at', 'updated_at', 'comments', 'comment_count', 
+                 'like_count', 'user_has_liked', 'tags', 'tag_names']
         read_only_fields = ['id', 'uploader', 'uploaded_at', 'updated_at']
     
     def get_comment_count(self, obj):
         return obj.comments.count()
+    
+    def get_like_count(self, obj):
+        return obj.likes.count()
+    
+    def get_user_has_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(user=request.user).exists()
+        return False
     
     def get_image_file(self, obj):
         request = self.context.get('request')

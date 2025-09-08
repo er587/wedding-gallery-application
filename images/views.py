@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
 from django.utils import timezone
-from .models import Image, Comment, Tag, UserProfile, InvitationCode
+from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like
 from .serializers import ImageSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer
 
 
@@ -340,3 +340,56 @@ def user_profile_view(request):
         return Response({
             'error': 'Not authenticated'
         }, status=status.HTTP_401_UNAUTHORIZED)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def toggle_like(request, image_id):
+    """Toggle like status for an image"""
+    try:
+        image = Image.objects.get(id=image_id)
+    except Image.DoesNotExist:
+        return Response({'error': 'Image not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    like, created = Like.objects.get_or_create(
+        user=request.user,
+        image=image
+    )
+    
+    if not created:
+        # Like exists, so remove it (unlike)
+        like.delete()
+        action = 'unliked'
+        liked = False
+    else:
+        # Like was created
+        action = 'liked'
+        liked = True
+    
+    # Get updated like count
+    like_count = image.likes.count()
+    
+    return Response({
+        'action': action,
+        'liked': liked,
+        'like_count': like_count
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def user_liked_images(request):
+    """Get list of images the user has liked"""
+    liked_images = Image.objects.filter(
+        likes__user=request.user
+    ).order_by('-likes__created_at')
+    
+    paginator = ImagePagination()
+    page = paginator.paginate_queryset(liked_images, request)
+    
+    if page is not None:
+        serializer = ImageSerializer(page, many=True, context={'request': request})
+        return paginator.get_paginated_response(serializer.data)
+    
+    serializer = ImageSerializer(liked_images, many=True, context={'request': request})
+    return Response(serializer.data)

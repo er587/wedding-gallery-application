@@ -8,6 +8,10 @@ urlpatterns = [
     path('api/images/<int:image_id>/comments/', views.CommentListCreateView.as_view(), name='comment-list-create'),
     path('api/comments/<int:comment_id>/reply/', views.create_reply, name='comment-reply'),
     
+    # Like endpoints
+    path('api/images/<int:image_id>/like/', views.toggle_like, name='toggle-like'),
+    path('api/auth/liked-images/', views.user_liked_images, name='user-liked-images'),
+    
     # Authentication endpoints
     path('api/auth/csrf/', views.get_csrf_token, name='csrf-token'),
     path('api/auth/login/', views.login_view, name='login'),
