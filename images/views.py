@@ -270,10 +270,14 @@ def register_view(request):
         invitation.used_at = timezone.now()
         invitation.save()
         
-        # Get or create user profile (should be auto-created by signal)
+        # Get or create user profile with role from invitation
         profile = getattr(user, 'profile', None)
         if not profile:
-            profile = UserProfile.objects.create(user=user)
+            profile = UserProfile.objects.create(user=user, role=invitation.role)
+        else:
+            # Update role based on invitation
+            profile.role = invitation.role
+            profile.save()
         
         # Build response data
         user_data = {

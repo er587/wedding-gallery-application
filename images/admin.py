@@ -103,10 +103,11 @@ class GroupAdmin(admin.ModelAdmin):
 
 @admin.register(InvitationCode)
 class InvitationCodeAdmin(admin.ModelAdmin):
-    list_display = ['code', 'is_used', 'used_by', 'created_by', 'created_at', 'used_at']
-    list_filter = ['is_used', 'created_at', 'used_at', 'created_by']
+    list_display = ['code', 'role', 'is_used', 'used_by', 'created_by', 'created_at', 'used_at']
+    list_filter = ['role', 'is_used', 'created_at', 'used_at', 'created_by']
     search_fields = ['code', 'used_by__username', 'created_by__username', 'notes']
     readonly_fields = ['code', 'used_by', 'used_at', 'created_at']
+    fields = ['role', 'notes', 'code', 'created_by', 'created_at', 'is_used', 'used_by', 'used_at']
     
     def save_model(self, request, obj, form, change):
         """Auto-generate code and set creator on new invitation codes"""
@@ -115,23 +116,42 @@ class InvitationCodeAdmin(admin.ModelAdmin):
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
     
-    actions = ['generate_multiple_codes']
+    actions = ['generate_full_user_codes', 'generate_memory_user_codes']
     
-    def generate_multiple_codes(self, request, queryset):
-        """Admin action to generate multiple invitation codes"""
-        count = 5  # Generate 5 codes by default
+    def generate_full_user_codes(self, request, queryset):
+        """Admin action to generate Full User invitation codes"""
+        count = 3
         created_codes = []
         
         for _ in range(count):
             code = InvitationCode.objects.create(
                 code=InvitationCode.generate_code(),
-                created_by=request.user
+                role='full',
+                created_by=request.user,
+                notes='Full User - Can upload, delete, and comment'
             )
             created_codes.append(code.code)
         
-        self.message_user(request, f"Generated {count} invitation codes: {', '.join(created_codes)}")
+        self.message_user(request, f"Generated {count} Full User codes: {', '.join(created_codes)}")
     
-    generate_multiple_codes.short_description = "Generate 5 new invitation codes"
+    def generate_memory_user_codes(self, request, queryset):
+        """Admin action to generate Memory User invitation codes"""
+        count = 3
+        created_codes = []
+        
+        for _ in range(count):
+            code = InvitationCode.objects.create(
+                code=InvitationCode.generate_code(),
+                role='memory',
+                created_by=request.user,
+                notes='Memory User - Can only comment on images'
+            )
+            created_codes.append(code.code)
+        
+        self.message_user(request, f"Generated {count} Memory User codes: {', '.join(created_codes)}")
+    
+    generate_full_user_codes.short_description = "Generate 3 Full User invitation codes"
+    generate_memory_user_codes.short_description = "Generate 3 Memory User invitation codes"
 
 
 # Unregister and register Group with custom admin

@@ -117,7 +117,13 @@ def save_user_profile(sender, instance, **kwargs):
 
 class InvitationCode(models.Model):
     """Invitation codes for user registration"""
+    ROLE_CHOICES = [
+        ('full', 'Full User'),  # Can upload, delete, and comment
+        ('memory', 'Memory User'),  # Can only comment on images
+    ]
+    
     code = models.CharField(max_length=20, unique=True)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='full')
     is_used = models.BooleanField(default=False)
     used_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -140,7 +146,8 @@ class InvitationCode(models.Model):
     
     def __str__(self):
         status = "Used" if self.is_used else "Available"
-        return f"{self.code} ({status})"
+        role_display = self.get_role_display()
+        return f"{self.code} ({role_display}, {status})"
     
     @classmethod
     def generate_code(cls):
