@@ -361,10 +361,24 @@ def toggle_like(request, image_id):
         like.delete()
         action = 'unliked'
         liked = False
+        
+        # Also remove the love comment if it exists
+        Comment.objects.filter(
+            image=image,
+            author=request.user,
+            content=f"{request.user.username} loves this image"
+        ).delete()
     else:
         # Like was created
         action = 'liked'
         liked = True
+        
+        # Create a comment saying user loves this image
+        Comment.objects.create(
+            image=image,
+            author=request.user,
+            content=f"{request.user.username} loves this image"
+        )
     
     # Get updated like count
     like_count = image.likes.count()
