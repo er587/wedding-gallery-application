@@ -11,6 +11,7 @@ export default function ImageGallery({ user, refresh }) {
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedImages, setSelectedImages] = useState(new Set())
   const [downloading, setDownloading] = useState(false)
+  const [showSearchBar, setShowSearchBar] = useState(false)
   const [pagination, setPagination] = useState({
     page: 1,
     pageSize: 6,
@@ -219,13 +220,27 @@ export default function ImageGallery({ user, refresh }) {
 
   return (
     <>
-      <SearchBar onSearch={handleSearch} onTagFilter={handleTagFilter} />
-      
-      {/* Selection Controls */}
-      {images.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+      {/* Search & Filter Toggle */}
+      <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowSearchBar(!showSearchBar)}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                showSearchBar
+                  ? 'bg-purple-600 text-white hover:bg-purple-700'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <span className="flex items-center space-x-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span>{showSearchBar ? 'Hide Search' : 'Search & Filter'}</span>
+              </span>
+            </button>
+            
+            {images.length > 0 && (
               <button
                 onClick={toggleSelectionMode}
                 className={`px-4 py-2 rounded-md transition-colors ${
@@ -234,42 +249,54 @@ export default function ImageGallery({ user, refresh }) {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                {selectionMode ? 'Cancel Selection' : 'Select Images'}
-              </button>
-              
-              {selectionMode && (
-                <>
-                  <button
-                    onClick={selectAllImages}
-                    className="text-sm text-blue-600 hover:text-blue-800 underline"
-                  >
-                    Select All ({images.length})
-                  </button>
-                  <button
-                    onClick={clearSelection}
-                    className="text-sm text-gray-600 hover:text-gray-800 underline"
-                  >
-                    Clear Selection
-                  </button>
-                </>
-              )}
-            </div>
-            
-            {selectionMode && selectedImages.size > 0 && (
-              <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-600">
-                  {selectedImages.size} selected
+                <span className="flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
+                  <span>{selectionMode ? 'Cancel Selection' : 'Select Images'}</span>
                 </span>
-                <button
-                  onClick={downloadSelectedImages}
-                  disabled={downloading}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 transition-colors"
-                >
-                  {downloading ? 'Downloading...' : `💾 Download (${selectedImages.size})`}
-                </button>
-              </div>
+              </button>
             )}
           </div>
+          
+          {selectionMode && (
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={selectAllImages}
+                className="text-sm text-blue-600 hover:text-blue-800 underline"
+              >
+                Select All ({images.length})
+              </button>
+              <button
+                onClick={clearSelection}
+                className="text-sm text-gray-600 hover:text-gray-800 underline"
+              >
+                Clear Selection
+              </button>
+              
+              {selectedImages.size > 0 && (
+                <div className="flex items-center space-x-3 ml-4">
+                  <span className="text-sm text-gray-600">
+                    {selectedImages.size} selected
+                  </span>
+                  <button
+                    onClick={downloadSelectedImages}
+                    disabled={downloading}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 transition-colors"
+                  >
+                    {downloading ? 'Downloading...' : `💾 Download (${selectedImages.size})`}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Collapsible Search Bar */}
+      {showSearchBar && (
+        <div className="mb-6">
+          <SearchBar onSearch={handleSearch} onTagFilter={handleTagFilter} />
         </div>
       )}
       

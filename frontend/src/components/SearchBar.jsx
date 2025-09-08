@@ -22,7 +22,7 @@ export default function SearchBar({ onSearch, onTagFilter }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+    <div className="bg-white rounded-lg shadow-sm border p-6 transform transition-all duration-200 ease-in-out">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Search & Filter</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
