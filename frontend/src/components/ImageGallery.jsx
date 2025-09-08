@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import ImageViewer from './ImageViewer'
 import SearchBar from './SearchBar'
 import { apiService } from '../services/api'
@@ -98,13 +98,53 @@ export default function ImageGallery({ user, refresh }) {
     }
   }, [refresh, user, searchParams])
 
+  // Add ref for intersection observer
+  const loadingTriggerRef = useRef(null)
+
   useEffect(() => {
-    // Set up scroll listener for infinite scroll
+    // Use Intersection Observer for more reliable infinite scroll
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        if (entry.isIntersecting && !pagination.loadingMore && pagination.hasMore) {
+          loadMoreImages()
+        }
+      },
+      {
+        root: null, // Use viewport as root
+        rootMargin: '800px', // Trigger 800px before element comes into view
+        threshold: 0
+      }
+    )
+
+    if (loadingTriggerRef.current) {
+      observer.observe(loadingTriggerRef.current)
+    }
+
+    return () => {
+      if (loadingTriggerRef.current) {
+        observer.unobserve(loadingTriggerRef.current)
+      }
+    }
+  }, [pagination.loadingMore, pagination.hasMore])
+
+  // Fallback scroll listener for additional compatibility
+  useEffect(() => {
     const handleScroll = () => {
       if (pagination.loadingMore || !pagination.hasMore) return
       
-      // Trigger loading when user is 800px from bottom
-      const scrolledToBottom = window.innerHeight + window.scrollY >= document.documentElement.offsetHeight - 800
+      // More robust scroll detection for different contexts (iframe, full browser)
+      const windowHeight = window.innerHeight
+      const documentHeight = Math.max(
+        document.documentElement.scrollHeight,
+        document.documentElement.offsetHeight,
+        document.body.scrollHeight,
+        document.body.offsetHeight
+      )
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
+      
+      // Trigger loading when user is 500px from bottom (closer than intersection observer)
+      const scrolledToBottom = windowHeight + scrollTop >= documentHeight - 500
       
       if (scrolledToBottom) {
         loadMoreImages()
@@ -123,8 +163,14 @@ export default function ImageGallery({ user, refresh }) {
       }
     }
 
-    window.addEventListener('scroll', throttledScroll)
-    return () => window.removeEventListener('scroll', throttledScroll)
+    // Listen to both window and document scroll events for better compatibility
+    window.addEventListener('scroll', throttledScroll, { passive: true })
+    document.addEventListener('scroll', throttledScroll, { passive: true })
+    
+    return () => {
+      window.removeEventListener('scroll', throttledScroll)
+      document.removeEventListener('scroll', throttledScroll)
+    }
   }, [pagination.loadingMore, pagination.hasMore])
 
   const handleImageDeleted = (deletedImageId) => {
@@ -391,6 +437,15 @@ export default function ImageGallery({ user, refresh }) {
           </div>
         ))}
       </div>
+
+      {/* Invisible trigger for Intersection Observer */}
+      {images.length > 0 && pagination.hasMore && (
+        <div 
+          ref={loadingTriggerRef} 
+          className="h-1 w-full"
+          style={{ position: 'relative', bottom: '200px' }}
+        />
+      )}
 
       {images.length === 0 && !loading && (
         <div className="text-center py-12">
