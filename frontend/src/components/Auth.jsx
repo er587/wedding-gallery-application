@@ -2,8 +2,12 @@ import { useState } from 'react'
 import { authService } from '../services/auth'
 
 export default function Auth({ onLogin }) {
-  const [isLogin, setIsLogin] = useState(true)
-  const [formData, setFormData] = useState({
+  const [showSignupModal, setShowSignupModal] = useState(false)
+  const [loginData, setLoginData] = useState({
+    username: '',
+    password: ''
+  })
+  const [signupData, setSignupData] = useState({
     username: '',
     password: '',
     email: '',
@@ -12,106 +16,192 @@ export default function Auth({ onLogin }) {
     last_name: ''
   })
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
     try {
-      if (isLogin) {
-        const userData = await authService.login(formData.username, formData.password)
-        onLogin(userData)
-      } else {
-        // Registration with invitation code
-        const userData = await authService.register(formData)
-        onLogin(userData)
-      }
+      const userData = await authService.login(loginData.username, loginData.password)
+      onLogin(userData)
     } catch (error) {
-      const action = isLogin ? 'Login' : 'Registration'
-      const message = isLogin ? 
-        `Login failed: ${error.message}\n\nExisting users:\n• testuser / testpass123 (Full User)\n• memoryuser / memorypass123 (Memory User)` :
-        `Registration failed: ${error.message}\n\nPlease check your invitation code and try again.`
-      alert(message)
+      alert(`Login failed: ${error.message}\n\nExisting users:\n• testuser / testpass123 (Full User)\n• memoryuser / memorypass123 (Memory User)`)
     }
   }
 
-  const handleInputChange = (e) => {
-    setFormData(prev => ({
+  const handleSignup = async (e) => {
+    e.preventDefault()
+    try {
+      const userData = await authService.register(signupData)
+      onLogin(userData)
+      setShowSignupModal(false)
+      // Reset form
+      setSignupData({
+        username: '',
+        password: '',
+        email: '',
+        invitation_code: '',
+        first_name: '',
+        last_name: ''
+      })
+    } catch (error) {
+      alert(`Registration failed: ${error.message}\n\nPlease check your invitation code and try again.`)
+    }
+  }
+
+  const handleLoginInputChange = (e) => {
+    setLoginData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }))
+  }
+
+  const handleSignupInputChange = (e) => {
+    setSignupData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }))
   }
 
   return (
-    <div className="flex items-center space-x-4">
-      <form onSubmit={handleSubmit} className="flex items-center space-x-2">
-        <input
-          type="text"
-          name="username"
-          placeholder="Username"
-          value={formData.username}
-          onChange={handleInputChange}
-          required
-          className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleInputChange}
-          required
-          className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        {!isLogin && (
-          <>
-            <input
-              type="text"
-              name="first_name"
-              placeholder="First Name"
-              value={formData.first_name}
-              onChange={handleInputChange}
-              className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="text"
-              name="last_name"
-              placeholder="Last Name"
-              value={formData.last_name}
-              onChange={handleInputChange}
-              className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-              className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="text"
-              name="invitation_code"
-              placeholder="Invitation Code"
-              value={formData.invitation_code}
-              onChange={handleInputChange}
-              required
-              className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-yellow-50"
-            />
-          </>
-        )}
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
-        >
-          {isLogin ? 'Login' : 'Sign Up'}
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsLogin(!isLogin)}
-          className="text-blue-600 text-sm hover:underline"
-        >
-          {isLogin ? 'Sign Up' : 'Login'}
-        </button>
-      </form>
-    </div>
+    <>
+      {/* Login Form */}
+      <div className="flex items-center space-x-4">
+        <form onSubmit={handleLogin} className="flex items-center space-x-2">
+          <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            value={loginData.username}
+            onChange={handleLoginInputChange}
+            required
+            className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={loginData.password}
+            onChange={handleLoginInputChange}
+            required
+            className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
+          >
+            Login
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowSignupModal(true)}
+            className="text-blue-600 text-sm hover:underline"
+          >
+            Sign Up
+          </button>
+        </form>
+      </div>
+
+      {/* Signup Modal */}
+      {showSignupModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Join Wedding Gallery</h2>
+              <button
+                onClick={() => setShowSignupModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <form onSubmit={handleSignup} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  name="first_name"
+                  placeholder="First Name"
+                  value={signupData.first_name}
+                  onChange={handleSignupInputChange}
+                  className="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="text"
+                  name="last_name"
+                  placeholder="Last Name"
+                  value={signupData.last_name}
+                  onChange={handleSignupInputChange}
+                  className="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <input
+                type="text"
+                name="username"
+                placeholder="Username"
+                value={signupData.username}
+                onChange={handleSignupInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={signupData.email}
+                onChange={handleSignupInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                value={signupData.password}
+                onChange={handleSignupInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              
+              <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                <label className="block text-sm font-medium text-yellow-800 mb-1">
+                  Invitation Code
+                </label>
+                <input
+                  type="text"
+                  name="invitation_code"
+                  placeholder="Enter your invitation code"
+                  value={signupData.invitation_code}
+                  onChange={handleSignupInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-yellow-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white"
+                />
+                <p className="text-xs text-yellow-700 mt-1">
+                  Required code provided by the wedding organizer
+                </p>
+              </div>
+              
+              <div className="flex space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSignupModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                >
+                  Sign Up
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
