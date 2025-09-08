@@ -28,7 +28,9 @@ DEBUG = True
 ALLOWED_HOSTS = os.environ["REPLIT_DOMAINS"].split(',') + ['localhost', '127.0.0.1']
 CSRF_TRUSTED_ORIGINS = [
     "https://" + domain for domain in os.environ["REPLIT_DOMAINS"].split(',')
-] + ['http://localhost:5000', 'http://127.0.0.1:5000']
+] + [
+    "https://" + domain + ":8000" for domain in os.environ["REPLIT_DOMAINS"].split(',')
+] + ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://localhost:8000', 'http://127.0.0.1:8000']
 
 # Application definition
 
