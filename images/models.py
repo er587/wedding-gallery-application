@@ -5,6 +5,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from datetime import datetime
 import os
+import secrets
+import string
 
 
 class UserProfile(models.Model):
@@ -111,6 +113,43 @@ def save_user_profile(sender, instance, **kwargs):
         # Only create if one doesn't exist
         if not UserProfile.objects.filter(user=instance).exists():
             UserProfile.objects.create(user=instance)
+
+
+class InvitationCode(models.Model):
+    """Invitation codes for user registration"""
+    code = models.CharField(max_length=20, unique=True)
+    is_used = models.BooleanField(default=False)
+    used_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='used_invitation'
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='created_invitations'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, help_text="Admin notes about this invitation")
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        status = "Used" if self.is_used else "Available"
+        return f"{self.code} ({status})"
+    
+    @classmethod
+    def generate_code(cls):
+        """Generate a unique invitation code"""
+        while True:
+            # Generate 8-character code with uppercase letters and numbers
+            code = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+            if not cls.objects.filter(code=code).exists():
+                return code
 
 
 class Tag(models.Model):

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User, Group
-from .models import Image, Comment, Tag, UserProfile
+from .models import Image, Comment, Tag, UserProfile, InvitationCode
 
 
 # Customize User admin to show groups and roles
@@ -99,6 +99,39 @@ class GroupAdmin(admin.ModelAdmin):
             user_names.append(f'... +{obj.user_set.count() - 5} more')
         return ', '.join(user_names) or 'No Users'
     user_list.short_description = 'Users'
+
+
+@admin.register(InvitationCode)
+class InvitationCodeAdmin(admin.ModelAdmin):
+    list_display = ['code', 'is_used', 'used_by', 'created_by', 'created_at', 'used_at']
+    list_filter = ['is_used', 'created_at', 'used_at', 'created_by']
+    search_fields = ['code', 'used_by__username', 'created_by__username', 'notes']
+    readonly_fields = ['code', 'used_by', 'used_at', 'created_at']
+    
+    def save_model(self, request, obj, form, change):
+        """Auto-generate code and set creator on new invitation codes"""
+        if not change:  # Only for new objects
+            obj.code = InvitationCode.generate_code()
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+    
+    actions = ['generate_multiple_codes']
+    
+    def generate_multiple_codes(self, request, queryset):
+        """Admin action to generate multiple invitation codes"""
+        count = 5  # Generate 5 codes by default
+        created_codes = []
+        
+        for _ in range(count):
+            code = InvitationCode.objects.create(
+                code=InvitationCode.generate_code(),
+                created_by=request.user
+            )
+            created_codes.append(code.code)
+        
+        self.message_user(request, f"Generated {count} invitation codes: {', '.join(created_codes)}")
+    
+    generate_multiple_codes.short_description = "Generate 5 new invitation codes"
 
 
 # Unregister and register Group with custom admin
