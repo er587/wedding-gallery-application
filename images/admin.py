@@ -9,6 +9,8 @@ class UserProfileInline(admin.StackedInline):
     model = UserProfile
     can_delete = False
     verbose_name_plural = 'Profile'
+    extra = 0  # Don't show extra empty forms
+    max_num = 1  # Only allow one profile per user
 
 
 class UserAdmin(BaseUserAdmin):

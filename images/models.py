@@ -96,15 +96,21 @@ class Comment(models.Model):
 # Signal to create UserProfile automatically when User is created
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        UserProfile.objects.create(user=instance)
+    if created and not hasattr(instance, 'profile'):
+        try:
+            UserProfile.objects.create(user=instance)
+        except:
+            # Profile already exists, skip creation
+            pass
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     if hasattr(instance, 'profile'):
         instance.profile.save()
     else:
-        UserProfile.objects.create(user=instance)
+        # Only create if one doesn't exist
+        if not UserProfile.objects.filter(user=instance).exists():
+            UserProfile.objects.create(user=instance)
 
 
 class Tag(models.Model):
