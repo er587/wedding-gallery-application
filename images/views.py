@@ -115,9 +115,14 @@ class CommentListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         image_id = self.kwargs.get('image_id')
         image = Image.objects.get(id=image_id)
-        # Use the test user if no user is authenticated
-        from django.contrib.auth.models import User
-        user = self.request.user if self.request.user.is_authenticated else User.objects.get(username='testuser')
+        
+        if self.request.user.is_authenticated:
+            user = self.request.user
+        else:
+            # If no user is authenticated, require login
+            from rest_framework.exceptions import NotAuthenticated
+            raise NotAuthenticated("You must be logged in to post comments.")
+            
         serializer.save(author=user, image=image)
 
 
@@ -128,9 +133,12 @@ def create_reply(request, comment_id):
         parent_comment = Comment.objects.get(id=comment_id)
         serializer = CommentSerializer(data=request.data)
         if serializer.is_valid():
-            # Use the test user if no user is authenticated
-            from django.contrib.auth.models import User
-            user = request.user if request.user.is_authenticated else User.objects.get(username='testuser')
+            if request.user.is_authenticated:
+                user = request.user
+            else:
+                return Response({
+                    'error': 'You must be logged in to post replies.'
+                }, status=status.HTTP_401_UNAUTHORIZED)
             serializer.save(
                 author=user,
                 image=parent_comment.image,
@@ -161,6 +169,9 @@ def login_view(request):
         # Authenticate user
         user = authenticate(username=username, password=password)
         if user is not None and user.is_active:
+            # Log the user into Django session
+            login(request, user)
+            
             # Get user profile and role information
             profile = getattr(user, 'profile', None)
             if not profile:

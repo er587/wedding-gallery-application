@@ -31,6 +31,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Enable cookies for session authentication
 })
 
 // API service functions
