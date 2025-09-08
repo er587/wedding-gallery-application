@@ -2,8 +2,12 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+import json
 from .models import Image, Comment, Tag
 from .serializers import ImageSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer
 
@@ -136,3 +140,98 @@ def create_reply(request, comment_id):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Comment.DoesNotExist:
         return Response({'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+# Authentication Views
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def login_view(request):
+    """Handle user login"""
+    try:
+        data = json.loads(request.body)
+        username = data.get('username')
+        password = data.get('password')
+        
+        if not username or not password:
+            return Response({
+                'error': 'Username and password are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Authenticate user
+        user = authenticate(username=username, password=password)
+        if user is not None and user.is_active:
+            # Get user profile and role information
+            profile = getattr(user, 'profile', None)
+            if not profile:
+                from .models import UserProfile
+                profile = UserProfile.objects.create(user=user)
+            
+            # Build response data
+            user_data = {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'role': profile.role,
+                'role_display': profile.get_role_display(),
+                'can_upload_images': profile.can_upload_images,
+                'can_delete_images': profile.can_delete_images,
+                'can_comment': profile.can_comment,
+                'groups': [group.name for group in user.groups.all()]
+            }
+            
+            return Response({
+                'message': 'Login successful',
+                'user': user_data
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                'error': 'Invalid credentials'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+            
+    except json.JSONDecodeError:
+        return Response({
+            'error': 'Invalid JSON data'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({
+            'error': f'Login failed: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def logout_view(request):
+    """Handle user logout"""
+    logout(request)
+    return Response({
+        'message': 'Logout successful'
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def user_profile_view(request):
+    """Get current user profile"""
+    if request.user.is_authenticated:
+        profile = getattr(request.user, 'profile', None)
+        if not profile:
+            from .models import UserProfile
+            profile = UserProfile.objects.create(user=request.user)
+        
+        user_data = {
+            'id': request.user.id,
+            'username': request.user.username,
+            'email': request.user.email,
+            'role': profile.role,
+            'role_display': profile.get_role_display(),
+            'can_upload_images': profile.can_upload_images,
+            'can_delete_images': profile.can_delete_images,
+            'can_comment': profile.can_comment,
+            'groups': [group.name for group in request.user.groups.all()]
+        }
+        return Response({'user': user_data}, status=status.HTTP_200_OK)
+    else:
+        return Response({
+            'error': 'Not authenticated'
+        }, status=status.HTTP_401_UNAUTHORIZED)
