@@ -146,6 +146,7 @@ REST_FRAMEWORK = {
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 # Media files
 MEDIA_URL = '/media/'
