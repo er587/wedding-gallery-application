@@ -167,9 +167,9 @@ def get_csrf_token(request):
 def login_view(request):
     """Handle user login"""
     try:
-        data = json.loads(request.body)
-        username = data.get('username')
-        password = data.get('password')
+        # Use DRF's request.data instead of manually parsing JSON
+        username = request.data.get('username')
+        password = request.data.get('password')
         
         if not username or not password:
             return Response({
@@ -210,10 +210,6 @@ def login_view(request):
                 'error': 'Invalid credentials'
             }, status=status.HTTP_401_UNAUTHORIZED)
             
-    except json.JSONDecodeError:
-        return Response({
-            'error': 'Invalid JSON data'
-        }, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({
             'error': f'Login failed: {str(e)}'
