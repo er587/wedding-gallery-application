@@ -60,37 +60,8 @@ export default function Auth({ onLogin }) {
 
   return (
     <>
-      {/* Welcome Section with Wedding Couple */}
-      {!showSignupModal && (
-        <div className="text-center mb-8 pt-6">
-          <div className="flex justify-center mb-4">
-            <svg 
-              className="w-24 h-24" 
-              viewBox="0 0 100 100" 
-              fill="none"
-              alt="Wedding Couple"
-            >
-              {/* Simple wedding couple silhouette */}
-              <path 
-                d="M30 20C32 18 35 18 37 20C39 22 39 26 37 28C35 30 32 30 30 28C28 26 28 22 30 20Z
-                   M28 30L40 30L42 35L40 80L35 80L33 50L32 50L30 80L25 80L27 35Z" 
-                fill="#1f2937" 
-              />
-              <path 
-                d="M60 22C62 20 65 20 67 22C69 24 69 28 67 30C65 32 62 32 60 30C58 28 58 24 60 22Z
-                   M58 32L70 32L72 37C75 40 78 43 80 47L78 50C76 47 73 44 70 42L70 80L65 80L63 55L62 55L60 80L55 80L57 42C54 44 51 47 49 50L47 47C49 43 52 40 55 37L57 32Z
-                   M55 42L70 42C75 50 80 60 82 80L47 80C49 60 54 50 55 42Z" 
-                fill="#1f2937" 
-              />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Our Wedding Gallery</h2>
-          <p className="text-gray-600 mb-6">Share precious memories from our special day</p>
-        </div>
-      )}
-      
       {/* Login Form */}
-      <div className="flex items-center space-x-4 justify-center">
+      <div className="flex items-center space-x-4">
         <form onSubmit={handleLogin} className="flex items-center space-x-2">
           <input
             type="email"
