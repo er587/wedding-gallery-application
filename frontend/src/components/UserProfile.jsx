@@ -55,11 +55,14 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
   const fetchUserImages = async () => {
     try {
       setLoading(true)
-      // Fetch liked images instead of uploaded images
-      const response = await apiService.getLikedImages()
-      setUserImages(response.data.results || response.data || [])
+      const response = await apiService.getImages()
+      // Filter images by current user (uploaded by this user)
+      const currentUserImages = response.data.filter(img => 
+        img?.uploader?.username === user?.username
+      )
+      setUserImages(currentUserImages)
     } catch (error) {
-      console.error('Error fetching liked images:', error)
+      console.error('Error fetching user images:', error)
       setUserImages([])
     } finally {
       setLoading(false)
@@ -228,7 +231,7 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Liked Images ({userImages.length})
+            Images ({userImages.length})
           </button>
         </div>
 
@@ -318,7 +321,7 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
                     <span className="ml-2 text-sm text-gray-900">{user?.email || user?.username}</span>
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-500">Images Liked:</span>
+                    <span className="text-sm font-medium text-gray-500">Images Shared:</span>
                     <span className="ml-2 text-sm text-gray-900">{userImages.length}</span>
                   </div>
                 </div>
@@ -386,23 +389,23 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
             <div className="space-y-6">
               {/* Image Upload Section */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Upload New Image</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Share New Image</h3>
                 <ImageUpload 
                   user={user} 
                   onImageUploaded={() => {
                     setMessage('Image uploaded successfully!')
-                    // Refresh the gallery after upload
-                    window.location.reload()
+                    // Refresh the images list
+                    fetchUserImages()
                   }}
                   onCancel={() => {}}
                 />
               </div>
               
-              {/* Liked Images Section */}
+              {/* User's Uploaded Images Section */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Your Liked Images</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Your Shared Images</h3>
                 {loading ? (
-                  <div className="text-center py-8">Loading liked images...</div>
+                  <div className="text-center py-8">Loading your images...</div>
                 ) : userImages.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {userImages.map((image) => (
@@ -421,8 +424,8 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <div className="text-gray-500">No liked images yet</div>
-                    <p className="text-gray-400 text-sm mt-1">Heart some images to see them here!</p>
+                    <div className="text-gray-500">No images shared yet</div>
+                    <p className="text-gray-400 text-sm mt-1">Upload your first wedding memory!</p>
                   </div>
                 )}
               </div>
