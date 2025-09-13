@@ -82,9 +82,6 @@ function App() {
                           : user?.first_name || user?.username || 'User'
                         }
                       </span>
-                      <span className="text-xs text-gray-500">
-                        {user?.role === 'full' ? 'Full User' : 'Memory User'}
-                      </span>
                     </div>
                   </button>
                   {user.can_upload_images && (
