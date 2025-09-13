@@ -62,23 +62,28 @@ function App() {
                   >
                     {/* Avatar */}
                     <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      {user.first_name && user.last_name 
-                        ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase()
-                        : user.first_name 
-                        ? user.first_name.charAt(0).toUpperCase()
-                        : (user.username || '?').charAt(0).toUpperCase()
-                      }
+                      {(() => {
+                        if (user?.first_name && user?.last_name) {
+                          return `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase()
+                        } else if (user?.first_name) {
+                          return user.first_name.charAt(0).toUpperCase()
+                        } else if (user?.username) {
+                          return user.username.charAt(0).toUpperCase()
+                        } else {
+                          return '?'
+                        }
+                      })()}
                     </div>
                     {/* User Info */}
                     <div className="flex flex-col items-start">
                       <span className="text-sm font-medium">
-                        {user.first_name && user.last_name 
+                        {user?.first_name && user?.last_name 
                           ? `${user.first_name} ${user.last_name}`
-                          : user.first_name || user.username || 'User'
+                          : user?.first_name || user?.username || 'User'
                         }
                       </span>
                       <span className="text-xs text-gray-500">
-                        {user.role === 'full' ? 'Full User' : 'Memory User'}
+                        {user?.role === 'full' ? 'Full User' : 'Memory User'}
                       </span>
                     </div>
                   </button>
