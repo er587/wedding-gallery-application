@@ -11,16 +11,10 @@ export const authService = {
       
       // Then authenticate with Django backend
       const response = await apiService.login({ username, password })
-      console.log('🔍 Login response:', response.data)
-      
       const userData = response.data.user || response.data
-      console.log('🔍 Extracted user data:', userData)
-      console.log('🔍 First name from response:', userData.first_name)
-      console.log('🔍 Username from response:', userData.username)
       
       localStorage.setItem('user', JSON.stringify(userData))
       localStorage.setItem('isAuthenticated', 'true')
-      console.log('🔍 Stored user data:', localStorage.getItem('user'))
       
       return userData
     } catch (error) {
@@ -72,11 +66,7 @@ export const authService = {
   getCurrentUser: () => {
     const user = localStorage.getItem('user')
     const isAuthenticated = localStorage.getItem('isAuthenticated')
-    console.log('🔍 getCurrentUser - Raw user from localStorage:', user)
-    console.log('🔍 getCurrentUser - isAuthenticated:', isAuthenticated)
-    const parsedUser = user && isAuthenticated ? JSON.parse(user) : null
-    console.log('🔍 getCurrentUser - Parsed user:', parsedUser)
-    return parsedUser
+    return user && isAuthenticated ? JSON.parse(user) : null
   },
 
   register: async (userData) => {

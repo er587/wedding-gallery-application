@@ -3,12 +3,14 @@ import ImageGallery from './components/ImageGallery'
 import ImageUpload from './components/ImageUpload'
 import Auth from './components/Auth'
 import UserProfile from './components/UserProfile'
+import WelcomeModal from './components/WelcomeModal'
 import { authService } from './services/auth'
 
 function App() {
   const [user, setUser] = useState(null)
   const [showUpload, setShowUpload] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
+  const [showWelcome, setShowWelcome] = useState(false)
   const [refreshGallery, setRefreshGallery] = useState(0)
 
   useEffect(() => {
@@ -22,6 +24,15 @@ function App() {
   const handleLogin = (userData) => {
     setUser(userData)
     localStorage.setItem('user', JSON.stringify(userData))
+    
+    // Check if this is the user's first time logging in
+    const userKey = userData.id || userData.username || userData.email || 'default'
+    const hasSeenWelcome = localStorage.getItem(`hasSeenWelcome_${userKey}`)
+    if (!hasSeenWelcome) {
+      setShowWelcome(true)
+      // Mark as seen when modal opens to prevent repeats on refresh
+      localStorage.setItem(`hasSeenWelcome_${userKey}`, 'true')
+    }
   }
 
   const handleUserUpdate = (updatedUser) => {
@@ -34,12 +45,17 @@ function App() {
     setUser(null)
     setShowUpload(false)
     setShowProfile(false)
+    setShowWelcome(false)
     // Redirect to default page by refreshing the gallery
     setRefreshGallery(prev => prev + 1)
     // Add a brief message to show logout was successful
     setTimeout(() => {
       // You could add a toast notification here if needed
     }, 100)
+  }
+
+  const handleWelcomeClose = () => {
+    setShowWelcome(false)
   }
 
   const handleImageUploaded = () => {
@@ -56,6 +72,12 @@ function App() {
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
+                  <button
+                    onClick={() => setShowWelcome(true)}
+                    className="text-gray-600 hover:text-gray-900 transition-colors text-sm"
+                  >
+                    Help
+                  </button>
                   <button
                     onClick={() => setShowProfile(true)}
                     className="flex items-center space-x-3 text-gray-700 hover:text-gray-900 transition-colors p-2 rounded-lg hover:bg-gray-50"
@@ -127,6 +149,11 @@ function App() {
           onUserUpdate={handleUserUpdate}
         />
       )}
+
+      <WelcomeModal
+        isOpen={showWelcome}
+        onClose={handleWelcomeClose}
+      />
     </div>
   )
 }
