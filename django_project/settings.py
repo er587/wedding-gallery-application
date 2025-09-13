@@ -20,23 +20,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-4ju2n@$f9d0c=h)_g0lbb%k9&@rf(xa$d$g$&5ri$uf)*gev^4')
+SECRET_KEY = 'django-insecure-4ju2n@$f9d0c=h)_g0lbb%k9&@rf(xa$d$g$&5ri$uf)*gev^4'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+DEBUG = True
 
-ALLOWED_HOSTS = ['*'] if DEBUG else os.environ.get("REPLIT_DOMAINS", "localhost").split(',') + ['localhost', '127.0.0.1', 'images.reneeanderic.wedding']
-
-# CSRF settings for production
-if DEBUG:
-    CSRF_TRUSTED_ORIGINS = ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://localhost:8000', 'http://127.0.0.1:8000']
-else:
-    REPLIT_DOMAINS = os.environ.get("REPLIT_DOMAINS", "").split(',')
-    CSRF_TRUSTED_ORIGINS = [
-        "https://" + domain for domain in REPLIT_DOMAINS if domain
-    ] + [
-        "https://" + domain + ":8000" for domain in REPLIT_DOMAINS if domain
-    ] + ['https://images.reneeanderic.wedding']
+ALLOWED_HOSTS = os.environ["REPLIT_DOMAINS"].split(',') + ['localhost', '127.0.0.1']
+CSRF_TRUSTED_ORIGINS = [
+    "https://" + domain for domain in os.environ["REPLIT_DOMAINS"].split(',')
+] + [
+    "https://" + domain + ":8000" for domain in os.environ["REPLIT_DOMAINS"].split(',')
+] + ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://localhost:8000', 'http://127.0.0.1:8000']
 
 # Application definition
 
@@ -72,10 +66,7 @@ ROOT_URLCONF = 'django_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            os.path.join(BASE_DIR, 'templates'),
-            os.path.join(BASE_DIR, 'frontend/dist'),
-        ],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -154,41 +145,20 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all origins in development
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-if not DEBUG:
-    REPLIT_DOMAINS = os.environ.get("REPLIT_DOMAINS", "").split(',')
-    CORS_ALLOWED_ORIGINS = [
-        "https://" + domain for domain in REPLIT_DOMAINS if domain
-    ] + ['https://images.reneeanderic.wedding']
 
-# Static files configuration for production
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'frontend/dist'),
-] if not DEBUG else []
+# CSRF settings for API
+CSRF_TRUSTED_ORIGINS = [
+    'https://0e1efad5-cfaf-4762-bbde-543dc8094838-00-2yutrstchfwzz.spock.replit.dev',
+    'https://0e1efad5-cfaf-4762-bbde-543dc8094838-00-2yutrstchfwzz.spock.replit.dev:5000',
+    'https://0e1efad5-cfaf-4762-bbde-543dc8094838-00-2yutrstchfwzz.spock.replit.dev:8000',
+]
 
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Production security settings
-if not DEBUG:
-    # HTTPS settings
-    SECURE_SSL_REDIRECT = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    
-    # Secure cookies
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    
-    # Content security
-    X_FRAME_OPTIONS = 'DENY'
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_BROWSER_XSS_FILTER = True
-
 # Force HTTPS URLs in production
-USE_TLS = not DEBUG
+USE_TLS = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
