@@ -4,6 +4,9 @@ from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from datetime import datetime
+from PIL import Image as PILImage
+from io import BytesIO
+from django.core.files.base import ContentFile
 import os
 import secrets
 import string
@@ -41,11 +44,18 @@ def get_image_upload_path(instance, filename):
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     return f'images/{instance.uploader.username}/{timestamp}_{filename}'
 
+def get_thumbnail_upload_path(instance, filename):
+    """Generate upload path for thumbnails"""
+    ext = filename.split('.')[-1]
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    return f'images/{instance.uploader.username}/thumbnails/{timestamp}_{filename}'
+
 
 class Image(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     image_file = models.ImageField(upload_to=get_image_upload_path)
+    thumbnail = models.ImageField(upload_to=get_thumbnail_upload_path, blank=True, null=True)
     uploader = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE,
@@ -60,6 +70,60 @@ class Image(models.Model):
         
     def __str__(self):
         return self.title
+    
+    def save(self, *args, **kwargs):
+        """Override save to generate thumbnail"""
+        super().save(*args, **kwargs)
+        
+        # Generate thumbnail if image_file exists but thumbnail doesn't
+        if self.image_file and not self.thumbnail:
+            self.create_thumbnail()
+    
+    def create_thumbnail(self):
+        """Create a thumbnail version of the image"""
+        if not self.image_file:
+            return
+            
+        try:
+            # Open the image file
+            with PILImage.open(self.image_file.path) as image:
+                # Convert RGBA to RGB if necessary (for PNG files with transparency)
+                if image.mode in ('RGBA', 'LA', 'P'):
+                    background = PILImage.new('RGB', image.size, (255, 255, 255))
+                    if image.mode == 'P':
+                        image = image.convert('RGBA')
+                    if 'transparency' in image.info:
+                        background.paste(image, mask=image.split()[-1])
+                    else:
+                        background.paste(image)
+                    image = background
+                
+                # Calculate thumbnail size maintaining aspect ratio
+                # Max dimensions: 300x300 pixels
+                image.thumbnail((300, 300), PILImage.Resampling.LANCZOS)
+                
+                # Save to BytesIO
+                thumb_io = BytesIO()
+                image.save(thumb_io, format='JPEG', quality=85, optimize=True)
+                thumb_io.seek(0)
+                
+                # Generate thumbnail filename
+                original_name = os.path.basename(self.image_file.name)
+                name, ext = os.path.splitext(original_name)
+                thumbnail_name = f'{name}_thumb.jpg'
+                
+                # Save thumbnail
+                self.thumbnail.save(
+                    thumbnail_name,
+                    ContentFile(thumb_io.getvalue()),
+                    save=False
+                )
+                
+                # Save the model again to save the thumbnail field
+                super().save(update_fields=['thumbnail'])
+                
+        except Exception as e:
+            print(f"Error creating thumbnail for image {self.id}: {e}")
 
 
 class Comment(models.Model):

@@ -43,12 +43,13 @@ class ImageSerializer(serializers.ModelSerializer):
     like_count = serializers.SerializerMethodField()
     user_has_liked = serializers.SerializerMethodField()
     image_file = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
     tags = TagSerializer(many=True, read_only=True)
     tag_names = serializers.ListField(child=serializers.CharField(), write_only=True, required=False)
     
     class Meta:
         model = Image
-        fields = ['id', 'title', 'description', 'image_file', 'uploader', 
+        fields = ['id', 'title', 'description', 'image_file', 'thumbnail_url', 'uploader', 
                  'uploaded_at', 'updated_at', 'comments', 'comment_count', 
                  'like_count', 'user_has_liked', 'tags', 'tag_names']
         read_only_fields = ['id', 'uploader', 'uploaded_at', 'updated_at']
@@ -68,6 +69,15 @@ class ImageSerializer(serializers.ModelSerializer):
     def get_image_file(self, obj):
         if obj.image_file:
             # Return relative URL so it goes through Vite proxy
+            return obj.image_file.url
+        return None
+    
+    def get_thumbnail_url(self, obj):
+        if obj.thumbnail:
+            # Return relative URL for thumbnail
+            return obj.thumbnail.url
+        elif obj.image_file:
+            # Fallback to full image if no thumbnail (shouldn't happen)
             return obj.image_file.url
         return None
 

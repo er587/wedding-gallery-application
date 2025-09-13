@@ -405,7 +405,7 @@ export default function ImageGallery({ user, refresh }) {
           >
             <div className="aspect-w-4 aspect-h-3 relative">
               <img
-                src={image.image_file}
+                src={image.thumbnail_url || image.image_file}
                 alt={image.title}
                 className="w-full h-48 object-cover"
               />

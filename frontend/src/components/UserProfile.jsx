@@ -411,7 +411,7 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
                     {userImages.map((image) => (
                       <div key={image.id} className="bg-gray-100 rounded-lg overflow-hidden">
                         <img
-                          src={image.image_file}
+                          src={image.thumbnail_url || image.image_file}
                           alt={image.title}
                           className="w-full h-32 object-cover"
                         />
