@@ -56,7 +56,16 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
     }
   }
 
-  const canDeleteImage = user && imageData.uploader && user.username === imageData.uploader.username && user.can_delete_images
+  const canDeleteImage = () => {
+    if (!user) return false
+    
+    // Allow deletion if user is admin, has global delete permissions, or owns the image
+    return (
+      user.is_superuser ||
+      user.can_delete_images ||
+      (imageData.uploader && user.id === imageData.uploader.id)
+    )
+  }
 
   const handleSaveImage = async () => {
     try {
@@ -147,7 +156,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
                 >
                   💾 Save
                 </button>
-                {canDeleteImage && (
+                {canDeleteImage() && (
                   <button
                     onClick={handleDeleteImage}
                     disabled={deleting}

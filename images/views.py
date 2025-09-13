@@ -79,29 +79,49 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
     
     def destroy(self, request, *args, **kwargs):
         # Check if user has delete permissions
-        from django.contrib.auth.models import User
-        from .models import UserProfile
-        user = request.user if request.user.is_authenticated else User.objects.get(username='testuser')
+        if not request.user.is_authenticated:
+            return Response(
+                {"error": "You must be logged in to delete images."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        user = request.user
+        image = self.get_object()
         
         # Ensure user has a profile
         if not hasattr(user, 'profile'):
+            from .models import UserProfile
             UserProfile.objects.create(user=user)
         
-        if not user.profile.can_delete_images:
+        # Allow deletion if user is admin, has delete permissions globally, or owns the image
+        can_delete = (
+            user.is_superuser or  # Django admin
+            user.profile.can_delete_images or  # Global delete permission (Full User role)
+            image.uploader == user  # Image owner
+        )
+        
+        if not can_delete:
             return Response(
-                {"error": "You don't have permission to delete images. You can only add memories to existing images."},
+                {"error": "You can only delete images you uploaded yourself."},
                 status=status.HTTP_403_FORBIDDEN
             )
         
         return super().destroy(request, *args, **kwargs)
     
     def perform_destroy(self, instance):
-        # Delete the physical file when deleting the database record
+        # Delete the physical files when deleting the database record
         if instance.image_file:
             try:
                 instance.image_file.delete(save=False)
             except Exception as e:
-                print(f"Error deleting file: {e}")
+                print(f"Error deleting image file: {e}")
+                
+        if instance.thumbnail:
+            try:
+                instance.thumbnail.delete(save=False)
+            except Exception as e:
+                print(f"Error deleting thumbnail file: {e}")
+                
         super().perform_destroy(instance)
 
 
