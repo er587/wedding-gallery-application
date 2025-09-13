@@ -1,0 +1,144 @@
+name: Bug Report
+description: File a bug report to help us improve Wedding Gallery
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! 🐛
+        
+        Please provide as much detail as possible to help us reproduce and fix the issue.
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe the bug...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+      placeholder: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happened instead?
+      placeholder: What actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots to help explain your problem.
+      placeholder: Drag and drop images here or paste image URLs
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Which component is affected?
+      options:
+        - Frontend (React)
+        - Backend (Django)
+        - Authentication
+        - Photo Upload
+        - Comments System
+        - Admin Interface
+        - Database
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: environment-os
+    attributes:
+      label: Operating System
+      placeholder: "e.g., macOS 13.0, Windows 11, Ubuntu 22.04"
+    validations:
+      required: true
+
+  - type: input
+    id: environment-browser
+    attributes:
+      label: Browser
+      description: If frontend issue
+      placeholder: "e.g., Chrome 120, Safari 17, Firefox 121"
+
+  - type: input
+    id: environment-python
+    attributes:
+      label: Python Version
+      description: If backend issue
+      placeholder: "e.g., Python 3.11.5"
+
+  - type: input
+    id: environment-node
+    attributes:
+      label: Node.js Version
+      description: If frontend issue
+      placeholder: "e.g., Node.js 20.10.0"
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here.
+      placeholder: |
+        - Error messages or logs
+        - Recent changes to your setup
+        - Similar issues you've found
+        - Workarounds you've tried
+
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment Environment
+      options:
+        - Local Development
+        - Production Server
+        - Heroku
+        - DigitalOcean
+        - Railway
+        - Docker
+        - Other Cloud Provider
+        - Not sure
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched existing issues to avoid duplicates
+          required: true
+        - label: I have included all relevant information
+          required: true
+        - label: I can reproduce this bug consistently
+          required: true
+        - label: This is not a security vulnerability (use SECURITY.md for those)
+          required: true

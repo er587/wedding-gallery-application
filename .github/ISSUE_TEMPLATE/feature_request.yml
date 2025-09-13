@@ -1,0 +1,178 @@
+name: Feature Request
+description: Suggest a new feature for Wedding Gallery
+title: "[Feature]: "
+labels: ["enhancement", "needs-discussion"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! 💡
+        
+        We love hearing ideas that can make Wedding Gallery even better for couples and their guests.
+
+  - type: textarea
+    id: feature-summary
+    attributes:
+      label: Feature Summary
+      description: A clear, concise summary of the feature you'd like to see.
+      placeholder: Brief description of the proposed feature...
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: Problem or Use Case
+      description: What problem does this feature solve? What use case does it address?
+      placeholder: |
+        As a [wedding couple/guest/photographer], I want to [goal] so that [benefit].
+        
+        Currently, users have to [current limitation]...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: Describe your ideal solution in detail.
+      placeholder: |
+        The feature would work by...
+        
+        Users would be able to...
+        
+        The interface would show...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternative-solutions
+    attributes:
+      label: Alternative Solutions
+      description: Have you considered any alternative approaches?
+      placeholder: |
+        Alternative 1: [description]
+        Alternative 2: [description]
+        
+        Why the main proposal is preferred...
+
+  - type: dropdown
+    id: feature-category
+    attributes:
+      label: Feature Category
+      options:
+        - Photo Management
+        - User Experience
+        - Comments & Social
+        - Authentication & Security
+        - Admin & Management
+        - Performance & Optimization
+        - Mobile Experience
+        - Customization & Theming
+        - Integration & API
+        - Deployment & DevOps
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: user-type
+    attributes:
+      label: Who would benefit from this feature?
+      options:
+        - Wedding Couples (organizers)
+        - Wedding Guests (uploaders)
+        - Photographers & Vendors
+        - System Administrators
+        - Developers & Contributors
+        - All Users
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority Level
+      description: How important is this feature to you?
+      options:
+        - Nice to have
+        - Would be helpful
+        - Important for my use case
+        - Critical for my use case
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation-ideas
+    attributes:
+      label: Implementation Ideas
+      description: Any thoughts on how this could be implemented technically?
+      placeholder: |
+        This could be implemented by...
+        
+        It might require changes to...
+        
+        Similar features exist in...
+
+  - type: textarea
+    id: mockups-examples
+    attributes:
+      label: Mockups or Examples
+      description: Any mockups, sketches, or examples from other applications?
+      placeholder: |
+        Attach images, provide links, or describe examples:
+        
+        - Similar feature in [app name]: [description]
+        - Mockup: [drag and drop image]
+
+  - type: checkboxes
+    id: implementation-scope
+    attributes:
+      label: Implementation Scope
+      description: What parts of the system might this affect?
+      options:
+        - label: Frontend (React components)
+        - label: Backend (Django models/views)
+        - label: Database schema changes
+        - label: API endpoints
+        - label: User interface design
+        - label: Mobile responsiveness
+        - label: Documentation updates
+        - label: Migration/upgrade process
+
+  - type: textarea
+    id: success-criteria
+    attributes:
+      label: Success Criteria
+      description: How will we know this feature is successful?
+      placeholder: |
+        This feature would be successful if:
+        - Users can [specific action]
+        - Performance remains [criteria]
+        - Usage metrics show [improvement]
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution Interest
+      options:
+        - label: I would be interested in helping implement this feature
+        - label: I would be willing to test this feature
+        - label: I would help with documentation for this feature
+        - label: I would provide feedback during development
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched existing issues to avoid duplicates
+          required: true
+        - label: This feature aligns with the project's wedding gallery focus
+          required: true
+        - label: I have provided sufficient detail for discussion
+          required: true
+        - label: I understand this is a suggestion and may not be implemented
+          required: true

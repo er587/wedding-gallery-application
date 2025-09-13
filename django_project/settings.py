@@ -12,25 +12,46 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 import os
 from pathlib import Path
+import environ
+
+# Initialize environment variables
+env = environ.Env(
+    DEBUG=(bool, True),
+    SECRET_KEY=(str, 'django-insecure-change-this-in-production'),
+    ALLOWED_HOSTS=(list, ['localhost', '127.0.0.1', '0.0.0.0']),
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Read .env file if it exists
+env.read_env(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-4ju2n@$f9d0c=h)_g0lbb%k9&@rf(xa$d$g$&5ri$uf)*gev^4'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = os.environ["REPLIT_DOMAINS"].split(',') + ['localhost', '127.0.0.1']
-CSRF_TRUSTED_ORIGINS = [
-    "https://" + domain for domain in os.environ["REPLIT_DOMAINS"].split(',')
-] + [
-    "https://" + domain + ":8000" for domain in os.environ["REPLIT_DOMAINS"].split(',')
-] + ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://localhost:8000', 'http://127.0.0.1:8000']
+# Handle Replit domains if present, otherwise use env defaults
+try:
+    replit_domains = os.environ["REPLIT_DOMAINS"].split(',')
+    ALLOWED_HOSTS = replit_domains + env('ALLOWED_HOSTS')
+except KeyError:
+    ALLOWED_HOSTS = env('ALLOWED_HOSTS')
+# Configure CSRF trusted origins
+try:
+    replit_domains = os.environ["REPLIT_DOMAINS"].split(',')
+    CSRF_TRUSTED_ORIGINS = [
+        "https://" + domain for domain in replit_domains
+    ] + [
+        "https://" + domain + ":8000" for domain in replit_domains
+    ] + ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://localhost:8000', 'http://127.0.0.1:8000']
+except KeyError:
+    CSRF_TRUSTED_ORIGINS = ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://localhost:8000', 'http://127.0.0.1:8000']
 
 # Application definition
 
