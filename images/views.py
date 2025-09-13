@@ -75,38 +75,46 @@ class ImageListCreateView(generics.ListCreateAPIView):
 class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Image.objects.all()
     serializer_class = ImageSerializer
-    permission_classes = [permissions.AllowAny]  # Allow for testing
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     
     def destroy(self, request, *args, **kwargs):
-        # Check if user has delete permissions
-        if not request.user.is_authenticated:
-            return Response(
-                {"error": "You must be logged in to delete images."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-        
         user = request.user
         image = self.get_object()
         
-        # Ensure user has a profile
-        if not hasattr(user, 'profile'):
-            from .models import UserProfile
-            UserProfile.objects.create(user=user)
-        
-        # Allow deletion if user is admin, has delete permissions globally, or owns the image
-        can_delete = (
-            user.is_superuser or  # Django admin
-            user.profile.can_delete_images or  # Global delete permission (Full User role)
-            image.uploader == user  # Image owner
-        )
-        
-        if not can_delete:
+        # Only allow image owner to delete their own image
+        if image.uploader != user:
             return Response(
                 {"error": "You can only delete images you uploaded yourself."},
                 status=status.HTTP_403_FORBIDDEN
             )
         
         return super().destroy(request, *args, **kwargs)
+    
+    def update(self, request, *args, **kwargs):
+        user = request.user
+        image = self.get_object()
+        
+        # Only allow image owner to update their own image
+        if image.uploader != user:
+            return Response(
+                {"error": "You can only update images you uploaded yourself."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        return super().update(request, *args, **kwargs)
+    
+    def partial_update(self, request, *args, **kwargs):
+        user = request.user
+        image = self.get_object()
+        
+        # Only allow image owner to update their own image
+        if image.uploader != user:
+            return Response(
+                {"error": "You can only update images you uploaded yourself."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        return super().partial_update(request, *args, **kwargs)
     
     def perform_destroy(self, instance):
         # Delete the physical files when deleting the database record

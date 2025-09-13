@@ -153,12 +153,8 @@ export default function ImageGallery({ user, refresh }) {
   const canDeleteImage = (image) => {
     if (!user) return false
     
-    // Allow deletion if user is admin, has global delete permissions, or owns the image
-    return (
-      user.is_superuser ||
-      user.can_delete_images ||
-      image.uploader.id === user.id
-    )
+    // Only allow image owner to delete their own image
+    return (image.uploader.id === user.id)
   }
 
   useEffect(() => {
