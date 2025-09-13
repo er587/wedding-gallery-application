@@ -24,6 +24,11 @@ function App() {
     localStorage.setItem('user', JSON.stringify(userData))
   }
 
+  const handleUserUpdate = (updatedUser) => {
+    setUser(updatedUser)
+    localStorage.setItem('user', JSON.stringify(updatedUser))
+  }
+
   const handleLogout = () => {
     authService.logout()
     setUser(null)
@@ -51,14 +56,31 @@ function App() {
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
-                  <div className="text-sm text-gray-500">
-                    Role: {user.role === 'full' ? 'Full User' : 'Memory User'}
-                  </div>
                   <button
                     onClick={() => setShowProfile(true)}
-                    className="text-gray-700 hover:text-gray-900 transition-colors"
+                    className="flex items-center space-x-3 text-gray-700 hover:text-gray-900 transition-colors p-2 rounded-lg hover:bg-gray-50"
                   >
-                    Welcome, {user.first_name || user.username}
+                    {/* Avatar */}
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      {user.first_name && user.last_name 
+                        ? `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase()
+                        : user.first_name 
+                        ? user.first_name.charAt(0).toUpperCase()
+                        : (user.username || '?').charAt(0).toUpperCase()
+                      }
+                    </div>
+                    {/* User Info */}
+                    <div className="flex flex-col items-start">
+                      <span className="text-sm font-medium">
+                        {user.first_name && user.last_name 
+                          ? `${user.first_name} ${user.last_name}`
+                          : user.first_name || user.username || 'User'
+                        }
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {user.role === 'full' ? 'Full User' : 'Memory User'}
+                      </span>
+                    </div>
                   </button>
                   {user.can_upload_images && (
                     <button
@@ -100,6 +122,7 @@ function App() {
         <UserProfile 
           user={user}
           onClose={() => setShowProfile(false)}
+          onUserUpdate={handleUserUpdate}
         />
       )}
     </div>

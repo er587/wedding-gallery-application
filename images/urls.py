@@ -18,4 +18,6 @@ urlpatterns = [
     path('api/auth/register/', views.register_view, name='register'),
     path('api/auth/logout/', views.logout_view, name='logout'),
     path('api/auth/profile/', views.user_profile_view, name='user-profile'),
+    path('api/auth/profile/update/', views.update_profile, name='update-profile'),
+    path('api/auth/change-password/', views.change_password, name='change-password'),
 ]

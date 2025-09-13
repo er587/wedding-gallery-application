@@ -47,6 +47,11 @@ export const apiService = {
   register: (userData) => api.post('/api/auth/register/', userData),
   logout: () => api.post('/api/auth/logout/'),
   getCurrentUser: () => api.get('/api/auth/user/'),
+  
+  // Profile management
+  getUserProfile: () => api.get('/api/auth/profile/'),
+  updateProfile: (profileData) => api.put('/api/auth/profile/update/', profileData),
+  changePassword: (passwordData) => api.post('/api/auth/change-password/', passwordData),
 }
 
 // Request interceptor for CSRF tokens and auth

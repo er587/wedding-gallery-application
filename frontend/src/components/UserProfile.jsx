@@ -1,10 +1,25 @@
 import { useState, useEffect } from 'react'
 import { apiService } from '../services/api'
 
-export default function UserProfile({ user, onClose }) {
+export default function UserProfile({ user, onClose, onUserUpdate }) {
   const [userImages, setUserImages] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('images')
+  const [activeTab, setActiveTab] = useState('profile')
+  const [editMode, setEditMode] = useState(false)
+  const [profileData, setProfileData] = useState({
+    first_name: user.first_name || '',
+    last_name: user.last_name || '',
+    email: user.email || ''
+  })
+  const [passwordData, setPasswordData] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
+  })
+  const [updateLoading, setUpdateLoading] = useState(false)
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
     fetchUserImages()
@@ -14,7 +29,7 @@ export default function UserProfile({ user, onClose }) {
     try {
       setLoading(true)
       const response = await apiService.getImages()
-      // Filter images by current user (in a real app, this would be done server-side)
+      // Filter images by current user
       const currentUserImages = response.data.filter(img => img.uploader.username === user.username)
       setUserImages(currentUserImages)
     } catch (error) {
@@ -25,6 +40,78 @@ export default function UserProfile({ user, onClose }) {
     }
   }
 
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault()
+    setUpdateLoading(true)
+    setMessage('')
+    setError('')
+
+    try {
+      const response = await apiService.updateProfile(profileData)
+      
+      if (response.data.user) {
+        setMessage('Profile updated successfully!')
+        setEditMode(false)
+        
+        // Update user data in parent component
+        if (onUserUpdate) {
+          onUserUpdate(response.data.user)
+        }
+      }
+    } catch (error) {
+      console.error('Profile update error:', error)
+      setError(error.response?.data?.error || 'Failed to update profile')
+    } finally {
+      setUpdateLoading(false)
+    }
+  }
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault()
+    setPasswordLoading(true)
+    setMessage('')
+    setError('')
+
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      setError('New passwords do not match')
+      setPasswordLoading(false)
+      return
+    }
+
+    try {
+      const response = await apiService.changePassword({
+        current_password: passwordData.current_password,
+        new_password: passwordData.new_password
+      })
+      
+      setMessage('Password changed successfully!')
+      setPasswordData({
+        current_password: '',
+        new_password: '',
+        confirm_password: ''
+      })
+    } catch (error) {
+      console.error('Password change error:', error)
+      setError(error.response?.data?.error || 'Failed to change password')
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
+
+  const getFullName = () => {
+    if (user.first_name && user.last_name) {
+      return `${user.first_name} ${user.last_name}`
+    }
+    return user.first_name || user.username
+  }
+
+  const getInitials = () => {
+    if (user.first_name && user.last_name) {
+      return `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase()
+    }
+    return user.first_name ? user.first_name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
@@ -32,13 +119,13 @@ export default function UserProfile({ user, onClose }) {
         <div className="p-6 border-b">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                {user.username.charAt(0).toUpperCase()}
+              <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-xl font-bold">
+                {getInitials()}
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{user.first_name || user.username}</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{getFullName()}</h2>
                 <p className="text-gray-600">@{user.username}</p>
-                {user.email && <p className="text-gray-500 text-sm">{user.email}</p>}
+                <p className="text-sm text-blue-600">{user.role === 'full' ? 'Full User' : 'Memory User'}</p>
               </div>
             </div>
             <button
@@ -50,8 +137,44 @@ export default function UserProfile({ user, onClose }) {
           </div>
         </div>
 
+        {/* Message/Error Display */}
+        {(message || error) && (
+          <div className="px-6 pt-4">
+            {message && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md mb-4">
+                {message}
+              </div>
+            )}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
+                {error}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex border-b">
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`px-6 py-3 text-sm font-medium ${
+              activeTab === 'profile' 
+                ? 'text-blue-600 border-b-2 border-blue-600' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Profile
+          </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`px-6 py-3 text-sm font-medium ${
+              activeTab === 'settings' 
+                ? 'text-blue-600 border-b-2 border-blue-600' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Settings
+          </button>
           <button
             onClick={() => setActiveTab('images')}
             className={`px-6 py-3 text-sm font-medium ${
@@ -62,20 +185,162 @@ export default function UserProfile({ user, onClose }) {
           >
             Images ({userImages.length})
           </button>
-          <button
-            onClick={() => setActiveTab('about')}
-            className={`px-6 py-3 text-sm font-medium ${
-              activeTab === 'about' 
-                ? 'text-blue-600 border-b-2 border-blue-600' 
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            About
-          </button>
         </div>
 
         {/* Content */}
         <div className="p-6 max-h-[60vh] overflow-y-auto">
+          {activeTab === 'profile' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium text-gray-900">Profile Information</h3>
+                <button
+                  onClick={() => setEditMode(!editMode)}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
+                  {editMode ? 'Cancel' : 'Edit Profile'}
+                </button>
+              </div>
+
+              {editMode ? (
+                <form onSubmit={handleProfileUpdate} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        First Name
+                      </label>
+                      <input
+                        type="text"
+                        value={profileData.first_name}
+                        onChange={(e) => setProfileData({...profileData, first_name: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter your first name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Last Name
+                      </label>
+                      <input
+                        type="text"
+                        value={profileData.last_name}
+                        onChange={(e) => setProfileData({...profileData, last_name: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter your last name"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={profileData.email}
+                      onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                  <div className="flex space-x-4">
+                    <button
+                      type="submit"
+                      disabled={updateLoading}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {updateLoading ? 'Updating...' : 'Update Profile'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditMode(false)}
+                      className="border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Full Name:</span>
+                    <span className="ml-2 text-sm text-gray-900">{getFullName()}</span>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Email:</span>
+                    <span className="ml-2 text-sm text-gray-900">{user.email || 'Not provided'}</span>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Username:</span>
+                    <span className="ml-2 text-sm text-gray-900">@{user.username}</span>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Account Type:</span>
+                    <span className="ml-2 text-sm text-gray-900">{user.role === 'full' ? 'Full User' : 'Memory User'}</span>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Images Shared:</span>
+                    <span className="ml-2 text-sm text-gray-900">{userImages.length}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Change Password</h3>
+                <form onSubmit={handlePasswordChange} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Current Password
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordData.current_password}
+                      onChange={(e) => setPasswordData({...passwordData, current_password: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter your current password"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordData.new_password}
+                      onChange={(e) => setPasswordData({...passwordData, new_password: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter your new password"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Confirm New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordData.confirm_password}
+                      onChange={(e) => setPasswordData({...passwordData, confirm_password: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Confirm your new password"
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={passwordLoading}
+                    className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {passwordLoading ? 'Changing...' : 'Change Password'}
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'images' && (
             <div>
               {loading ? (
@@ -102,30 +367,6 @@ export default function UserProfile({ user, onClose }) {
                   <p className="text-gray-400 text-sm mt-1">Start sharing your memories!</p>
                 </div>
               )}
-            </div>
-          )}
-
-          {activeTab === 'about' && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">About {user.first_name || user.username}</h3>
-                <div className="mt-4 space-y-2">
-                  <div>
-                    <span className="text-sm font-medium text-gray-500">Username:</span>
-                    <span className="ml-2 text-sm text-gray-900">{user.username}</span>
-                  </div>
-                  {user.email && (
-                    <div>
-                      <span className="text-sm font-medium text-gray-500">Email:</span>
-                      <span className="ml-2 text-sm text-gray-900">{user.email}</span>
-                    </div>
-                  )}
-                  <div>
-                    <span className="text-sm font-medium text-gray-500">Images shared:</span>
-                    <span className="ml-2 text-sm text-gray-900">{userImages.length}</span>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
         </div>

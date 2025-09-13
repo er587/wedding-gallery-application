@@ -416,3 +416,105 @@ def user_liked_images(request):
     
     serializer = ImageSerializer(liked_images, many=True, context={'request': request})
     return Response(serializer.data)
+
+
+@api_view(['PUT'])
+@permission_classes([permissions.IsAuthenticated])
+def update_profile(request):
+    """Update user profile information"""
+    try:
+        user = request.user
+        data = request.data
+        
+        # Update user fields
+        if 'first_name' in data:
+            user.first_name = data['first_name']
+        if 'last_name' in data:
+            user.last_name = data['last_name']
+        if 'email' in data:
+            # Check if email already exists for another user
+            if User.objects.filter(email=data['email']).exclude(id=user.id).exists():
+                return Response({
+                    'error': 'Email already in use by another account'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            user.email = data['email']
+        
+        user.save()
+        
+        # Get profile data for response
+        profile = getattr(user, 'profile', None)
+        if not profile:
+            profile = UserProfile.objects.create(user=user)
+        
+        user_data = {
+            'id': user.id,
+            'username': user.email or user.username,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'role': profile.role,
+            'role_display': profile.get_role_display(),
+            'can_upload_images': profile.can_upload_images,
+            'can_delete_images': profile.can_delete_images,
+            'can_comment': profile.can_comment,
+        }
+        
+        return Response({
+            'message': 'Profile updated successfully',
+            'user': user_data
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Profile update failed for user {request.user.id}: {str(e)}')
+        
+        return Response({
+            'error': 'Profile update failed. Please try again.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def change_password(request):
+    """Change user password"""
+    try:
+        user = request.user
+        data = request.data
+        
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        
+        if not current_password or not new_password:
+            return Response({
+                'error': 'Both current and new passwords are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check current password
+        if not user.check_password(current_password):
+            return Response({
+                'error': 'Current password is incorrect'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate new password length (basic validation)
+        if len(new_password) < 8:
+            return Response({
+                'error': 'New password must be at least 8 characters long'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Update password
+        user.set_password(new_password)
+        user.save()
+        
+        return Response({
+            'message': 'Password changed successfully'
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Password change failed for user {request.user.id}: {str(e)}')
+        
+        return Response({
+            'error': 'Password change failed. Please try again.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
