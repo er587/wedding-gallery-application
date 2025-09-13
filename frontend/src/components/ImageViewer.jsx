@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import CommentSystem from './CommentSystem'
+import FaceTagging from './FaceTagging'
+import AdminFaceTagging from './AdminFaceTagging'
 import { apiService } from '../services/api'
 
 export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
@@ -7,7 +9,12 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
   const [imageData, setImageData] = useState(image) // Local copy for like updates
+  const [showFaceTagging, setShowFaceTagging] = useState(false)
+  const [showFaceOverlay, setShowFaceOverlay] = useState(false)
+  const [showAdminPanel, setShowAdminPanel] = useState(false)
   const intervalRef = useRef(null)
+  const imageCanvasRef = useRef(null)
+  const imageDisplayRef = useRef(null)
 
   useEffect(() => {
     fetchComments()
@@ -98,15 +105,100 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
     }
   }
 
+  const handleFaceTagged = async () => {
+    // Refresh image data to get updated face tags
+    try {
+      const response = await apiService.getImage(imageData.id)
+      setImageData(response.data)
+    } catch (error) {
+      console.error('Error refreshing image data:', error)
+    }
+  }
+
+  const drawFaceOverlay = () => {
+    const canvas = imageCanvasRef.current
+    const img = imageDisplayRef.current
+    
+    if (!canvas || !img || !imageData.face_tags || imageData.face_tags.length === 0) return
+
+    const ctx = canvas.getContext('2d')
+    
+    // Set canvas size to match image display size
+    const rect = img.getBoundingClientRect()
+    canvas.width = rect.width
+    canvas.height = rect.height
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    
+    if (!showFaceOverlay) return // Don't draw if overlay is hidden
+    
+    // Calculate scale factors
+    const scaleX = rect.width / img.naturalWidth
+    const scaleY = rect.height / img.naturalHeight
+    
+    // Draw face tags
+    imageData.face_tags.forEach((faceTag, index) => {
+      // Convert relative coordinates to pixel coordinates
+      const x = faceTag.face_x * rect.width
+      const y = faceTag.face_y * rect.height
+      const width = faceTag.face_width * rect.width
+      const height = faceTag.face_height * rect.height
+      
+      // Face rectangle
+      ctx.strokeStyle = '#10b981' // Green for approved tags
+      ctx.lineWidth = 2
+      ctx.strokeRect(x, y, width, height)
+      
+      // Person name label background
+      const labelText = faceTag.person.name
+      ctx.font = '14px Arial'
+      const textWidth = ctx.measureText(labelText).width
+      
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.9)' // Semi-transparent green
+      ctx.fillRect(x, y - 25, textWidth + 10, 20)
+      
+      // Person name text
+      ctx.fillStyle = 'white'
+      ctx.fillText(labelText, x + 5, y - 10)
+    })
+  }
+
+  // Draw face overlay when image data or overlay state changes
+  useEffect(() => {
+    if (imageDisplayRef.current) {
+      // Add a small delay to ensure image is fully loaded
+      setTimeout(drawFaceOverlay, 100)
+    }
+  }, [imageData.face_tags, showFaceOverlay])
+
+  const toggleFaceOverlay = () => {
+    setShowFaceOverlay(!showFaceOverlay)
+    // Redraw will happen via useEffect
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex">
         {/* Image Section */}
-        <div className="flex-1 bg-black flex items-center justify-center">
+        <div className="flex-1 bg-black flex items-center justify-center relative">
           <img
+            ref={imageDisplayRef}
             src={imageData.image_file}
             alt={imageData.title}
             className="max-w-full max-h-full object-contain"
+            onLoad={drawFaceOverlay}
+          />
+          
+          {/* Face Overlay Canvas */}
+          <canvas
+            ref={imageCanvasRef}
+            className="absolute top-0 left-0 pointer-events-none"
+            style={{ 
+              width: '100%', 
+              height: '100%',
+              objectFit: 'contain'
+            }}
           />
         </div>
         
@@ -145,6 +237,36 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
                   </svg>
                   <span>{imageData.like_count || 0}</span>
                 </button>
+                <button
+                  onClick={() => setShowFaceTagging(true)}
+                  className="text-purple-500 hover:text-purple-700 text-sm px-2 py-1 rounded border border-purple-500 hover:border-purple-700 transition-colors"
+                  title="Tag faces in this image"
+                  disabled={!user}
+                >
+                  👤 Tag Faces
+                </button>
+                {imageData.face_tags && imageData.face_tags.length > 0 && (
+                  <button
+                    onClick={toggleFaceOverlay}
+                    className={`text-sm px-2 py-1 rounded border transition-colors ${
+                      showFaceOverlay 
+                        ? 'text-green-700 border-green-700 bg-green-50' 
+                        : 'text-green-500 border-green-500 hover:text-green-700 hover:border-green-700'
+                    }`}
+                    title={showFaceOverlay ? 'Hide face tags' : 'Show face tags'}
+                  >
+                    {showFaceOverlay ? '👁️ Hide Tags' : '👁️ Show Tags'} ({imageData.face_count || 0})
+                  </button>
+                )}
+                {user?.is_staff && (
+                  <button
+                    onClick={() => setShowAdminPanel(true)}
+                    className="text-orange-500 hover:text-orange-700 text-sm px-2 py-1 rounded border border-orange-500 hover:border-orange-700 transition-colors"
+                    title="Admin face tag management"
+                  >
+                    ⚙️ Admin Panel
+                  </button>
+                )}
                 <button
                   onClick={handleSaveImage}
                   className="text-blue-500 hover:text-blue-700 text-sm px-2 py-1 rounded border border-blue-500 hover:border-blue-700 transition-colors"
@@ -187,6 +309,22 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
           </div>
         </div>
       </div>
+      
+      {/* Face Tagging Modal */}
+      <FaceTagging
+        image={imageData}
+        isOpen={showFaceTagging}
+        onClose={() => setShowFaceTagging(false)}
+        onFaceTagged={handleFaceTagged}
+      />
+      
+      {/* Admin Panel Modal */}
+      {showAdminPanel && (
+        <AdminFaceTagging
+          user={user}
+          onClose={() => setShowAdminPanel(false)}
+        />
+      )}
     </div>
   )
 }

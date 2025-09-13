@@ -52,6 +52,31 @@ export const apiService = {
   getUserProfile: () => api.get('/api/auth/profile/'),
   updateProfile: (profileData) => api.put('/api/auth/profile/update/', profileData),
   changePassword: (passwordData) => api.post('/api/auth/change-password/', passwordData),
+  
+  // Face Tagging
+  detectFaces: (imageId) => api.post(`/api/images/${imageId}/detect-faces/`),
+  getFaceTags: (imageId) => api.get(`/api/images/${imageId}/face-tags/`),
+  createFaceTag: (imageId, tagData) => api.post(`/api/images/${imageId}/face-tags/`, tagData),
+  updateFaceTag: (tagId, tagData) => api.put(`/api/face-tags/${tagId}/`, tagData),
+  deleteFaceTag: (tagId) => api.delete(`/api/face-tags/${tagId}/`),
+  getSuggestedTags: (imageId) => api.post(`/api/images/${imageId}/suggest-tags/`),
+  applyAutoTag: (tagData) => api.post('/api/apply-auto-tag/', tagData),
+  
+  // People Management
+  getPeople: () => api.get('/api/people/'),
+  createPerson: (personData) => api.post('/api/people/', personData),
+  updatePerson: (personId, personData) => api.put(`/api/people/${personId}/`, personData),
+  deletePerson: (personId) => api.delete(`/api/people/${personId}/`),
+  
+  // Admin Face Tag Management
+  getPendingTags: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString()
+    const url = queryString ? `/api/admin/pending-tags/?${queryString}` : '/api/admin/pending-tags/'
+    return api.get(url)
+  },
+  approveFaceTag: (tagId) => api.post(`/api/admin/face-tags/${tagId}/approve/`),
+  rejectFaceTag: (tagId) => api.post(`/api/admin/face-tags/${tagId}/reject/`),
+  bulkApproveTags: (tagIds) => api.post('/api/admin/bulk-approve-tags/', { tag_ids: tagIds }),
 }
 
 // Request interceptor for CSRF tokens and auth
