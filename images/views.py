@@ -204,6 +204,8 @@ def login_view(request):
                 'id': user.id,
                 'username': user.email or user.username,  # Use email as display username
                 'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
                 'role': profile.role,
                 'role_display': profile.get_role_display(),
                 'can_upload_images': profile.can_upload_images,

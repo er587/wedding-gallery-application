@@ -11,7 +11,7 @@ export const authService = {
       
       // Then authenticate with Django backend
       const response = await apiService.login({ username, password })
-      const userData = response.data
+      const userData = response.data.user || response.data
       
       localStorage.setItem('user', JSON.stringify(userData))
       localStorage.setItem('isAuthenticated', 'true')
@@ -75,7 +75,7 @@ export const authService = {
       
       // Then register with Django backend
       const response = await apiService.register(userData)
-      const newUserData = response.data.user
+      const newUserData = response.data.user || response.data
       
       localStorage.setItem('user', JSON.stringify(newUserData))
       localStorage.setItem('isAuthenticated', 'true')
