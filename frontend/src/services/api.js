@@ -1,28 +1,11 @@
 import axios from 'axios'
 
-// Get the backend URL from environment or use Replit domain  
-const getBackendURL = () => {
-  // Check for explicit environment variable first
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL
-  }
-  
-  // For Replit environment
-  if (window.location.hostname.includes('.replit.dev')) {
-    // In Replit, both frontend (port 5000) and backend (port 8000) use the same domain
-    // Just change the port in the current URL
-    return window.location.protocol + '//' + window.location.hostname + ':8000'
-  }
-  
-  // Default for local development
-  return 'http://localhost:8000'
-}
-
-const API_BASE_URL = getBackendURL()
+// Use relative URLs - Vite will proxy to Django backend
+const API_BASE_URL = ''
 
 // Debug logging to help troubleshoot
 console.log('🔗 Frontend API Configuration:')
-console.log('  API Base URL:', API_BASE_URL)
+console.log('  API Base URL: Using Vite proxy (relative URLs)')
 console.log('  Current location:', window.location.origin)
 
 // Create axios instance with default config
