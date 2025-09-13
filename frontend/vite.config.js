@@ -9,9 +9,8 @@ export default defineConfig({
     port: 5000,
     allowedHosts: [
       'localhost',         // allow local
-      '127.0.0.1',         // allow 
-      '*.replit.dev',
-      '0e1efad5-cfaf-4762-bbde-543dc8094838-00-2yutrstchfwzz.spock.replit.dev',
+      '127.0.0.1',         // allow localhost IP
+      '.replit.dev'        // allow all replit.dev subdomains
     ],
     proxy: {
       '/api': {
@@ -24,6 +23,9 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       }
+    },
+    hmr: {
+      clientPort: 443
     }
   },
 })
