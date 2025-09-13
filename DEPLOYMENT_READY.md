@@ -6,7 +6,7 @@ Your wedding gallery application is **ready for production deployment** on Repli
 
 ### 🏗️ **Deployment Configuration**
 - **Type**: Autoscale Deployment (recommended for Django + React)
-- **Build Command**: `cd frontend && npm ci && npm run build && cd .. && python manage.py collectstatic --noinput`
+- **Build Command**: `cd frontend && npm install && npm run build && cd .. && python manage.py collectstatic --noinput`
 - **Run Command**: `python manage.py migrate && python manage.py runserver 0.0.0.0:5000`
 - **Port**: 5000 (configured for production)
 
