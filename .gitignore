@@ -61,6 +61,22 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# Media files (uploaded images and thumbnails)
+media/
+uploads/
+static/uploads/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.webp
+*.tiff
+# Exclude from any subdirectory
+**/images/
+**/media/
+**/uploads/
+
 # Flask stuff:
 instance/
 .webassets-cache
