@@ -25,7 +25,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-4ju2n@$f9d0c=h)_g0lbb
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['*'] if DEBUG else os.environ.get("REPLIT_DOMAINS", "localhost").split(',') + ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*'] if DEBUG else os.environ.get("REPLIT_DOMAINS", "localhost").split(',') + ['localhost', '127.0.0.1', 'images.reneeanderic.wedding']
 
 # CSRF settings for production
 if DEBUG:
@@ -36,7 +36,7 @@ else:
         "https://" + domain for domain in REPLIT_DOMAINS if domain
     ] + [
         "https://" + domain + ":8000" for domain in REPLIT_DOMAINS if domain
-    ]
+    ] + ['https://images.reneeanderic.wedding']
 
 # Application definition
 
@@ -160,7 +160,7 @@ if not DEBUG:
     REPLIT_DOMAINS = os.environ.get("REPLIT_DOMAINS", "").split(',')
     CORS_ALLOWED_ORIGINS = [
         "https://" + domain for domain in REPLIT_DOMAINS if domain
-    ]
+    ] + ['https://images.reneeanderic.wedding']
 
 # Static files configuration for production
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
