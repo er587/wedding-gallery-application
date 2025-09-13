@@ -21,8 +21,24 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('images.urls')),
+    path('api/', include('images.urls')),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Media files (always needed)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# In production, serve React frontend for all non-API routes
+if not settings.DEBUG:
+    from django.views.generic import TemplateView
+    from django.views.static import serve
+    from django.urls import re_path
+    
+    # Serve static files
+    urlpatterns += [
+        re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
+    ]
+    
+    # Serve React frontend for all other routes  
+    urlpatterns += [
+        re_path(r'^(?!api/|admin/|static/|media/).*$', TemplateView.as_view(template_name='index.html'), name='frontend'),
+    ]
