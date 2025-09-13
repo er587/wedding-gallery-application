@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { apiService } from '../services/api'
+import ImageUpload from './ImageUpload'
 
 export default function UserProfile({ user, onClose, onUserUpdate }) {
   // Guard clause - if no user, don't render
@@ -54,14 +55,11 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
   const fetchUserImages = async () => {
     try {
       setLoading(true)
-      const response = await apiService.getImages()
-      // Filter images by current user
-      const currentUserImages = response.data.filter(img => 
-        img?.uploader?.username === user?.username
-      )
-      setUserImages(currentUserImages)
+      // Fetch liked images instead of uploaded images
+      const response = await apiService.getLikedImages()
+      setUserImages(response.data.results || response.data || [])
     } catch (error) {
-      console.error('Error fetching user images:', error)
+      console.error('Error fetching liked images:', error)
       setUserImages([])
     } finally {
       setLoading(false)
@@ -169,8 +167,7 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">{getFullName()}</h2>
-                <p className="text-gray-600">@{user.username}</p>
-                <p className="text-sm text-blue-600">{user.role === 'full' ? 'Full User' : 'Memory User'}</p>
+                <p className="text-gray-600">{user?.email || user?.username}</p>
               </div>
             </div>
             <button
@@ -231,7 +228,7 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Images ({userImages.length})
+            Liked Images ({userImages.length})
           </button>
         </div>
 
@@ -318,14 +315,10 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-500">Username:</span>
-                    <span className="ml-2 text-sm text-gray-900">@{user.username}</span>
+                    <span className="ml-2 text-sm text-gray-900">{user?.email || user?.username}</span>
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-500">Account Type:</span>
-                    <span className="ml-2 text-sm text-gray-900">{user.role === 'full' ? 'Full User' : 'Memory User'}</span>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-500">Images Shared:</span>
+                    <span className="text-sm font-medium text-gray-500">Images Liked:</span>
                     <span className="ml-2 text-sm text-gray-900">{userImages.length}</span>
                   </div>
                 </div>
@@ -390,31 +383,49 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
           )}
 
           {activeTab === 'images' && (
-            <div>
-              {loading ? (
-                <div className="text-center py-8">Loading images...</div>
-              ) : userImages.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {userImages.map((image) => (
-                    <div key={image.id} className="bg-gray-100 rounded-lg overflow-hidden">
-                      <img
-                        src={image.image_file}
-                        alt={image.title}
-                        className="w-full h-32 object-cover"
-                      />
-                      <div className="p-2">
-                        <h4 className="text-sm font-medium truncate">{image.title}</h4>
-                        <p className="text-xs text-gray-500 mt-1">{image.comment_count} comments</p>
+            <div className="space-y-6">
+              {/* Image Upload Section */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Upload New Image</h3>
+                <ImageUpload 
+                  user={user} 
+                  onImageUploaded={() => {
+                    setMessage('Image uploaded successfully!')
+                    // Refresh the gallery after upload
+                    window.location.reload()
+                  }}
+                  onCancel={() => {}}
+                />
+              </div>
+              
+              {/* Liked Images Section */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Your Liked Images</h3>
+                {loading ? (
+                  <div className="text-center py-8">Loading liked images...</div>
+                ) : userImages.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {userImages.map((image) => (
+                      <div key={image.id} className="bg-gray-100 rounded-lg overflow-hidden">
+                        <img
+                          src={image.image_file}
+                          alt={image.title}
+                          className="w-full h-32 object-cover"
+                        />
+                        <div className="p-2">
+                          <h4 className="text-sm font-medium truncate">{image.title}</h4>
+                          <p className="text-xs text-gray-500 mt-1">{image.comment_count} comments</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="text-gray-500">No images uploaded yet</div>
-                  <p className="text-gray-400 text-sm mt-1">Start sharing your memories!</p>
-                </div>
-              )}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-gray-500">No liked images yet</div>
+                    <p className="text-gray-400 text-sm mt-1">Heart some images to see them here!</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
