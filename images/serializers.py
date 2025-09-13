@@ -66,16 +66,10 @@ class ImageSerializer(serializers.ModelSerializer):
         return False
     
     def get_image_file(self, obj):
-        request = self.context.get('request')
-        if obj.image_file and request:
-            # Build the correct URL for Replit environment
-            url = request.build_absolute_uri(obj.image_file.url)
-            url = url.replace('http://', 'https://')
-            # Make sure port 8000 is included for media files
-            if ':8000' not in url:
-                url = url.replace('replit.dev/', 'replit.dev:8000/')
-            return url
-        return obj.image_file.url if obj.image_file else None
+        if obj.image_file:
+            # Return relative URL so it goes through Vite proxy
+            return obj.image_file.url
+        return None
 
 
 class ImageCreateSerializer(serializers.ModelSerializer):
