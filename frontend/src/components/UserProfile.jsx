@@ -127,17 +127,23 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
   }
 
   const getFullName = () => {
-    if (user.first_name && user.last_name) {
+    if (user?.first_name && user?.last_name) {
       return `${user.first_name} ${user.last_name}`
     }
-    return user.first_name || user.username
+    return user?.first_name || user?.username || 'User'
   }
 
   const getInitials = () => {
-    if (user.first_name && user.last_name) {
+    if (user?.first_name && user?.last_name) {
       return `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase()
     }
-    return user.first_name ? user.first_name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()
+    if (user?.first_name) {
+      return user.first_name.charAt(0).toUpperCase()
+    }
+    if (user?.username) {
+      return user.username.charAt(0).toUpperCase()
+    }
+    return '?'
   }
 
   return (
