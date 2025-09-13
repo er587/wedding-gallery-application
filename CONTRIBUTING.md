@@ -15,7 +15,7 @@ Thank you for your interest in contributing to the Wedding Gallery project! This
 ### Prerequisites
 
 Before contributing, make sure you have:
-- **Python 3.11+** with pip
+- **Python 3.10+** with pip
 - **Node.js 20+** with npm
 - **Git** for version control
 - **Basic knowledge** of Django and React
@@ -32,7 +32,7 @@ Before contributing, make sure you have:
 2. **Set Up Backend**
    ```bash
    # Install Python dependencies
-   pip install django djangorestframework django-cors-headers opencv-python pillow pytest pytest-django requests
+   pip install -r requirements.txt
    
    # Run migrations
    python manage.py migrate

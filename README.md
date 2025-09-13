@@ -110,7 +110,7 @@ For detailed installation instructions, see our **[Complete Setup Guide](SETUP.m
 ## 🏃 Quick Development Setup
 
 ### Prerequisites
-- **Python 3.11+** with pip
+- **Python 3.10+** with pip
 - **Node.js 20+** with npm
 - **Git** for version control
 

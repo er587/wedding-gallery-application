@@ -148,7 +148,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = env('STATIC_ROOT', default=os.path.join(BASE_DIR, 'static'))
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -165,20 +166,15 @@ REST_FRAMEWORK = {
     ],
 }
 
-# CORS settings
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
+# CORS settings from environment
+CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=False)
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:5000', 'http://127.0.0.1:5000'])
+CORS_ALLOW_CREDENTIALS = env.bool('CORS_ALLOW_CREDENTIALS', default=True)
 
-# CSRF settings for API
-CSRF_TRUSTED_ORIGINS = [
-    'https://0e1efad5-cfaf-4762-bbde-543dc8094838-00-2yutrstchfwzz.spock.replit.dev',
-    'https://0e1efad5-cfaf-4762-bbde-543dc8094838-00-2yutrstchfwzz.spock.replit.dev:5000',
-    'https://0e1efad5-cfaf-4762-bbde-543dc8094838-00-2yutrstchfwzz.spock.replit.dev:8000',
-]
 
 # Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = env('MEDIA_ROOT', default=os.path.join(BASE_DIR, 'media'))
 
 # Force HTTPS URLs in production
 USE_TLS = True
