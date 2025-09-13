@@ -32,6 +32,25 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
     }
   }, [user?.id])
 
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', handleEscKey)
+
+    return () => {
+      // Re-enable body scroll when modal closes
+      document.body.style.overflow = 'unset'
+      document.removeEventListener('keydown', handleEscKey)
+    }
+  }, [onClose])
+
   const fetchUserImages = async () => {
     try {
       setLoading(true)
@@ -122,8 +141,19 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={(e) => {
+        // Close modal when clicking outside the modal content
+        if (e.target === e.currentTarget) {
+          onClose()
+        }
+      }}
+    >
+      <div 
+        className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="p-6 border-b">
           <div className="flex justify-between items-center">
@@ -139,9 +169,12 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-xl"
+              className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-colors"
+              title="Close profile"
             >
-              ✕
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
         </div>
