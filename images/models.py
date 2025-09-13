@@ -80,10 +80,118 @@ class Image(models.Model):
             self.create_thumbnail()
     
     def create_thumbnail(self):
-        """Create a thumbnail version of the image"""
+        """Create a smart thumbnail version of the image with face detection"""
         if not self.image_file:
             return
             
+        try:
+            import cv2
+            import numpy as np
+            
+            # Load image with OpenCV for face detection
+            cv_image = cv2.imread(self.image_file.path)
+            if cv_image is None:
+                # Fallback to basic thumbnail if OpenCV can't read the image
+                return self._create_basic_thumbnail()
+            
+            # Detect faces in the image
+            face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+            gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+            
+            thumbnail_size = 300
+            
+            if len(faces) > 0:
+                # Face detected - create smart crop centered on the largest face
+                largest_face = max(faces, key=lambda rect: rect[2] * rect[3])
+                x, y, w, h = largest_face
+                
+                # Calculate center of the face
+                face_center_x = x + w // 2
+                face_center_y = y + h // 2
+                
+                # Calculate crop area (square) centered on face
+                img_height, img_width = cv_image.shape[:2]
+                
+                # Determine crop size (use smaller of image dimensions or desired size)
+                crop_size = min(thumbnail_size * 2, img_width, img_height)  # Use 2x for better quality
+                half_crop = crop_size // 2
+                
+                # Calculate crop boundaries, ensuring they stay within image
+                crop_x1 = max(0, min(face_center_x - half_crop, img_width - crop_size))
+                crop_y1 = max(0, min(face_center_y - half_crop, img_height - crop_size))
+                crop_x2 = crop_x1 + crop_size
+                crop_y2 = crop_y1 + crop_size
+                
+                # Crop the image
+                cropped = cv_image[crop_y1:crop_y2, crop_x1:crop_x2]
+                
+                # Resize to thumbnail size
+                resized = cv2.resize(cropped, (thumbnail_size, thumbnail_size), interpolation=cv2.INTER_AREA)
+                
+                # Convert back to PIL format
+                rgb_image = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
+                pil_image = PILImage.fromarray(rgb_image)
+                
+            else:
+                # No faces detected - use center crop
+                pil_image = self._create_center_crop(cv_image, thumbnail_size)
+            
+            # Save to BytesIO
+            thumb_io = BytesIO()
+            pil_image.save(thumb_io, format='JPEG', quality=85, optimize=True)
+            thumb_io.seek(0)
+            
+            # Generate thumbnail filename
+            original_name = os.path.basename(self.image_file.name)
+            name, ext = os.path.splitext(original_name)
+            thumbnail_name = f'{name}_thumb.jpg'
+            
+            # Save thumbnail
+            self.thumbnail.save(
+                thumbnail_name,
+                ContentFile(thumb_io.getvalue()),
+                save=False
+            )
+            
+            # Save the model again to save the thumbnail field
+            super().save(update_fields=['thumbnail'])
+            
+        except ImportError:
+            # OpenCV not available - fallback to basic thumbnail
+            print(f"OpenCV not available, using basic thumbnail for image {self.id}")
+            return self._create_basic_thumbnail()
+        except Exception as e:
+            print(f"Error creating smart thumbnail for image {self.id}: {e}")
+            # Try fallback to basic thumbnail
+            return self._create_basic_thumbnail()
+    
+    def _create_center_crop(self, cv_image, size):
+        """Create center-cropped thumbnail from OpenCV image"""
+        import cv2
+        
+        img_height, img_width = cv_image.shape[:2]
+        
+        # Calculate center crop
+        crop_size = min(img_width, img_height)
+        center_x, center_y = img_width // 2, img_height // 2
+        half_crop = crop_size // 2
+        
+        # Crop to square from center
+        cropped = cv_image[
+            center_y - half_crop:center_y + half_crop,
+            center_x - half_crop:center_x + half_crop
+        ]
+        
+        # Resize to target size
+        resized = cv2.resize(cropped, (size, size), interpolation=cv2.INTER_AREA)
+        
+        # Convert to PIL
+        rgb_image = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
+        return PILImage.fromarray(rgb_image)
+    
+    def _create_basic_thumbnail(self):
+        """Fallback basic thumbnail creation using PIL only"""
         try:
             # Open the image file
             with PILImage.open(self.image_file.path) as image:
@@ -123,7 +231,7 @@ class Image(models.Model):
                 super().save(update_fields=['thumbnail'])
                 
         except Exception as e:
-            print(f"Error creating thumbnail for image {self.id}: {e}")
+            print(f"Error creating basic thumbnail for image {self.id}: {e}")
 
 
 class Comment(models.Model):
