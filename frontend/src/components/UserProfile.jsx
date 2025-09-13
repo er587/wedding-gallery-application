@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import { apiService } from '../services/api'
 
 export default function UserProfile({ user, onClose, onUserUpdate }) {
+  // Guard clause - if no user, don't render
+  if (!user) {
+    return null
+  }
+
   const [userImages, setUserImages] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('profile')
@@ -22,15 +27,19 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetchUserImages()
-  }, [user.id])
+    if (user?.id) {
+      fetchUserImages()
+    }
+  }, [user?.id])
 
   const fetchUserImages = async () => {
     try {
       setLoading(true)
       const response = await apiService.getImages()
       // Filter images by current user
-      const currentUserImages = response.data.filter(img => img.uploader.username === user.username)
+      const currentUserImages = response.data.filter(img => 
+        img?.uploader?.username === user?.username
+      )
       setUserImages(currentUserImages)
     } catch (error) {
       console.error('Error fetching user images:', error)
