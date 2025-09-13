@@ -8,7 +8,6 @@ export default function Auth({ onLogin }) {
     password: ''
   })
   const [signupData, setSignupData] = useState({
-    username: '',
     password: '',
     email: '',
     invitation_code: '',
@@ -22,7 +21,7 @@ export default function Auth({ onLogin }) {
       const userData = await authService.login(loginData.username, loginData.password)
       onLogin(userData)
     } catch (error) {
-      alert(`Login failed: ${error.message}\n\nExisting users:\n• testuser / testpass123 (Full User)\n• memoryuser / memorypass123 (Memory User)`)
+      alert(`Login failed: ${error.message}`)
     }
   }
 
@@ -34,7 +33,6 @@ export default function Auth({ onLogin }) {
       setShowSignupModal(false)
       // Reset form
       setSignupData({
-        username: '',
         password: '',
         email: '',
         invitation_code: '',
@@ -42,7 +40,7 @@ export default function Auth({ onLogin }) {
         last_name: ''
       })
     } catch (error) {
-      alert(`Registration failed: ${error.message}\n\nPlease check your invitation code and try again.`)
+      alert(`Registration failed: ${error.message}`)
     }
   }
 
@@ -66,9 +64,9 @@ export default function Auth({ onLogin }) {
       <div className="flex items-center space-x-4">
         <form onSubmit={handleLogin} className="flex items-center space-x-2">
           <input
-            type="text"
+            type="email"
             name="username"
-            placeholder="Username"
+            placeholder="Email Address"
             value={loginData.username}
             onChange={handleLoginInputChange}
             required
@@ -136,19 +134,9 @@ export default function Auth({ onLogin }) {
               </div>
               
               <input
-                type="text"
-                name="username"
-                placeholder="Username"
-                value={signupData.username}
-                onChange={handleSignupInputChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              
-              <input
                 type="email"
                 name="email"
-                placeholder="Email"
+                placeholder="Email Address"
                 value={signupData.email}
                 onChange={handleSignupInputChange}
                 required

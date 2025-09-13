@@ -168,17 +168,27 @@ def get_csrf_token(request):
 def login_view(request):
     """Handle user login"""
     try:
-        # Use DRF's request.data instead of manually parsing JSON
-        username = request.data.get('username')
+        # Use email as username for authentication
+        email = request.data.get('username')  # Frontend still sends as 'username' key
         password = request.data.get('password')
         
-        if not username or not password:
+        if not email or not password:
             return Response({
-                'error': 'Username and password are required'
+                'error': 'Please enter your email and password'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Authenticate user
-        user = authenticate(username=username, password=password)
+        # Try to authenticate with email as username
+        user = authenticate(username=email, password=password)
+        
+        # If that fails, try to find user by email and authenticate with their username
+        if user is None:
+            try:
+                from django.contrib.auth.models import User
+                user_obj = User.objects.get(email=email)
+                user = authenticate(username=user_obj.username, password=password)
+            except User.DoesNotExist:
+                user = None
+        
         if user is not None and user.is_active:
             # Log the user into Django session
             login(request, user)
@@ -189,10 +199,10 @@ def login_view(request):
                 from .models import UserProfile
                 profile = UserProfile.objects.create(user=user)
             
-            # Build response data
+            # Build response data - use email as display username
             user_data = {
                 'id': user.id,
-                'username': user.username,
+                'username': user.email or user.username,  # Use email as display username
                 'email': user.email,
                 'role': profile.role,
                 'role_display': profile.get_role_display(),
@@ -208,12 +218,12 @@ def login_view(request):
             }, status=status.HTTP_200_OK)
         else:
             return Response({
-                'error': 'Invalid credentials'
+                'error': 'Invalid email or password'
             }, status=status.HTTP_401_UNAUTHORIZED)
             
     except Exception as e:
         return Response({
-            'error': f'Login failed: {str(e)}'
+            'error': 'Login failed. Please try again.'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -230,21 +240,15 @@ def register_view(request):
         last_name = request.data.get('last_name', '')
         
         # Validate required fields
-        if not all([username, password, email, invitation_code]):
+        if not all([password, email, invitation_code]):
             return Response({
-                'error': 'Username, password, email, and invitation code are required'
+                'error': 'All fields are required'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Check if username already exists
-        if User.objects.filter(username=username).exists():
+        # Check if email already exists (using email as username)
+        if User.objects.filter(username=email).exists() or User.objects.filter(email=email).exists():
             return Response({
-                'error': 'Username already exists'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Check if email already exists
-        if User.objects.filter(email=email).exists():
-            return Response({
-                'error': 'Email already exists'
+                'error': 'This email is already registered'
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Validate invitation code
@@ -252,12 +256,12 @@ def register_view(request):
             invitation = InvitationCode.objects.get(code=invitation_code, is_active=True)
         except InvitationCode.DoesNotExist:
             return Response({
-                'error': 'Invalid or inactive invitation code'
+                'error': 'Invalid or expired invitation code'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Create user
+        # Create user - use email as username
         user = User.objects.create_user(
-            username=username,
+            username=email,  # Use email as username
             password=password,
             email=email,
             first_name=first_name,
@@ -278,10 +282,10 @@ def register_view(request):
             profile.role = invitation.role
             profile.save()
         
-        # Build response data
+        # Build response data - use email as display username
         user_data = {
             'id': user.id,
-            'username': user.username,
+            'username': user.email or user.username,  # Use email as display username
             'email': user.email,
             'first_name': user.first_name,
             'last_name': user.last_name,
@@ -299,8 +303,13 @@ def register_view(request):
         }, status=status.HTTP_201_CREATED)
         
     except Exception as e:
+        # Log the actual error for debugging but don't expose it
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Registration failed for email {email}: {str(e)}')
+        
         return Response({
-            'error': f'Registration failed: {str(e)}'
+            'error': 'Registration failed. Please try again.'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
