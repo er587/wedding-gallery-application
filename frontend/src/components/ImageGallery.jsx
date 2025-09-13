@@ -519,6 +519,18 @@ export default function ImageGallery({ user, refresh }) {
         </div>
       )}
 
+      {/* Load More Button */}
+      {images.length > 0 && pagination.hasMore && !pagination.loadingMore && (
+        <div className="text-center mt-8 mb-8">
+          <button
+            onClick={loadMoreImages}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+          >
+            Load More Images
+          </button>
+        </div>
+      )}
+
       {/* End of Results */}
       {images.length > 0 && !pagination.hasMore && (
         <div className="text-center mt-8 mb-8 text-gray-500">
