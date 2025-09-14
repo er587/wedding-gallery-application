@@ -135,7 +135,7 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class CommentListCreateView(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
-    permission_classes = [permissions.AllowAny]  # Temporarily allow comments for testing
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     
     def get_queryset(self):
         image_id = self.kwargs.get('image_id')
@@ -144,32 +144,18 @@ class CommentListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         image_id = self.kwargs.get('image_id')
         image = Image.objects.get(id=image_id)
-        
-        if self.request.user.is_authenticated:
-            user = self.request.user
-        else:
-            # If no user is authenticated, require login
-            from rest_framework.exceptions import NotAuthenticated
-            raise NotAuthenticated("You must be logged in to post comments.")
-            
-        serializer.save(author=user, image=image)
+        serializer.save(author=self.request.user, image=image)
 
 
 @api_view(['POST'])
-@permission_classes([permissions.AllowAny])  # Temporarily allow replies for testing
+@permission_classes([permissions.IsAuthenticated])
 def create_reply(request, comment_id):
     try:
         parent_comment = Comment.objects.get(id=comment_id)
         serializer = CommentSerializer(data=request.data)
         if serializer.is_valid():
-            if request.user.is_authenticated:
-                user = request.user
-            else:
-                return Response({
-                    'error': 'You must be logged in to post replies.'
-                }, status=status.HTTP_401_UNAUTHORIZED)
             serializer.save(
-                author=user,
+                author=request.user,
                 image=parent_comment.image,
                 parent=parent_comment
             )
