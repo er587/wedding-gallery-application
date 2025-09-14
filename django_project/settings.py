@@ -167,8 +167,21 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings from environment
-CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=False)
-CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:5000', 'http://127.0.0.1:5000'])
+CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=True)
+
+# Configure CORS allowed origins
+cors_defaults = ['http://localhost:5000', 'http://127.0.0.1:5000']
+try:
+    replit_domains = os.environ["REPLIT_DOMAINS"].split(',')
+    replit_cors_origins = [
+        "https://" + domain for domain in replit_domains
+    ] + [
+        "https://" + domain + ":5000" for domain in replit_domains
+    ]
+    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=cors_defaults + replit_cors_origins)
+except KeyError:
+    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=cors_defaults)
+
 CORS_ALLOW_CREDENTIALS = env.bool('CORS_ALLOW_CREDENTIALS', default=True)
 
 
