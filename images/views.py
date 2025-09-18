@@ -50,6 +50,7 @@ class ImageListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         # Check if user is authenticated
         if not request.user.is_authenticated:
+            print(f"[DEBUG] Upload failed: User not authenticated")
             return Response(
                 {"error": "You must be logged in to upload images."},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -58,17 +59,22 @@ class ImageListCreateView(generics.ListCreateAPIView):
         # Check if user has upload permissions
         from .models import UserProfile
         user = request.user
+        print(f"[DEBUG] Upload attempt by user: {user.username} (email: {user.email})")
         
         # Ensure user has a profile
         if not hasattr(user, 'profile'):
+            print(f"[DEBUG] Creating profile for user: {user.username}")
             UserProfile.objects.create(user=user)
         
+        print(f"[DEBUG] User profile - Role: {user.profile.role}, Can upload: {user.profile.can_upload_images}")
         if not user.profile.can_upload_images:
+            print(f"[DEBUG] Upload denied for user {user.username} - role: {user.profile.role}")
             return Response(
                 {"error": "You don't have permission to upload images. You can only add memories to existing images."},
                 status=status.HTTP_403_FORBIDDEN
             )
         
+        print(f"[DEBUG] Upload allowed for user {user.username}")
         return super().create(request, *args, **kwargs)
     
     def perform_create(self, serializer):
