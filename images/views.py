@@ -48,10 +48,16 @@ class ImageListCreateView(generics.ListCreateAPIView):
         return ImageSerializer
     
     def create(self, request, *args, **kwargs):
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            return Response(
+                {"error": "You must be logged in to upload images."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
         # Check if user has upload permissions
-        from django.contrib.auth.models import User
         from .models import UserProfile
-        user = request.user if request.user.is_authenticated else User.objects.get(username='testuser')
+        user = request.user
         
         # Ensure user has a profile
         if not hasattr(user, 'profile'):
@@ -66,10 +72,8 @@ class ImageListCreateView(generics.ListCreateAPIView):
         return super().create(request, *args, **kwargs)
     
     def perform_create(self, serializer):
-        # Use the test user if no user is authenticated
-        from django.contrib.auth.models import User
-        user = self.request.user if self.request.user.is_authenticated else User.objects.get(username='testuser')
-        serializer.save(uploader=user)
+        # Save the image with the authenticated user as uploader
+        serializer.save(uploader=self.request.user)
 
 
 class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
