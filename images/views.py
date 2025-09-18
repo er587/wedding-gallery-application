@@ -19,6 +19,7 @@ class ImagePagination(PageNumberPagination):
     max_page_size = 50
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class ImageListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.AllowAny]  # Temporarily allow uploads for testing
     pagination_class = ImagePagination
