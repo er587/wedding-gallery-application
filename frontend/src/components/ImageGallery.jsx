@@ -571,17 +571,6 @@ export default function ImageGallery({ user, refresh }) {
           </div>
         ))}
         </div>
-      ) : (
-        // Normal Mode - Use react-photo-gallery for better layout
-        images.length > 0 && (
-          <Gallery
-            photos={preparePhotosForGallery()}
-            onClick={handlePhotoClick}
-            direction="row"
-            margin={3}
-            renderImage={renderPhoto}
-          />
-        )
       )}
 
       {/* Invisible trigger for Intersection Observer */}
