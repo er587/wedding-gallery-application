@@ -127,10 +127,10 @@ function App() {
                   </button>
                   {user.can_upload_images && (
                     <button
-                      onClick={() => setShowUpload(!showUpload)}
+                      onClick={() => setShowUpload(true)}
                       className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
                     >
-                      {showUpload ? 'Cancel' : 'Upload Image'}
+                      Upload Image
                     </button>
                   )}
                   <button
@@ -149,17 +149,16 @@ function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {showUpload && user && user.can_upload_images && (
-          <div className="mb-8">
-            <ImageUpload 
-              user={user} 
-              onImageUploaded={handleImageUploaded}
-              onCancel={() => setShowUpload(false)}
-            />
-          </div>
-        )}
         <ImageGallery user={user} refresh={refreshGallery} />
       </main>
+
+      {showUpload && user && user.can_upload_images && (
+        <ImageUpload 
+          user={user} 
+          onImageUploaded={handleImageUploaded}
+          onCancel={() => setShowUpload(false)}
+        />
+      )}
 
       {showProfile && user && (
         <UserProfile 
