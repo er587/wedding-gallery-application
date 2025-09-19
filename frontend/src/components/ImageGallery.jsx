@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import Gallery from 'react-photo-gallery'
+import Lightbox from 'react-image-lightbox'
+import 'react-image-lightbox/style.css'
 import ImageViewer from './ImageViewer'
 import SearchBar from './SearchBar'
 import { apiService } from '../services/api'
@@ -6,6 +9,8 @@ import { apiService } from '../services/api'
 export default function ImageGallery({ user, refresh }) {
   const [images, setImages] = useState([])
   const [selectedImage, setSelectedImage] = useState(null)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [searchParams, setSearchParams] = useState({ search: '', tags: '' })
   const [selectionMode, setSelectionMode] = useState(false)
@@ -324,6 +329,79 @@ export default function ImageGallery({ user, refresh }) {
     }
   }
 
+  // Prepare images for react-photo-gallery
+  const preparePhotosForGallery = () => {
+    return images.map((image, index) => {
+      // Use varying aspect ratios for better layout
+      const aspectRatios = [
+        { width: 4, height: 3 },   // 4:3 landscape
+        { width: 3, height: 4 },   // 3:4 portrait  
+        { width: 16, height: 9 },  // 16:9 wide
+        { width: 1, height: 1 },   // 1:1 square
+        { width: 5, height: 4 },   // 5:4 standard
+      ]
+      
+      const ratio = aspectRatios[index % aspectRatios.length]
+      const baseWidth = 400 // Larger base for better quality
+      
+      return {
+        src: image.image_file,
+        width: baseWidth,
+        height: (baseWidth * ratio.height) / ratio.width,
+        alt: image.title,
+        key: image.id,
+        thumbnail: image.thumbnail_medium || image.thumbnail_url || image.image_file,
+        original: image,
+      }
+    })
+  }
+
+  // Handle photo click in gallery
+  const handlePhotoClick = (event, { photo, index }) => {
+    setLightboxIndex(index)
+    setLightboxOpen(true)
+  }
+
+  // Custom render for gallery photos with overlay info
+  const renderPhoto = ({ index, photo, margin, direction, top, left }) => {
+    const image = photo.original
+    return (
+      <div
+        key={photo.key}
+        style={{
+          margin,
+          height: photo.height,
+          width: photo.width,
+          position: direction === 'row' ? 'absolute' : 'relative',
+          left: direction === 'row' ? left : undefined,
+          top: direction === 'row' ? top : undefined,
+        }}
+        className="group cursor-pointer"
+        onClick={(e) => handlePhotoClick(e, { photo, index })}
+      >
+        <img
+          src={photo.thumbnail}
+          alt={photo.alt}
+          className="w-full h-full object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow"
+        />
+        
+        {/* Overlay with image info */}
+        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 rounded-lg flex items-end opacity-0 group-hover:opacity-100">
+          <div className="p-3 text-white w-full">
+            <h4 className="font-medium text-sm truncate">{image.title}</h4>
+            <div className="flex justify-between items-center text-xs mt-1">
+              <span>by {image.uploader.first_name && image.uploader.last_name ? `${image.uploader.first_name} ${image.uploader.last_name}` : image.uploader.first_name || image.uploader.username}</span>
+              <div className="flex space-x-2">
+                <span>💬 {image.comment_count}</span>
+                <span>❤️ {image.like_count || 0}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -433,31 +511,28 @@ export default function ImageGallery({ user, refresh }) {
         </div>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {images.map((image) => (
-          <div
-            key={image.id}
-            className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer relative ${
-              selectedImages.has(image.id) ? 'ring-4 ring-blue-500' : ''
-            }`}
-            onClick={(e) => {
-              if (selectionMode) {
+      {selectionMode ? (
+        // Selection Mode - Use traditional grid for checkboxes
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {images.map((image) => (
+            <div
+              key={image.id}
+              className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer relative ${
+                selectedImages.has(image.id) ? 'ring-4 ring-blue-500' : ''
+              }`}
+              onClick={(e) => {
                 e.stopPropagation()
                 toggleImageSelection(image.id)
-              } else {
-                setSelectedImage(image)
-              }
-            }}
-          >
-            <div className="aspect-w-4 aspect-h-3 relative">
-              <img
-                src={image.thumbnail_url || image.image_file}
-                alt={image.title}
-                className="w-full h-48 object-cover"
-              />
-              
-              {/* Selection checkbox */}
-              {selectionMode && (
+              }}
+            >
+              <div className="aspect-w-4 aspect-h-3 relative">
+                <img
+                  src={image.thumbnail_medium || image.thumbnail_url || image.image_file}
+                  alt={image.title}
+                  className="w-full h-48 object-cover"
+                />
+                
+                {/* Selection checkbox */}
                 <div className="absolute top-2 left-2">
                   <input
                     type="checkbox"
@@ -469,17 +544,16 @@ export default function ImageGallery({ user, refresh }) {
                     className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500"
                   />
                 </div>
-              )}
-              
-              {/* Selection overlay */}
-              {selectionMode && selectedImages.has(image.id) && (
-                <div className="absolute inset-0 bg-blue-500 bg-opacity-20 flex items-center justify-center">
-                  <div className="bg-blue-600 text-white rounded-full p-2">
-                    ✓
+                
+                {/* Selection overlay */}
+                {selectedImages.has(image.id) && (
+                  <div className="absolute inset-0 bg-blue-500 bg-opacity-20 flex items-center justify-center">
+                    <div className="bg-blue-600 text-white rounded-full p-2">
+                      ✓
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
             <div className="p-4">
               <h3 className="font-semibold text-gray-900 truncate">{image.title}</h3>
               <p className="text-sm text-gray-600 mt-1 line-clamp-2">{image.description}</p>
@@ -562,7 +636,19 @@ export default function ImageGallery({ user, refresh }) {
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      ) : (
+        // Normal Mode - Use react-photo-gallery for better layout
+        images.length > 0 && (
+          <Gallery
+            photos={preparePhotosForGallery()}
+            onClick={handlePhotoClick}
+            direction="row"
+            margin={3}
+            renderImage={renderPhoto}
+          />
+        )
+      )}
 
       {/* Invisible trigger for Intersection Observer */}
       {images.length > 0 && pagination.hasMore && (
@@ -610,6 +696,36 @@ export default function ImageGallery({ user, refresh }) {
           <p>You've reached the end of the gallery</p>
           <p className="text-sm">All {images.length} images loaded</p>
         </div>
+      )}
+
+      {lightboxOpen && (
+        <Lightbox
+          mainSrc={images[lightboxIndex]?.image_file}
+          nextSrc={images[(lightboxIndex + 1) % images.length]?.image_file}
+          prevSrc={images[(lightboxIndex + images.length - 1) % images.length]?.image_file}
+          onCloseRequest={() => setLightboxOpen(false)}
+          onMovePrevRequest={() =>
+            setLightboxIndex((lightboxIndex + images.length - 1) % images.length)
+          }
+          onMoveNextRequest={() =>
+            setLightboxIndex((lightboxIndex + 1) % images.length)
+          }
+          imageTitle={images[lightboxIndex]?.title}
+          imageCaption={
+            <div className="text-center">
+              <p className="mb-2">{images[lightboxIndex]?.description}</p>
+              <p className="text-sm opacity-75">
+                by {images[lightboxIndex]?.uploader?.first_name && images[lightboxIndex]?.uploader?.last_name 
+                  ? `${images[lightboxIndex].uploader.first_name} ${images[lightboxIndex].uploader.last_name}`
+                  : images[lightboxIndex]?.uploader?.first_name || images[lightboxIndex]?.uploader?.username}
+              </p>
+              <div className="flex justify-center space-x-4 mt-2 text-sm">
+                <span>💬 {images[lightboxIndex]?.comment_count} comments</span>
+                <span>❤️ {images[lightboxIndex]?.like_count || 0} likes</span>
+              </div>
+            </div>
+          }
+        />
       )}
 
       {selectedImage && (
