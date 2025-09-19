@@ -1,0 +1,28 @@
+{
+  "name": "workspace",
+  "version": "1.0.0",
+  "description": "A beautiful, secure wedding gallery application for sharing precious memories with loved ones. Built with Django REST Framework and React, featuring invitation-based access, intelligent photo management, and seamless social engagement.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/er587/wedding-gallery-application.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/er587/wedding-gallery-application/issues"
+  },
+  "homepage": "https://github.com/er587/wedding-gallery-application#readme",
+  "dependencies": {
+    "react-image-lightbox": "^5.1.4",
+    "react-photo-gallery": "^8.0.0"
+  }
+}
