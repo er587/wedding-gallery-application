@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'easy_thumbnails',
     'images',
 ]
 
@@ -192,3 +193,21 @@ MEDIA_ROOT = env('MEDIA_ROOT', default=os.path.join(BASE_DIR, 'media'))
 # Force HTTPS URLs in production
 USE_TLS = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Easy-thumbnails configuration
+THUMBNAIL_ALIASES = {
+    '': {
+        'small': {'size': (150, 150), 'crop': True, 'quality': 85},
+        'medium': {'size': (300, 300), 'crop': True, 'quality': 85},
+        'large': {'size': (600, 600), 'crop': False, 'quality': 90},
+    },
+}
+
+THUMBNAIL_PROCESSORS = [
+    'easy_thumbnails.processors.colorspace',
+    'easy_thumbnails.processors.autocrop',
+    'easy_thumbnails.processors.scale_and_crop',
+    'easy_thumbnails.processors.filters',
+]
+
+THUMBNAIL_DEFAULT_STORAGE = 'django.core.files.storage.FileSystemStorage'

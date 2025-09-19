@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from easy_thumbnails.files import get_thumbnailer
 from .models import Image, Comment, Tag, Like
 
 
@@ -44,14 +45,17 @@ class ImageSerializer(serializers.ModelSerializer):
     user_has_liked = serializers.SerializerMethodField()
     image_file = serializers.SerializerMethodField()
     thumbnail_url = serializers.SerializerMethodField()
+    thumbnail_small = serializers.SerializerMethodField()
+    thumbnail_medium = serializers.SerializerMethodField()
+    thumbnail_large = serializers.SerializerMethodField()
     tags = TagSerializer(many=True, read_only=True)
     tag_names = serializers.ListField(child=serializers.CharField(), write_only=True, required=False)
     
     class Meta:
         model = Image
-        fields = ['id', 'title', 'description', 'image_file', 'thumbnail_url', 'uploader', 
-                 'uploaded_at', 'updated_at', 'comments', 'comment_count', 
-                 'like_count', 'user_has_liked', 'tags', 'tag_names']
+        fields = ['id', 'title', 'description', 'image_file', 'thumbnail_url', 'thumbnail_small', 
+                 'thumbnail_medium', 'thumbnail_large', 'uploader', 'uploaded_at', 'updated_at', 
+                 'comments', 'comment_count', 'like_count', 'user_has_liked', 'tags', 'tag_names']
         read_only_fields = ['id', 'uploader', 'uploaded_at', 'updated_at']
     
     def get_comment_count(self, obj):
@@ -73,12 +77,37 @@ class ImageSerializer(serializers.ModelSerializer):
         return None
     
     def get_thumbnail_url(self, obj):
-        if obj.thumbnail:
-            # Return relative URL for thumbnail
-            return obj.thumbnail.url
-        elif obj.image_file:
-            # Fallback to full image if no thumbnail (shouldn't happen)
-            return obj.image_file.url
+        # Legacy method - use medium thumbnail for backward compatibility
+        return self.get_thumbnail_medium(obj)
+    
+    def get_thumbnail_small(self, obj):
+        if obj.image_file:
+            try:
+                thumbnailer = get_thumbnailer(obj.image_file)
+                thumbnail = thumbnailer.get_thumbnail({'size': (150, 150), 'crop': True, 'quality': 85})
+                return thumbnail.url
+            except Exception:
+                return obj.image_file.url
+        return None
+    
+    def get_thumbnail_medium(self, obj):
+        if obj.image_file:
+            try:
+                thumbnailer = get_thumbnailer(obj.image_file)
+                thumbnail = thumbnailer.get_thumbnail({'size': (300, 300), 'crop': True, 'quality': 85})
+                return thumbnail.url
+            except Exception:
+                return obj.image_file.url
+        return None
+    
+    def get_thumbnail_large(self, obj):
+        if obj.image_file:
+            try:
+                thumbnailer = get_thumbnailer(obj.image_file)
+                thumbnail = thumbnailer.get_thumbnail({'size': (600, 600), 'crop': False, 'quality': 90})
+                return thumbnail.url
+            except Exception:
+                return obj.image_file.url
         return None
 
 
