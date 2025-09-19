@@ -52,8 +52,13 @@ export default function CommentSystem({ imageId, comments, user, loading, onComm
     })
   }
 
-  const getUserAvatar = (username, role) => {
-    const initial = username?.charAt(0).toUpperCase() || '?'
+  const getUserAvatar = (user, role) => {
+    let initial = '?'
+    if (user?.first_name) {
+      initial = user.first_name.charAt(0).toUpperCase()
+    } else if (user?.username) {
+      initial = user.username.charAt(0).toUpperCase()
+    }
     const isFullUser = role === 'full'
     
     return (
@@ -70,11 +75,14 @@ export default function CommentSystem({ imageId, comments, user, loading, onComm
   const renderComment = (comment, isReply = false) => (
     <div key={comment.id} className={`${isReply ? 'bg-gray-50 rounded-lg p-3' : 'bg-white'}`}>
       <div className="flex items-start space-x-3 mb-2">
-        {getUserAvatar(comment.author?.username, comment.author?.role)}
+        {getUserAvatar(comment.author, comment.author?.role)}
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2 mb-1">
             <span className="font-semibold text-sm text-gray-900">
-              {comment.author?.username || 'Unknown User'}
+              {comment.author?.first_name && comment.author?.last_name 
+                ? `${comment.author.first_name} ${comment.author.last_name}`
+                : comment.author?.first_name || comment.author?.username || 'Unknown User'
+              }
             </span>
             <span className={`text-xs px-2 py-1 rounded ${
               comment.author?.role === 'full' 

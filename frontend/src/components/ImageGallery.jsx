@@ -499,7 +499,7 @@ export default function ImageGallery({ user, refresh }) {
               )}
               
               <div className="flex justify-between items-center mt-3 text-sm text-gray-500">
-                <span>by {image.uploader.username}</span>
+                <span>by {image.uploader.first_name && image.uploader.last_name ? `${image.uploader.first_name} ${image.uploader.last_name}` : image.uploader.first_name || image.uploader.username}</span>
                 <div className="flex items-center space-x-3">
                   <span>{image.comment_count} comments</span>
                   <div className="flex items-center space-x-1">

@@ -117,7 +117,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="font-semibold text-lg">{imageData.title}</h2>
-                <p className="text-sm text-gray-600">by {imageData.uploader.username}</p>
+                <p className="text-sm text-gray-600">by {imageData.uploader.first_name && imageData.uploader.last_name ? `${imageData.uploader.first_name} ${imageData.uploader.last_name}` : imageData.uploader.first_name || imageData.uploader.username}</p>
               </div>
               <div className="flex items-center space-x-2">
                 <button
