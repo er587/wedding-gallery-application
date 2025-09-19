@@ -1,8 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import Lightbox from 'yet-another-react-lightbox'
-import 'yet-another-react-lightbox/styles.css'
-import Fullscreen from 'yet-another-react-lightbox/plugins/fullscreen'
-import Zoom from 'yet-another-react-lightbox/plugins/zoom'
 import ImageViewer from './ImageViewer'
 import SearchBar from './SearchBar'
 import { apiService } from '../services/api'
@@ -10,8 +6,6 @@ import { apiService } from '../services/api'
 export default function ImageGallery({ user, refresh }) {
   const [images, setImages] = useState([])
   const [selectedImage, setSelectedImage] = useState(null)
-  const [lightboxOpen, setLightboxOpen] = useState(false)
-  const [lightboxIndex, setLightboxIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [searchParams, setSearchParams] = useState({ search: '', tags: '' })
   const [selectionMode, setSelectionMode] = useState(false)
@@ -330,11 +324,6 @@ export default function ImageGallery({ user, refresh }) {
     }
   }
 
-  // Handle image click for lightbox
-  const handleImageClick = (index) => {
-    setLightboxIndex(index)
-    setLightboxOpen(true)
-  }
 
   if (loading) {
     return (
@@ -459,7 +448,7 @@ export default function ImageGallery({ user, refresh }) {
                   e.stopPropagation()
                   toggleImageSelection(image.id)
                 } else {
-                  handleImageClick(index)
+                  setSelectedImage(image)
                 }
               }}
             >
@@ -627,22 +616,6 @@ export default function ImageGallery({ user, refresh }) {
         </div>
       )}
 
-      <Lightbox
-        open={lightboxOpen}
-        close={() => setLightboxOpen(false)}
-        index={lightboxIndex}
-        slides={images.map(image => ({
-          src: image.image_file,
-          title: image.title,
-          description: `${image.description || ''}\nby ${image.uploader.first_name && image.uploader.last_name 
-            ? `${image.uploader.first_name} ${image.uploader.last_name}`
-            : image.uploader.first_name || image.uploader.username} • 💬 ${image.comment_count} comments • ❤️ ${image.like_count || 0} likes`
-        }))}
-        plugins={[Fullscreen, Zoom]}
-        on={{
-          view: ({ index: newIndex }) => setLightboxIndex(newIndex),
-        }}
-      />
 
       {selectedImage && (
         <ImageViewer 

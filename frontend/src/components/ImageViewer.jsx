@@ -99,8 +99,8 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex">
+    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg max-w-7xl w-full max-h-[95vh] overflow-hidden flex m-4">
         {/* Image Section */}
         <div className="flex-1 bg-black flex items-center justify-center">
           <img
@@ -147,10 +147,13 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
                 </button>
                 <button
                   onClick={handleSaveImage}
-                  className="text-blue-500 hover:text-blue-700 text-sm px-2 py-1 rounded border border-blue-500 hover:border-blue-700 transition-colors"
+                  className="text-blue-500 hover:text-blue-700 text-sm px-3 py-1 rounded border border-blue-500 hover:border-blue-700 transition-colors flex items-center gap-1"
                   title="Save image to device"
                 >
-                  💾 Save
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Save
                 </button>
                 {canDeleteImage() && (
                   <button
