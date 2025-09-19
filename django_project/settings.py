@@ -47,11 +47,19 @@ try:
     replit_domains = os.environ["REPLIT_DOMAINS"].split(',')
     CSRF_TRUSTED_ORIGINS = [
         "https://" + domain for domain in replit_domains
-    ] + [
-        "https://" + domain + ":8000" for domain in replit_domains
-    ] + ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://localhost:8000', 'http://127.0.0.1:8000']
+    ] + ["https://" + domain + ":8000" for domain in replit_domains] + [
+        'http://localhost:5000',
+        'http://127.0.0.1:5000',
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+    ]
 except KeyError:
-    CSRF_TRUSTED_ORIGINS = ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://localhost:8000', 'http://127.0.0.1:8000']
+    CSRF_TRUSTED_ORIGINS = [
+        'http://localhost:5000',
+        'http://127.0.0.1:5000',
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+    ]
 
 # Application definition
 
@@ -171,20 +179,23 @@ REST_FRAMEWORK = {
 CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=True)
 
 # Configure CORS allowed origins
-cors_defaults = ['http://localhost:5000', 'http://127.0.0.1:5000']
+cors_defaults = [
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+]
 try:
     replit_domains = os.environ["REPLIT_DOMAINS"].split(',')
     replit_cors_origins = [
         "https://" + domain for domain in replit_domains
-    ] + [
-        "https://" + domain + ":5000" for domain in replit_domains
-    ]
-    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=cors_defaults + replit_cors_origins)
+    ] + ["https://" + domain + ":5000" for domain in replit_domains]
+    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS',
+                                    default=cors_defaults +
+                                    replit_cors_origins)
 except KeyError:
-    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=cors_defaults)
+    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS',
+                                    default=cors_defaults)
 
 CORS_ALLOW_CREDENTIALS = env.bool('CORS_ALLOW_CREDENTIALS', default=True)
-
 
 # Media files
 MEDIA_URL = '/media/'
@@ -197,9 +208,21 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Easy-thumbnails configuration
 THUMBNAIL_ALIASES = {
     '': {
-        'small': {'size': (150, 150), 'crop': True, 'quality': 85},
-        'medium': {'size': (300, 300), 'crop': True, 'quality': 85},
-        'large': {'size': (600, 600), 'crop': False, 'quality': 90},
+        'small': {
+            'size': (150, 150),
+            'crop': True,
+            'quality': 85
+        },
+        'medium': {
+            'size': (300, 300),
+            'crop': True,
+            'quality': 85
+        },
+        'large': {
+            'size': (600, 600),
+            'crop': False,
+            'quality': 90
+        },
     },
 }
 

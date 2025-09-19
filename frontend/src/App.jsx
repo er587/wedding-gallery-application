@@ -5,6 +5,7 @@ import Auth from './components/Auth'
 import UserProfile from './components/UserProfile'
 import WelcomeModal from './components/WelcomeModal'
 import { authService } from './services/auth'
+import { apiService } from './services/api'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -14,11 +15,29 @@ function App() {
   const [refreshGallery, setRefreshGallery] = useState(0)
 
   useEffect(() => {
-    // Check if user is already logged in
-    const currentUser = authService.getCurrentUser()
-    if (currentUser) {
-      setUser(currentUser)
+    // Initialize app: get CSRF token first, then check authentication
+    const initializeApp = async () => {
+      try {
+        // Ensure CSRF cookie is set before making any POST requests
+        await apiService.getCsrfToken()
+        console.log('🔒 CSRF token initialized')
+        
+        // Check if user is already logged in
+        const currentUser = authService.getCurrentUser()
+        if (currentUser) {
+          setUser(currentUser)
+        }
+      } catch (error) {
+        console.warn('Failed to initialize CSRF token:', error)
+        // Continue anyway - the user can still try to login/use the app
+        const currentUser = authService.getCurrentUser()
+        if (currentUser) {
+          setUser(currentUser)
+        }
+      }
     }
+    
+    initializeApp()
   }, [])
 
   const handleLogin = (userData) => {
