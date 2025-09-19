@@ -452,11 +452,15 @@ export default function ImageGallery({ user, refresh }) {
             <div
               key={image.id}
               className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer relative ${
-                selectedImages.has(image.id) ? 'ring-4 ring-blue-500' : ''
+                selectionMode && selectedImages.has(image.id) ? 'ring-4 ring-blue-500' : ''
               }`}
               onClick={(e) => {
-                e.stopPropagation()
-                toggleImageSelection(image.id)
+                if (selectionMode) {
+                  e.stopPropagation()
+                  toggleImageSelection(image.id)
+                } else {
+                  handleImageClick(index)
+                }
               }}
             >
               <div className="aspect-w-4 aspect-h-3 relative">
@@ -466,21 +470,23 @@ export default function ImageGallery({ user, refresh }) {
                   className="w-full h-48 object-cover"
                 />
                 
-                {/* Selection checkbox */}
-                <div className="absolute top-2 left-2">
-                  <input
-                    type="checkbox"
-                    checked={selectedImages.has(image.id)}
-                    onChange={(e) => {
-                      e.stopPropagation()
-                      toggleImageSelection(image.id)
-                    }}
-                    className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                </div>
+                {/* Selection checkbox - only show in selection mode */}
+                {selectionMode && (
+                  <div className="absolute top-2 left-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedImages.has(image.id)}
+                      onChange={(e) => {
+                        e.stopPropagation()
+                        toggleImageSelection(image.id)
+                      }}
+                      className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                  </div>
+                )}
                 
-                {/* Selection overlay */}
-                {selectedImages.has(image.id) && (
+                {/* Selection overlay - only show in selection mode */}
+                {selectionMode && selectedImages.has(image.id) && (
                   <div className="absolute inset-0 bg-blue-500 bg-opacity-20 flex items-center justify-center">
                     <div className="bg-blue-600 text-white rounded-full p-2">
                       ✓
