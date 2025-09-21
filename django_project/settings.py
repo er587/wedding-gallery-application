@@ -52,6 +52,10 @@ try:
     ] + ["https://" + domain + ":5000" for domain in replit_domains] + [
         "https://" + domain + ":8000" for domain in replit_domains
     ] + [
+        "http://" + domain for domain in replit_domains
+    ] + ["http://" + domain + ":5000" for domain in replit_domains] + [
+        "http://" + domain + ":8000" for domain in replit_domains
+    ] + [
         'http://localhost:5000',
         'http://127.0.0.1:5000',
         'http://localhost:8000',
