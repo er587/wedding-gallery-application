@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { X } from 'lucide-react'
 import CommentSystem from './CommentSystem'
 import { apiService } from '../services/api'
 
@@ -108,7 +107,10 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
           className="absolute top-4 left-4 z-10 p-2 rounded-full bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-600 hover:text-gray-800 transition-all shadow-md"
           title="Close"
         >
-          <X size={20} />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
         </button>
         {/* Image Section */}
         <div className="flex-1 bg-black flex items-center justify-center">

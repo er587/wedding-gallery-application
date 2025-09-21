@@ -9,6 +9,7 @@ export default function ImageGallery({ user, refresh }) {
   const [loading, setLoading] = useState(true)
   const [searchParams, setSearchParams] = useState({ search: '', tags: '' })
   const [selectionMode, setSelectionMode] = useState(false)
+  
   const [selectedImages, setSelectedImages] = useState(new Set())
   const [downloading, setDownloading] = useState(false)
   const [showSearchBar, setShowSearchBar] = useState(false)
