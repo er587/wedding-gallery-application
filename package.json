@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/er587/wedding-gallery-application#readme",
   "dependencies": {
+    "lucide-react": "^0.544.0",
     "react-image-lightbox": "^5.1.4",
     "react-photo-gallery": "^8.0.0"
   }

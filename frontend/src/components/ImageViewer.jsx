@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { X } from 'lucide-react'
 import CommentSystem from './CommentSystem'
 import { apiService } from '../services/api'
 
@@ -100,7 +101,15 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-7xl w-full max-h-[95vh] overflow-hidden flex m-4">
+      <div className="bg-white rounded-lg max-w-7xl w-full max-h-[95vh] overflow-hidden flex m-4 relative">
+        {/* Dismiss button in top left */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 left-4 z-10 p-2 rounded-full bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-600 hover:text-gray-800 transition-all shadow-md"
+          title="Close"
+        >
+          <X size={20} />
+        </button>
         {/* Image Section */}
         <div className="flex-1 bg-black flex items-center justify-center">
           <img
@@ -165,12 +174,6 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
                     {deleting ? 'Deleting...' : 'Delete'}
                   </button>
                 )}
-                <button
-                  onClick={onClose}
-                  className="text-gray-400 hover:text-gray-600 text-xl"
-                >
-                  ✕
-                </button>
               </div>
             </div>
             {imageData.description && (
