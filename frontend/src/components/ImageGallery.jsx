@@ -453,9 +453,15 @@ export default function ImageGallery({ user, refresh }) {
                 }
               }}
             >
-              <div className="aspect-square relative overflow-hidden">
+              <div className="aspect-square relative overflow-hidden bg-gray-100">
                 <img
                   src={image.thumbnail_medium || image.thumbnail_url || image.image_file}
+                  srcSet={`
+                    ${image.thumbnail_small} 150w,
+                    ${image.thumbnail_medium} 300w,
+                    ${image.thumbnail_large} 600w
+                  `.trim()}
+                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   alt={image.title}
                   className="absolute inset-0 w-full h-full object-cover transition-transform hover:scale-105"
                   style={{ aspectRatio: '1/1' }}
