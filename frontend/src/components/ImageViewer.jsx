@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import CommentSystem from './CommentSystem'
+import InlineEditableText from './InlineEditableText'
 import { apiService } from '../services/api'
 import { useToast } from './Toast'
 
@@ -64,6 +65,25 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
     
     // Only allow image owner to delete their own image
     return (imageData.uploader && user.id === imageData.uploader.id)
+  }
+
+  const canEditImage = () => {
+    if (!user) return false
+    
+    // Only allow image owner to edit their own image
+    return (imageData.uploader && user.id === imageData.uploader.id)
+  }
+
+  const handleUpdateImageTitle = async (newTitle) => {
+    try {
+      await apiService.updateImage(imageData.id, { title: newTitle })
+      
+      // Update the local state
+      setImageData(prev => ({ ...prev, title: newTitle }))
+    } catch (error) {
+      console.error('Error updating image title:', error)
+      throw error // Re-throw so InlineEditableText can handle the error
+    }
   }
 
   const handleSaveImage = async () => {
@@ -136,7 +156,13 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
         <div className="md:hidden absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent p-4 text-white order-2">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h2 className="font-semibold text-lg">{imageData.title}</h2>
+              <InlineEditableText
+                value={imageData.title}
+                onSave={handleUpdateImageTitle}
+                className="font-semibold text-lg text-white"
+                placeholder="Enter image title..."
+                canEdit={canEditImage()}
+              />
               <p className="text-sm text-gray-200">by {imageData.uploader.first_name && imageData.uploader.last_name ? `${imageData.uploader.first_name} ${imageData.uploader.last_name}` : imageData.uploader.first_name || imageData.uploader.username}</p>
             </div>
             <div className="flex items-center space-x-3">
@@ -208,7 +234,13 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
               {/* Drawer Header */}
               <div className="p-4 border-b flex justify-between items-center">
                 <div>
-                  <h3 className="font-semibold text-lg">{imageData.title}</h3>
+                  <InlineEditableText
+                    value={imageData.title}
+                    onSave={handleUpdateImageTitle}
+                    className="font-semibold text-lg"
+                    placeholder="Enter image title..."
+                    canEdit={canEditImage()}
+                  />
                   <p className="text-sm text-gray-600">Comments & Memories</p>
                 </div>
                 <button
@@ -241,7 +273,13 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
           <div className="p-4 border-b">
             <div className="flex justify-between items-start">
               <div>
-                <h2 className="font-semibold text-lg">{imageData.title}</h2>
+                <InlineEditableText
+                  value={imageData.title}
+                  onSave={handleUpdateImageTitle}
+                  className="font-semibold text-lg"
+                  placeholder="Enter image title..."
+                  canEdit={canEditImage()}
+                />
                 <p className="text-sm text-gray-600">by {imageData.uploader.first_name && imageData.uploader.last_name ? `${imageData.uploader.first_name} ${imageData.uploader.last_name}` : imageData.uploader.first_name || imageData.uploader.username}</p>
               </div>
               <div className="flex items-center space-x-2">
