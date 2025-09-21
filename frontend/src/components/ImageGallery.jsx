@@ -485,19 +485,21 @@ export default function ImageGallery({ user, refresh }) {
           {images.map((image, index) => (
             <div
               key={image.id}
-              className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all cursor-pointer relative ${
+              className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all relative ${
                 selectionMode && selectedImages.has(image.id) ? 'ring-4 ring-blue-500' : ''
               }`}
-              onClick={(e) => {
-                if (selectionMode) {
-                  e.stopPropagation()
-                  toggleImageSelection(image.id)
-                } else {
-                  setSelectedImage(image)
-                }
-              }}
             >
-              <div className="aspect-square relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+              <div 
+                className="aspect-square relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 cursor-pointer"
+                onClick={(e) => {
+                  if (selectionMode) {
+                    e.stopPropagation()
+                    toggleImageSelection(image.id)
+                  } else {
+                    setSelectedImage(image)
+                  }
+                }}
+              >
                 {/* Loading placeholder with shimmer effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
                 <img
