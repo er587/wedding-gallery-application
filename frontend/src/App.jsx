@@ -4,6 +4,7 @@ import ImageUpload from './components/ImageUpload'
 import Auth from './components/Auth'
 import UserProfile from './components/UserProfile'
 import WelcomeModal from './components/WelcomeModal'
+import { ToastProvider } from './components/Toast'
 import { authService } from './services/auth'
 import { apiService } from './services/api'
 
@@ -82,7 +83,8 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <ToastProvider>
+      <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -171,7 +173,8 @@ function App() {
         isOpen={showWelcome}
         onClose={handleWelcomeClose}
       />
-    </div>
+      </div>
+    </ToastProvider>
   )
 }
 

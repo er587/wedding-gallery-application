@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { apiService } from '../services/api'
+import { useToast } from './Toast'
 
 export default function ImageUpload({ user, onImageUploaded, onCancel }) {
+  const toast = useToast()
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -124,7 +126,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
       onImageUploaded()
     } catch (error) {
       console.error('Upload error:', error)
-      alert('Upload failed. Please make sure you are logged in and try again.')
+      toast.error('Upload failed. Please make sure you are logged in and try again.')
     } finally {
       setUploading(false)
     }

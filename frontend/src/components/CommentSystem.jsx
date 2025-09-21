@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { apiService } from '../services/api'
+import { useToast } from './Toast'
 
 export default function CommentSystem({ imageId, comments, user, loading, onCommentAdded }) {
+  const toast = useToast()
   const [newComment, setNewComment] = useState('')
   const [replyTo, setReplyTo] = useState(null)
   const [replyText, setReplyText] = useState('')
@@ -18,7 +20,7 @@ export default function CommentSystem({ imageId, comments, user, loading, onComm
       onCommentAdded()
     } catch (error) {
       console.error('Error posting comment:', error)
-      alert('Failed to post comment. Please make sure you are logged in.')
+      toast.error('Failed to post comment. Please make sure you are logged in.')
     } finally {
       setSubmitting(false)
     }
@@ -36,7 +38,7 @@ export default function CommentSystem({ imageId, comments, user, loading, onComm
       onCommentAdded()
     } catch (error) {
       console.error('Error posting reply:', error)
-      alert('Failed to post reply. Please make sure you are logged in.')
+      toast.error('Failed to post reply. Please make sure you are logged in.')
     } finally {
       setSubmitting(false)
     }

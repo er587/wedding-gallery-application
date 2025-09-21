@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import CommentSystem from './CommentSystem'
 import { apiService } from '../services/api'
+import { useToast } from './Toast'
 
 export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
+  const toast = useToast()
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
@@ -51,7 +53,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
       onClose()
     } catch (error) {
       console.error('Error deleting image:', error)
-      alert('Failed to delete image. Please try again.')
+      toast.error('Failed to delete image. Please try again.')
     } finally {
       setDeleting(false)
     }
@@ -79,7 +81,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
       window.URL.revokeObjectURL(url)
     } catch (error) {
       console.error('Error saving image:', error)
-      alert('Failed to save image. Please try again.')
+      toast.error('Failed to save image. Please try again.')
     }
   }
 

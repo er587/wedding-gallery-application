@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import ImageViewer from './ImageViewer'
 import SearchBar from './SearchBar'
 import { apiService } from '../services/api'
+import { useToast } from './Toast'
 
 export default function ImageGallery({ user, refresh }) {
+  const toast = useToast()
   const [images, setImages] = useState([])
   const [selectedImage, setSelectedImage] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -114,7 +116,7 @@ export default function ImageGallery({ user, refresh }) {
 
   const handleDeleteImage = async (imageId, imageTitle) => {
     if (!user) {
-      alert('Please log in to delete images')
+      toast.warning('Please log in to delete images')
       return
     }
 
@@ -135,7 +137,7 @@ export default function ImageGallery({ user, refresh }) {
       if (response.ok) {
         // Remove the image from the local state
         setImages(prevImages => prevImages.filter(img => img.id !== imageId))
-        alert('Image deleted successfully')
+        toast.success('Image deleted successfully')
         
         // Close image viewer if it's open for this image
         if (selectedImage && selectedImage.id === imageId) {
@@ -143,11 +145,11 @@ export default function ImageGallery({ user, refresh }) {
         }
       } else {
         const errorData = await response.json().catch(() => ({}))
-        alert(errorData.error || 'Failed to delete image')
+        toast.error(errorData.error || 'Failed to delete image')
       }
     } catch (error) {
       console.error('Error deleting image:', error)
-      alert('Failed to delete image')
+      toast.error('Failed to delete image')
     }
   }
 
@@ -319,7 +321,7 @@ export default function ImageGallery({ user, refresh }) {
       
     } catch (error) {
       console.error('Error downloading images:', error)
-      alert('Failed to download some images. Please try again.')
+      toast.error('Failed to download some images. Please try again.')
     } finally {
       setDownloading(false)
     }

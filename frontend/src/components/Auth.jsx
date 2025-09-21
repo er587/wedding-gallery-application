@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { authService } from '../services/auth'
+import { useToast } from './Toast'
 
 export default function Auth({ onLogin }) {
+  const toast = useToast()
   const [showSignupModal, setShowSignupModal] = useState(false)
   const [loginData, setLoginData] = useState({
     username: '',
@@ -21,7 +23,7 @@ export default function Auth({ onLogin }) {
       const userData = await authService.login(loginData.username, loginData.password)
       onLogin(userData)
     } catch (error) {
-      alert(`Login failed: ${error.message}`)
+      toast.error(`Login failed: ${error.message}`)
     }
   }
 
@@ -40,7 +42,7 @@ export default function Auth({ onLogin }) {
         last_name: ''
       })
     } catch (error) {
-      alert(`Registration failed: ${error.message}`)
+      toast.error(`Registration failed: ${error.message}`)
     }
   }
 
