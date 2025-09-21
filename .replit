@@ -12,8 +12,9 @@ packages = ["freetype", "lcms2", "libGL", "libGLU", "libimagequant", "libjpeg", 
 language = "python3"
 
 [deployment]
-run = ["python", "manage.py", "runserver", "0.0.0.0:3000"]
-deploymentTarget = "gce"
+run = ["gunicorn", "--bind=0.0.0.0:8000", "--workers=2", "django_project.wsgi:application"]
+deploymentTarget = "autoscale"
+build = ["bash", "-c", "cd frontend && npm install && npm run build && cd .. && python manage.py collectstatic --noinput && python manage.py migrate"]
 
 [[ports]]
 localPort = 5000
@@ -26,6 +27,10 @@ externalPort = 8000
 [[ports]]
 localPort = 24678
 externalPort = 80
+
+[[ports]]
+localPort = 44387
+externalPort = 3000
 
 [agent]
 expertMode = true
