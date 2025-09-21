@@ -20,4 +20,7 @@ urlpatterns = [
     path('api/auth/profile/', views.user_profile_view, name='user-profile'),
     path('api/auth/profile/update/', views.update_profile, name='update-profile'),
     path('api/auth/change-password/', views.change_password, name='change-password'),
+    
+    # Site configuration endpoints
+    path('api/site/style/', views.get_site_style, name='site-style'),
 ]

@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 import json
 from django.utils import timezone
-from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like
+from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, SiteStyleConfiguration
 from .serializers import ImageSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer
 
 
@@ -538,3 +538,14 @@ def change_password(request):
         return Response({
             'error': 'Password change failed. Please try again.'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def get_site_style(request):
+    """Get the current active site styling configuration"""
+    active_theme = SiteStyleConfiguration.get_active_theme()
+    return Response({
+        'theme': active_theme,
+        'timestamp': timezone.now().isoformat()
+    })
