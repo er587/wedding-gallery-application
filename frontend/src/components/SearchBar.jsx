@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { getThemeClasses } from '../hooks/useTheme'
 
-export default function SearchBar({ onSearch, onTagFilter }) {
+export default function SearchBar({ onSearch, onTagFilter, theme = 'default' }) {
+  const themeClasses = getThemeClasses(theme)
   const [searchTerm, setSearchTerm] = useState('')
   const [tagFilter, setTagFilter] = useState('')
 
@@ -22,8 +24,8 @@ export default function SearchBar({ onSearch, onTagFilter }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6 transform transition-all duration-200 ease-in-out">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Search & Filter</h3>
+    <div className={`${themeClasses.cardBackground} rounded-lg shadow-sm ${themeClasses.cardBorder} border p-6 transform transition-all duration-200 ease-in-out`}>
+      <h3 className={`text-lg font-semibold ${themeClasses.text.primary} mb-4`}>Search & Filter</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Search by title, description, or user */}
@@ -41,7 +43,7 @@ export default function SearchBar({ onSearch, onTagFilter }) {
             />
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className={`px-4 py-2 ${themeClasses.primaryButton} rounded-md transition-colors`}
             >
               Search
             </button>

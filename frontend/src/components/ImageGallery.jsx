@@ -4,8 +4,10 @@ import SearchBar from './SearchBar'
 import InlineEditableText from './InlineEditableText'
 import { apiService } from '../services/api'
 import { useToast } from './Toast'
+import { useTheme } from '../hooks/useTheme'
 
 export default function ImageGallery({ user, refresh }) {
+  const { theme } = useTheme()
   const toast = useToast()
   const [images, setImages] = useState([])
   const [selectedImage, setSelectedImage] = useState(null)
@@ -475,7 +477,7 @@ export default function ImageGallery({ user, refresh }) {
       {/* Collapsible Search Bar */}
       {showSearchBar && (
         <div className="mb-6">
-          <SearchBar onSearch={handleSearch} onTagFilter={handleTagFilter} />
+          <SearchBar onSearch={handleSearch} onTagFilter={handleTagFilter} theme={theme} />
         </div>
       )}
       
