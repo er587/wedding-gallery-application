@@ -453,11 +453,13 @@ export default function ImageGallery({ user, refresh }) {
                 }
               }}
             >
-              <div className="aspect-w-4 aspect-h-3 relative">
+              <div className="aspect-square relative overflow-hidden">
                 <img
                   src={image.thumbnail_medium || image.thumbnail_url || image.image_file}
                   alt={image.title}
-                  className="w-full h-48 object-cover"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform hover:scale-105"
+                  style={{ aspectRatio: '1/1' }}
+                  loading="lazy"
                 />
                 
                 {/* Selection checkbox - only show in selection mode */}
