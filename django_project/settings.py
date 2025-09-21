@@ -18,7 +18,6 @@ import environ
 # Initialize environment variables
 env = environ.Env(
     DEBUG=(bool, True),
-    SECRET_KEY=(str, 'django-insecure-change-this-in-production'),
     ALLOWED_HOSTS=(list, ['localhost', '127.0.0.1', '0.0.0.0']),
     DATABASE_URL=(str, ''),
 )
@@ -33,7 +32,8 @@ env.read_env(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env('SECRET_KEY')
+# Get SECRET_KEY directly from os.environ to ensure Replit secrets work properly
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
