@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 import os
+import dj_database_url
 from pathlib import Path
 import environ
 
@@ -19,6 +20,7 @@ env = environ.Env(
     DEBUG=(bool, True),
     SECRET_KEY=(str, 'django-insecure-change-this-in-production'),
     ALLOWED_HOSTS=(list, ['localhost', '127.0.0.1', '0.0.0.0']),
+    DATABASE_URL=(str, ''),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -80,6 +82,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -116,12 +119,19 @@ WSGI_APPLICATION = 'django_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Use PostgreSQL if DATABASE_URL is provided, otherwise fallback to SQLite
+database_url = env('DATABASE_URL')
+if database_url:
+    DATABASES = {
+        'default': dj_database_url.parse(database_url, conn_max_age=600)
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -160,7 +170,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = env('STATIC_ROOT', default=os.path.join(BASE_DIR, 'static'))
+STATIC_ROOT = env('STATIC_ROOT') if 'STATIC_ROOT' in os.environ else os.path.join(BASE_DIR, 'static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -178,7 +188,7 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings from environment
-CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=True)
+CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS') if 'CORS_ALLOW_ALL_ORIGINS' in os.environ else True
 
 # Configure CORS allowed origins
 cors_defaults = [
@@ -190,18 +200,15 @@ try:
     replit_cors_origins = [
         "https://" + domain for domain in replit_domains
     ] + ["https://" + domain + ":5000" for domain in replit_domains]
-    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS',
-                                    default=cors_defaults +
-                                    replit_cors_origins)
+    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS') if 'CORS_ALLOWED_ORIGINS' in os.environ else (cors_defaults + replit_cors_origins)
 except KeyError:
-    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS',
-                                    default=cors_defaults)
+    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS') if 'CORS_ALLOWED_ORIGINS' in os.environ else cors_defaults
 
-CORS_ALLOW_CREDENTIALS = env.bool('CORS_ALLOW_CREDENTIALS', default=True)
+CORS_ALLOW_CREDENTIALS = env.bool('CORS_ALLOW_CREDENTIALS') if 'CORS_ALLOW_CREDENTIALS' in os.environ else True
 
 # Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = env('MEDIA_ROOT', default=os.path.join(BASE_DIR, 'media'))
+MEDIA_ROOT = env('MEDIA_ROOT') if 'MEDIA_ROOT' in os.environ else os.path.join(BASE_DIR, 'media')
 
 # Force HTTPS URLs in production
 USE_TLS = True
