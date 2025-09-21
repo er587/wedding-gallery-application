@@ -24,6 +24,10 @@ externalPort = 5000
 localPort = 8000
 externalPort = 8000
 
+[[ports]]
+localPort = 24678
+externalPort = 80
+
 [agent]
 expertMode = true
 
@@ -37,23 +41,11 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "React Frontend"
+args = "Django Backend"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Django Backend"
-
-[[workflows.workflow]]
-name = "React Frontend"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd frontend && npm run dev"
-waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"
+args = "React Frontend"
 
 [[workflows.workflow]]
 name = "Django Backend"
@@ -66,3 +58,15 @@ waitForPort = 8000
 
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow]]
+name = "React Frontend"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npm run dev"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"

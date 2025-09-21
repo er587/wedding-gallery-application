@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User, Group
-from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, SiteStyleConfiguration
+from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like
 
 
 # Customize User admin to show groups and roles
@@ -169,41 +169,3 @@ class LikeAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user', 'image')
-
-
-@admin.register(SiteStyleConfiguration)
-class SiteStyleConfigurationAdmin(admin.ModelAdmin):
-    list_display = ['style_theme', 'is_active', 'updated_at', 'created_at']
-    list_filter = ['style_theme', 'is_active', 'created_at']
-    ordering = ['-updated_at']
-    readonly_fields = ['created_at', 'updated_at']
-    
-    def has_delete_permission(self, request, obj=None):
-        """Prevent deletion if this is the only active configuration"""
-        if obj and obj.is_active:
-            active_count = SiteStyleConfiguration.objects.filter(is_active=True).count()
-            if active_count <= 1:
-                return False
-        return super().has_delete_permission(request, obj)
-    
-    def save_model(self, request, obj, form, change):
-        """Ensure at least one configuration is always active"""
-        super().save_model(request, obj, form, change)
-        
-        # If no configurations are active, make this one active
-        if not SiteStyleConfiguration.objects.filter(is_active=True).exists():
-            obj.is_active = True
-            obj.save()
-    
-    def get_fieldsets(self, request, obj=None):
-        fieldsets = (
-            ('Theme Configuration', {
-                'fields': ('style_theme', 'is_active'),
-                'description': 'Select the visual theme for your wedding gallery. Only one theme can be active at a time.',
-            }),
-            ('Timestamps', {
-                'fields': ('created_at', 'updated_at'),
-                'classes': ('collapse',),
-            }),
-        )
-        return fieldsets
