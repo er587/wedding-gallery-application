@@ -20,4 +20,10 @@ urlpatterns = [
     path('api/auth/profile/', views.user_profile_view, name='user-profile'),
     path('api/auth/profile/update/', views.update_profile, name='update-profile'),
     path('api/auth/change-password/', views.change_password, name='change-password'),
+    
+    # Cloud Storage endpoints with authentication and access controls
+    path('api/cloud/upload-url/', views.get_upload_url, name='get-upload-url'),
+    path('api/cloud/set-acl/', views.set_file_acl, name='set-file-acl'),
+    path('api/cloud/files/', views.list_user_files, name='list-user-files'),
+    path('api/files/<path:file_path>', views.serve_protected_file, name='serve-protected-file'),
 ]

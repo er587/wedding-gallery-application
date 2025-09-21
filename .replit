@@ -1,6 +1,6 @@
 run = ["python", "manage.py", "runserver", "0.0.0.0:3000"]
 entrypoint = "manage.py"
-modules = ["python-3.10", "nodejs-24", "postgresql-16"]
+modules = ["python-3.10", "nodejs-24", "postgresql-16", "python3"]
 
 hidden = [".pythonlibs"]
 
@@ -27,12 +27,9 @@ externalPort = 8000
 localPort = 24678
 externalPort = 80
 
-[[ports]]
-localPort = 43103
-externalPort = 3000
-
 [agent]
 expertMode = true
+integrations = ["javascript_object_storage:1.0.0"]
 
 [workflows]
 runButton = "Project"
@@ -73,3 +70,6 @@ waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-5c5b7745-456c-4b58-8f54-b3fd89ab78c2"

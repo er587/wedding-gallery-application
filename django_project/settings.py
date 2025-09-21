@@ -212,9 +212,27 @@ except KeyError:
 
 CORS_ALLOW_CREDENTIALS = env.bool('CORS_ALLOW_CREDENTIALS') if 'CORS_ALLOW_CREDENTIALS' in os.environ else True
 
-# Media files
+# Media files - Cloud Storage Configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = env('MEDIA_ROOT') if 'MEDIA_ROOT' in os.environ else os.path.join(BASE_DIR, 'media')
+
+# Cloud Storage Configuration for Replit App Storage
+USE_CLOUD_STORAGE = env.bool('USE_CLOUD_STORAGE') if 'USE_CLOUD_STORAGE' in os.environ else False
+
+if USE_CLOUD_STORAGE:
+    # Use custom Replit App Storage backend for media files
+    DEFAULT_FILE_STORAGE = 'images.storage.ReplitAppStorage'
+    
+    # Environment variables for cloud storage paths
+    # These should be set in the Replit environment after creating buckets
+    PRIVATE_OBJECT_DIR = env('PRIVATE_OBJECT_DIR') if 'PRIVATE_OBJECT_DIR' in os.environ else '/wedding-gallery/private'
+    PUBLIC_OBJECT_SEARCH_PATHS = env('PUBLIC_OBJECT_SEARCH_PATHS') if 'PUBLIC_OBJECT_SEARCH_PATHS' in os.environ else '/wedding-gallery/public'
+    
+    # Cloud storage URLs will be served through Django for access control
+    MEDIA_URL = '/api/files/'
+else:
+    # Fall back to local storage for development
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 # Force HTTPS URLs in production
 USE_TLS = True

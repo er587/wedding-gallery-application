@@ -7,10 +7,15 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.http import JsonResponse, HttpResponse, Http404
+from django.conf import settings
 import json
+import uuid
+import requests
 from django.utils import timezone
 from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like
 from .serializers import ImageSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer
+from .storage import ReplitAppStorage, FileAccessControl
 
 
 class ImagePagination(PageNumberPagination):
@@ -537,4 +542,206 @@ def change_password(request):
         
         return Response({
             'error': 'Password change failed. Please try again.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ============================================================================
+# CLOUD STORAGE API ENDPOINTS WITH AUTHENTICATION AND ACCESS CONTROLS
+# ============================================================================
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def get_upload_url(request):
+    """
+    Get presigned URL for uploading files to Replit App Storage.
+    Requires authentication to ensure only logged-in users can upload.
+    """
+    try:
+        if not getattr(settings, 'USE_CLOUD_STORAGE', False):
+            return Response({
+                'error': 'Cloud storage is not enabled'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        
+        storage = ReplitAppStorage()
+        
+        # Generate unique filename with user ID for organization
+        filename = request.data.get('filename', f'upload_{uuid.uuid4().hex}')
+        object_path = storage._generate_object_path(str(request.user.pk), filename)
+        
+        # Parse bucket and object name
+        bucket_name, object_name = storage._get_bucket_and_object_name(object_path)
+        
+        # Get presigned upload URL
+        upload_url = storage._get_presigned_upload_url(bucket_name, object_name)
+        
+        return Response({
+            'upload_url': upload_url,
+            'object_path': object_path,
+            'bucket_name': bucket_name,
+            'object_name': object_name
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Failed to get upload URL for user {request.user.pk}: {str(e)}')
+        
+        return Response({
+            'error': 'Failed to generate upload URL. Please try again.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def set_file_acl(request):
+    """
+    Set ACL policy for uploaded file after successful upload.
+    This enforces authentication and access control for the file.
+    """
+    try:
+        if not getattr(settings, 'USE_CLOUD_STORAGE', False):
+            return Response({
+                'error': 'Cloud storage is not enabled'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        
+        upload_url = request.data.get('upload_url')
+        is_public = request.data.get('is_public', False)
+        
+        if not upload_url:
+            return Response({
+                'error': 'upload_url is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        storage = ReplitAppStorage()
+        
+        # Extract bucket and object name from upload URL
+        from urllib.parse import urlparse
+        parsed_url = urlparse(upload_url)
+        path_parts = parsed_url.path.split('/')
+        bucket_name = path_parts[1] if len(path_parts) > 1 else None
+        object_name = '/'.join(path_parts[2:]) if len(path_parts) > 2 else None
+        
+        if not bucket_name or not object_name:
+            return Response({
+                'error': 'Invalid upload URL format'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Set ACL policy for the file
+        storage._set_object_acl_policy(
+            bucket_name, 
+            object_name, 
+            str(request.user.pk), 
+            is_public
+        )
+        
+        # Generate normalized object path for client use
+        normalized_path = f"/objects/{object_name}"
+        
+        return Response({
+            'success': True,
+            'object_path': normalized_path,
+            'access_url': storage.url(normalized_path)
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Failed to set ACL for user {request.user.pk}: {str(e)}')
+        
+        return Response({
+            'error': 'Failed to set file permissions. Please try again.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def serve_protected_file(request, file_path):
+    """
+    Serve files from cloud storage with access control enforcement.
+    Checks user authentication and file ownership before serving.
+    """
+    try:
+        if not getattr(settings, 'USE_CLOUD_STORAGE', False):
+            raise Http404("File not found")
+        
+        storage = ReplitAppStorage()
+        
+        # Get the file from cloud storage
+        full_path = f"/objects/{file_path}"
+        object_file = storage._storage_client.bucket('default-bucket').blob(file_path)
+        
+        if not object_file.exists():
+            raise Http404("File not found")
+        
+        # Get ACL policy and check access
+        acl_policy = FileAccessControl.get_file_acl_policy('default-bucket', file_path)
+        
+        if not acl_policy:
+            raise Http404("File not found")
+        
+        # Check if user can access the file
+        can_access = FileAccessControl.can_access_file(
+            request.user if hasattr(request, 'user') and request.user.is_authenticated else None,
+            full_path,
+            acl_policy.get('owner', '')
+        )
+        
+        if not can_access:
+            return HttpResponse('Unauthorized', status=401)
+        
+        # Stream the file to the client
+        response = HttpResponse(content_type='application/octet-stream')
+        
+        # Get file metadata for proper content type
+        object_file.reload()
+        if hasattr(object_file, 'content_type') and object_file.content_type:
+            response['Content-Type'] = object_file.content_type
+        
+        # Set caching headers based on file visibility
+        is_public = acl_policy.get('visibility') == 'public'
+        cache_control = 'public, max-age=3600' if is_public else 'private, max-age=3600'
+        response['Cache-Control'] = cache_control
+        
+        # Stream file content
+        for chunk in object_file.download_as_bytes(chunk_size=8192):
+            response.write(chunk)
+        
+        return response
+        
+    except Http404:
+        raise
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Failed to serve file {file_path}: {str(e)}')
+        raise Http404("File not found")
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def list_user_files(request):
+    """
+    List files uploaded by the authenticated user.
+    Provides a way for users to see their uploaded files.
+    """
+    try:
+        if not getattr(settings, 'USE_CLOUD_STORAGE', False):
+            return Response({
+                'files': []
+            }, status=status.HTTP_200_OK)
+        
+        # This would need to be implemented based on your specific
+        # file tracking mechanism (e.g., database records of uploads)
+        
+        return Response({
+            'files': [],
+            'message': 'File listing feature coming soon'
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Failed to list files for user {request.user.pk}: {str(e)}')
+        
+        return Response({
+            'error': 'Failed to retrieve file list.'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
