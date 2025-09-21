@@ -21,7 +21,7 @@ cp .env.example .env
 
 ```env
 # SECURITY - CRITICAL!
-SECRET_KEY=your-super-secret-production-key-here
+SECRET_KEY=your-super-secret-production-key-here-minimum-50-characters
 DEBUG=False
 
 # DATABASE
@@ -30,6 +30,7 @@ DATABASE_URL=postgres://username:password@hostname:5432/database_name
 # DEPLOYMENT
 ALLOWED_HOSTS=your-domain.com,www.your-domain.com
 CORS_ALLOWED_ORIGINS=https://your-domain.com,https://www.your-domain.com
+CORS_ALLOW_ALL_ORIGINS=False  # CRITICAL: Must be False in production!
 
 # WEDDING CUSTOMIZATION
 WEDDING_COUPLE_NAME="Your Names Here"

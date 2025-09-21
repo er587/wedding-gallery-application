@@ -163,12 +163,13 @@ main() {
     echo ""
     
     check_env_vars
-    test_db_connection
-    install_python_deps
+    install_python_deps  # Install dependencies BEFORE any Django code
+    test_db_connection   # Move after dependencies are installed
     build_frontend
     run_migrations
     collect_static
-    init_database
+    # Note: init_database runs migrations again - only use if you need default data
+    # init_database
     security_check
     
     echo ""

@@ -91,9 +91,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
 ]
 
-# Only use clickjacking protection in deployments because the Development Web View uses
+# Only use clickjacking protection in production (not DEBUG) because the Development Web View uses
 # iframes and needs to be a cross origin.
-if ("REPLIT_DEPLOYMENT" in os.environ):
+if not DEBUG:
     MIDDLEWARE.append('django.middleware.clickjacking.XFrameOptionsMiddleware')
 
 ROOT_URLCONF = 'django_project.urls'
@@ -170,7 +170,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = env('STATIC_ROOT') if 'STATIC_ROOT' in os.environ else os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = env('STATIC_ROOT') if 'STATIC_ROOT' in os.environ else os.path.join(BASE_DIR, 'staticfiles')
 
 # WhiteNoise configuration for production static files
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
@@ -193,14 +193,14 @@ REST_FRAMEWORK = {
     ],
 }
 
-# CORS settings from environment
-CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS') if 'CORS_ALLOW_ALL_ORIGINS' in os.environ else True
+# CORS settings from environment - SECURE DEFAULT FOR PRODUCTION
+CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS') if 'CORS_ALLOW_ALL_ORIGINS' in os.environ else DEBUG
 
-# Configure CORS allowed origins
+# Configure CORS allowed origins - restrict localhost to DEBUG environments
 cors_defaults = [
     'http://localhost:5000',
     'http://127.0.0.1:5000',
-]
+] if DEBUG else []
 try:
     replit_domains = os.environ["REPLIT_DOMAINS"].split(',')
     replit_cors_origins = [
@@ -227,9 +227,14 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     X_FRAME_OPTIONS = 'DENY'
+
+# Fail fast if production is using insecure SECRET_KEY
+if not DEBUG and SECRET_KEY == 'django-insecure-change-this-in-production':
+    raise Exception("Production deployment requires a secure SECRET_KEY. Please set a proper SECRET_KEY environment variable.")
 
 # Easy-thumbnails configuration
 THUMBNAIL_ALIASES = {
