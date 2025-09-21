@@ -13,7 +13,7 @@ language = "python3"
 
 [deployment]
 run = ["sh", "-c", "python manage.py migrate && gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 120 django_project.wsgi:application"]
-deploymentTarget = "autoscale"
+deploymentTarget = "vm"
 build = ["sh", "-c", "cd frontend && npm install && npm run build && cd .. && python manage.py collectstatic --noinput"]
 
 [[ports]]

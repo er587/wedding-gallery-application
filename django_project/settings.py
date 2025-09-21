@@ -38,27 +38,39 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-produc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-# Handle Replit domains if present, otherwise use env defaults
+# Handle Replit domains and custom domains if present, otherwise use env defaults
+custom_domains = [
+    'wedding-website-replit2779.replit.app',
+    'reneeanderic.wedding',
+    'www.reneeanderic.wedding'
+]
+
 try:
     replit_domains = os.environ["REPLIT_DOMAINS"].split(',')
-    ALLOWED_HOSTS = replit_domains + env('ALLOWED_HOSTS')
+    ALLOWED_HOSTS = replit_domains + custom_domains + env('ALLOWED_HOSTS')
 except KeyError:
-    ALLOWED_HOSTS = env('ALLOWED_HOSTS')
+    ALLOWED_HOSTS = custom_domains + env('ALLOWED_HOSTS')
 # Configure CSRF trusted origins
+csrf_production_origins = [
+    'https://wedding-website-replit2779.replit.app',
+    'https://reneeanderic.wedding',
+    'https://www.reneeanderic.wedding'
+]
+
 try:
     replit_domains = os.environ["REPLIT_DOMAINS"].split(',')
     CSRF_TRUSTED_ORIGINS = [
         "https://" + domain for domain in replit_domains
     ] + ["https://" + domain + ":5000" for domain in replit_domains] + [
         "https://" + domain + ":8000" for domain in replit_domains
-    ] + [
+    ] + csrf_production_origins + [
         'http://localhost:5000',
         'http://127.0.0.1:5000',
         'http://localhost:8000',
         'http://127.0.0.1:8000',
     ]
 except KeyError:
-    CSRF_TRUSTED_ORIGINS = [
+    CSRF_TRUSTED_ORIGINS = csrf_production_origins + [
         'http://localhost:5000',
         'http://127.0.0.1:5000',
         'http://localhost:8000',
@@ -201,14 +213,22 @@ cors_defaults = [
     'http://localhost:5000',
     'http://127.0.0.1:5000',
 ] if DEBUG else []
+
+# Add production domains for CORS
+production_origins = [
+    'https://wedding-website-replit2779.replit.app',
+    'https://reneeanderic.wedding',
+    'https://www.reneeanderic.wedding'
+]
+
 try:
     replit_domains = os.environ["REPLIT_DOMAINS"].split(',')
     replit_cors_origins = [
         "https://" + domain for domain in replit_domains
     ] + ["https://" + domain + ":5000" for domain in replit_domains]
-    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS') if 'CORS_ALLOWED_ORIGINS' in os.environ else (cors_defaults + replit_cors_origins)
+    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS') if 'CORS_ALLOWED_ORIGINS' in os.environ else (cors_defaults + replit_cors_origins + production_origins)
 except KeyError:
-    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS') if 'CORS_ALLOWED_ORIGINS' in os.environ else cors_defaults
+    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS') if 'CORS_ALLOWED_ORIGINS' in os.environ else (cors_defaults + production_origins)
 
 CORS_ALLOW_CREDENTIALS = env.bool('CORS_ALLOW_CREDENTIALS') if 'CORS_ALLOW_CREDENTIALS' in os.environ else True
 
