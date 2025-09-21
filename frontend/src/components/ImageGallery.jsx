@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import ImageViewer from './ImageViewer'
 import SearchBar from './SearchBar'
+import InlineEditableText from './InlineEditableText'
 import { apiService } from '../services/api'
 import { useToast } from './Toast'
 
@@ -153,10 +154,40 @@ export default function ImageGallery({ user, refresh }) {
     }
   }
 
+  const handleUpdateImageTitle = async (imageId, newTitle) => {
+    try {
+      await apiService.updateImage(imageId, { title: newTitle })
+      
+      // Update the image in the local state
+      setImages(prevImages => 
+        prevImages.map(img => 
+          img.id === imageId 
+            ? { ...img, title: newTitle }
+            : img
+        )
+      )
+      
+      // Update selected image if it's currently being viewed
+      if (selectedImage && selectedImage.id === imageId) {
+        setSelectedImage(prev => ({ ...prev, title: newTitle }))
+      }
+    } catch (error) {
+      console.error('Error updating image title:', error)
+      throw error // Re-throw so InlineEditableText can handle the error
+    }
+  }
+
   const canDeleteImage = (image) => {
     if (!user) return false
     
     // Only allow image owner to delete their own image
+    return (image.uploader.id === user.id)
+  }
+
+  const canEditImage = (image) => {
+    if (!user) return false
+    
+    // Only allow image owner to edit their own image
     return (image.uploader.id === user.id)
   }
 
@@ -502,7 +533,13 @@ export default function ImageGallery({ user, refresh }) {
                 )}
               </div>
             <div className="p-4">
-              <h3 className="font-semibold text-gray-900 truncate">{image.title}</h3>
+              <InlineEditableText
+                value={image.title}
+                onSave={(newTitle) => handleUpdateImageTitle(image.id, newTitle)}
+                className="font-semibold text-gray-900 truncate"
+                placeholder="Enter image title..."
+                canEdit={canEditImage(image)}
+              />
               <p className="text-sm text-gray-600 mt-1 line-clamp-2">{image.description}</p>
               
               {/* Display tags */}
