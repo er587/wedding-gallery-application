@@ -100,11 +100,12 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-7xl w-full max-h-[95vh] overflow-hidden flex m-4 relative">
+      {/* Mobile-first responsive modal */}
+      <div className="bg-white w-full h-full md:rounded-lg md:max-w-7xl md:w-full md:max-h-[95vh] md:m-4 overflow-hidden flex flex-col md:flex-row relative">
         {/* Dismiss button in top left */}
         <button
           onClick={onClose}
-          className="absolute top-4 left-4 z-10 p-2 rounded-full bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-600 hover:text-gray-800 transition-all shadow-md"
+          className="absolute top-4 left-4 z-20 p-2 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-white transition-all shadow-md md:bg-white md:bg-opacity-80 md:hover:bg-opacity-100 md:text-gray-600 md:hover:text-gray-800"
           title="Close"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -112,17 +113,75 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
-        {/* Image Section */}
-        <div className="flex-1 bg-black flex items-center justify-center">
+        
+        {/* Image Section - Full height on mobile, flexible on desktop */}
+        <div className="flex-1 bg-black flex items-center justify-center min-h-0 order-1 md:order-1">
           <img
             src={imageData.image_file}
             alt={imageData.title}
-            className="max-w-full max-h-full object-contain"
+            className="max-w-full max-h-full object-contain w-full"
+            style={{ maxHeight: 'calc(100vh - 200px)' }} // Reserve space for mobile social bar
           />
         </div>
         
-        {/* Comments Section */}
-        <div className="w-80 bg-white flex flex-col">
+        {/* Mobile Social Bar - Bottom overlay */}
+        <div className="md:hidden absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent p-4 text-white order-2">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h2 className="font-semibold text-lg">{imageData.title}</h2>
+              <p className="text-sm text-gray-200">by {imageData.uploader.first_name && imageData.uploader.last_name ? `${imageData.uploader.first_name} ${imageData.uploader.last_name}` : imageData.uploader.first_name || imageData.uploader.username}</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={handleLike}
+                className={`flex items-center space-x-1 px-2 py-1 rounded-md transition-colors ${
+                  imageData.user_has_liked 
+                    ? 'text-red-400 hover:text-red-300' 
+                    : 'text-white hover:text-red-400'
+                }`}
+                disabled={!user}
+                title={imageData.user_has_liked ? 'Unlike' : 'Like'}
+              >
+                <svg 
+                  className={`w-5 h-5 ${imageData.user_has_liked ? 'fill-current' : ''}`} 
+                  fill={imageData.user_has_liked ? 'currentColor' : 'none'} 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
+                  />
+                </svg>
+                <span className="text-sm">{imageData.like_count || 0}</span>
+              </button>
+              <button
+                onClick={handleSaveImage}
+                className="text-white hover:text-blue-400 text-sm px-2 py-1 rounded transition-colors flex items-center gap-1"
+                title="Save image to device"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </button>
+              {canDeleteImage() && (
+                <button
+                  onClick={handleDeleteImage}
+                  disabled={deleting}
+                  className="text-white hover:text-red-400 text-sm px-2 py-1 rounded transition-colors disabled:opacity-50"
+                  title="Delete image"
+                >
+                  {deleting ? '...' : '🗑️'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Comments Section - Hidden on mobile, sidebar on desktop */}
+        <div className="hidden md:flex md:w-80 bg-white flex-col order-3 md:order-2">
           {/* Header */}
           <div className="p-4 border-b">
             <div className="flex justify-between items-start">
