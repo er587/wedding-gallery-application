@@ -453,7 +453,9 @@ export default function ImageGallery({ user, refresh }) {
                 }
               }}
             >
-              <div className="aspect-square relative overflow-hidden bg-gray-100">
+              <div className="aspect-square relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                {/* Loading placeholder with shimmer effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
                 <img
                   src={image.thumbnail_medium || image.thumbnail_url || image.image_file}
                   srcSet={`
@@ -463,9 +465,14 @@ export default function ImageGallery({ user, refresh }) {
                   `.trim()}
                   sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   alt={image.title}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform hover:scale-105"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform hover:scale-105 z-10"
                   style={{ aspectRatio: '1/1' }}
                   loading="lazy"
+                  onLoad={(e) => {
+                    // Hide shimmer effect once image loads
+                    const shimmer = e.target.previousElementSibling
+                    if (shimmer) shimmer.style.display = 'none'
+                  }}
                 />
                 
                 {/* Selection checkbox - only show in selection mode */}
