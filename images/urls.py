@@ -1,5 +1,8 @@
-from django.urls import path
+from django.urls import path, re_path
 from . import views
+from django.views.generic import TemplateView
+from django.conf import settings
+import os
 
 urlpatterns = [
     # Image endpoints
@@ -26,4 +29,7 @@ urlpatterns = [
     path('api/cloud/set-acl/', views.set_file_acl, name='set-file-acl'),
     path('api/cloud/files/', views.list_user_files, name='list-user-files'),
     path('api/files/<path:file_path>', views.serve_protected_file, name='serve-protected-file'),
+    
+    # Serve React frontend for all non-API routes
+    re_path(r'^(?!api/).*$', views.serve_frontend, name='frontend'),
 ]

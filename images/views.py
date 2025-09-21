@@ -12,6 +12,7 @@ from django.conf import settings
 import json
 import uuid
 import requests
+import os
 from django.utils import timezone
 from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like
 from .serializers import ImageSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer
@@ -745,3 +746,26 @@ def list_user_files(request):
         return Response({
             'error': 'Failed to retrieve file list.'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def serve_frontend(request, *args, **kwargs):
+    """
+    Serve the React frontend for all non-API routes.
+    This is the catch-all route for the single-page application.
+    """
+    try:
+        # Path to the React build's index.html
+        index_path = os.path.join(settings.BASE_DIR, "frontend", "dist", "index.html")
+        
+        if os.path.exists(index_path):
+            with open(index_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            return HttpResponse(content, content_type="text/html")
+        else:
+            # Fallback if React build doesn't exist
+            return HttpResponse(
+                "<html><body><h1>Frontend not built</h1><p>Run: cd frontend && npm run build</p></body></html>",
+                content_type="text/html"
+            )
+    except Exception as e:
+        return HttpResponse(f"Error serving frontend: {str(e)}", status=500)
