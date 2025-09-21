@@ -89,6 +89,10 @@ db.sqlite3*
 .env.production
 .env.staging
 cookies.txt
+.cache/
+**/logs/
+tmp/
+*.log
 
 # Flask stuff:
 instance/
