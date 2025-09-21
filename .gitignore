@@ -76,7 +76,7 @@ static/uploads/
 **/images/
 **/media/
 **/uploads/
-attached_assests/
+attached_assets/
 
 # Flask stuff:
 instance/
