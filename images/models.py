@@ -356,3 +356,54 @@ class Like(models.Model):
     
     def __str__(self):
         return f"{self.user.username} likes {self.image.title}"
+
+
+class SiteStyleConfiguration(models.Model):
+    """Site styling configuration for the wedding gallery"""
+    STYLE_CHOICES = [
+        ('default', 'Default'),
+        ('verona_sunset', 'Verona Sunset'),
+    ]
+    
+    style_theme = models.CharField(
+        max_length=20, 
+        choices=STYLE_CHOICES, 
+        default='default',
+        help_text="Select the visual theme for the wedding gallery"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this styling configuration is currently active"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-updated_at']
+        verbose_name = "Site Style Configuration"
+        verbose_name_plural = "Site Style Configurations"
+    
+    def __str__(self):
+        status = "Active" if self.is_active else "Inactive"
+        return f"{self.get_style_theme_display()} ({status})"
+    
+    def save(self, *args, **kwargs):
+        """Ensure only one active configuration exists"""
+        if self.is_active:
+            # Deactivate all other configurations
+            SiteStyleConfiguration.objects.filter(is_active=True).exclude(pk=self.pk).update(is_active=False)
+        super().save(*args, **kwargs)
+    
+    @classmethod
+    def get_active_style(cls):
+        """Get the currently active style configuration"""
+        try:
+            return cls.objects.filter(is_active=True).first()
+        except cls.DoesNotExist:
+            return None
+    
+    @classmethod
+    def get_active_theme(cls):
+        """Get the active theme name, defaulting to 'default' if none set"""
+        active_config = cls.get_active_style()
+        return active_config.style_theme if active_config else 'default'
