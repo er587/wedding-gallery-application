@@ -7,6 +7,7 @@ import WelcomeModal from './components/WelcomeModal'
 import { ToastProvider } from './components/Toast'
 import { authService } from './services/auth'
 import { apiService } from './services/api'
+import { useTheme, getThemeClasses } from './hooks/useTheme'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -14,6 +15,8 @@ function App() {
   const [showProfile, setShowProfile] = useState(false)
   const [showWelcome, setShowWelcome] = useState(false)
   const [refreshGallery, setRefreshGallery] = useState(0)
+  const { theme, loading: themeLoading } = useTheme()
+  const themeClasses = getThemeClasses(theme)
 
   useEffect(() => {
     // Initialize app: get CSRF token first, then check authentication
@@ -84,11 +87,11 @@ function App() {
 
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+      <div className={`min-h-screen ${themeClasses.pageBackground}`}>
+      <header className={`${themeClasses.cardBackground} shadow-sm ${themeClasses.cardBorder} border-b`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-gray-900">Wedding Gallery</h1>
+            <h1 className={`text-2xl font-bold ${themeClasses.text.primary}`}>Wedding Gallery</h1>
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
@@ -129,7 +132,7 @@ function App() {
                   {user.can_upload_images && (
                     <button
                       onClick={() => setShowUpload(true)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                      className={`${themeClasses.primaryButton} px-4 py-2 rounded-md transition-colors`}
                     >
                       Upload Image
                     </button>
