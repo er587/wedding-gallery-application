@@ -3,10 +3,7 @@ import axios from 'axios'
 // Use relative URLs - Vite will proxy to Django backend
 const API_BASE_URL = ''
 
-// Debug logging to help troubleshoot
-console.log('🔗 Frontend API Configuration:')
-console.log('  API Base URL: Using Vite proxy (relative URLs)')
-console.log('  Current location:', window.location.origin)
+// Frontend API Configuration - Using Vite proxy to Django backend
 
 // Create axios instance with default config
 const api = axios.create({

@@ -16,10 +16,10 @@ export const authService = {
       localStorage.setItem('user', JSON.stringify(userData))
       localStorage.setItem('isAuthenticated', 'true')
       
-      console.log('✅ Django authentication successful:', userData)
+      // Authentication successful
       return userData
     } catch (error) {
-      console.error('❌ Django authentication failed:', error.response?.data || error.message)
+      console.error('Django authentication failed:', error.response?.data || error.message)
       
       // Only use fallback if Django authentication truly fails
       if (username === 'testuser' && password === 'testpass123') {
