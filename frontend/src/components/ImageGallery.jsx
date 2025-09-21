@@ -281,6 +281,17 @@ export default function ImageGallery({ user, refresh }) {
     setImages(prevImages => prevImages.filter(image => image.id !== deletedImageId))
   }
 
+  const handleImageTitleUpdated = (imageId, newTitle) => {
+    // Update the image title in the gallery's local state
+    setImages(prevImages => 
+      prevImages.map(img => 
+        img.id === imageId 
+          ? { ...img, title: newTitle }
+          : img
+      )
+    )
+  }
+
   const handleSearch = (searchTerm) => {
     setSearchParams(prev => ({ ...prev, search: searchTerm }))
   }
@@ -678,6 +689,7 @@ export default function ImageGallery({ user, refresh }) {
           user={user}
           onClose={() => setSelectedImage(null)}
           onImageDeleted={handleImageDeleted}
+          onTitleUpdated={handleImageTitleUpdated}
         />
       )}
     </>

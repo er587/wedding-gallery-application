@@ -4,7 +4,7 @@ import InlineEditableText from './InlineEditableText'
 import { apiService } from '../services/api'
 import { useToast } from './Toast'
 
-export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
+export default function ImageViewer({ image, user, onClose, onImageDeleted, onTitleUpdated }) {
   const toast = useToast()
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
@@ -80,6 +80,11 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted }) {
       
       // Update the local state
       setImageData(prev => ({ ...prev, title: newTitle }))
+      
+      // Notify parent component (ImageGallery) about the title update
+      if (onTitleUpdated) {
+        onTitleUpdated(imageData.id, newTitle)
+      }
     } catch (error) {
       console.error('Error updating image title:', error)
       throw error // Re-throw so InlineEditableText can handle the error
