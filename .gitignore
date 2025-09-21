@@ -65,6 +65,7 @@ db.sqlite3-journal
 media/
 uploads/
 static/uploads/
+staticfiles/
 *.jpg
 *.jpeg
 *.png
@@ -76,7 +77,18 @@ static/uploads/
 **/images/
 **/media/
 **/uploads/
+**/staticfiles/
 attached_assets/
+
+# User data and sensitive files
+db.sqlite3*
+*.sqlite*
+*.db
+.env
+.env.local
+.env.production
+.env.staging
+cookies.txt
 
 # Flask stuff:
 instance/
