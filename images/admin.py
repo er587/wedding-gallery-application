@@ -106,7 +106,7 @@ class InvitationCodeAdmin(admin.ModelAdmin):
     list_display = ['code', 'role', 'is_active', 'usage_count', 'created_by', 'created_at', 'last_used_at']
     list_filter = ['role', 'is_active', 'created_at', 'last_used_at', 'created_by']
     search_fields = ['code', 'created_by__username', 'notes']
-    readonly_fields = ['code', 'usage_count', 'last_used_at', 'created_at']
+    readonly_fields = ['code', 'created_by', 'usage_count', 'last_used_at', 'created_at']
     fields = ['role', 'is_active', 'notes', 'code', 'created_by', 'created_at', 'usage_count', 'last_used_at']
     
     def save_model(self, request, obj, form, change):
