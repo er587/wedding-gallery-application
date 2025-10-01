@@ -275,47 +275,41 @@ if not DEBUG:
 if not DEBUG and SECRET_KEY == 'django-insecure-change-this-in-production':
     raise Exception("Production deployment requires a secure SECRET_KEY. Please set a proper SECRET_KEY environment variable.")
 
-# Easy-thumbnails configuration with responsive sizes and WebP support
+# Easy-thumbnails configuration with responsive sizes
 THUMBNAIL_ALIASES = {
     '': {
-        # Square thumbnails for gallery grid (face-aware cropping with WebP)
+        # Square thumbnails for gallery grid (face-aware cropping)
         'square_160': {
             'size': (160, 160),
             'crop': True,
             'quality': 80,
-            'format': 'WEBP',
         },
         'square_320': {
             'size': (320, 320),
             'crop': True,
             'quality': 80,
-            'format': 'WEBP',
         },
         'square_640': {
             'size': (640, 640),
             'crop': True,
             'quality': 80,
-            'format': 'WEBP',
         },
         
-        # Width-constrained images for viewing (maintain aspect ratio, WebP)
+        # Width-constrained images for viewing (maintain aspect ratio)
         'width_480': {
             'size': (480, 0),
             'crop': False,
             'quality': 82,
-            'format': 'WEBP',
         },
         'width_960': {
             'size': (960, 0),
             'crop': False,
             'quality': 82,
-            'format': 'WEBP',
         },
         'width_1440': {
             'size': (1440, 0),
             'crop': False,
             'quality': 82,
-            'format': 'WEBP',
         },
         
         # Legacy aliases for backward compatibility
@@ -323,19 +317,16 @@ THUMBNAIL_ALIASES = {
             'size': (150, 150),
             'crop': True,
             'quality': 85,
-            'format': 'WEBP',
         },
         'medium': {
             'size': (300, 300),
             'crop': True,
             'quality': 85,
-            'format': 'WEBP',
         },
         'large': {
             'size': (600, 600),
             'crop': False,
             'quality': 90,
-            'format': 'WEBP',
         },
     },
 }
