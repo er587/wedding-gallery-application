@@ -28,10 +28,6 @@ externalPort = 8000
 localPort = 24678
 externalPort = 80
 
-[[ports]]
-localPort = 42761
-externalPort = 3000
-
 [agent]
 expertMode = true
 integrations = ["javascript_object_storage:1.0.0"]
