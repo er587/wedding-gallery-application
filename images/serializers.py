@@ -44,17 +44,31 @@ class ImageSerializer(serializers.ModelSerializer):
     like_count = serializers.SerializerMethodField()
     user_has_liked = serializers.SerializerMethodField()
     image_file = serializers.SerializerMethodField()
+    
+    # Responsive thumbnail URLs for different sizes and platforms
+    thumbnail_square_160 = serializers.SerializerMethodField()
+    thumbnail_square_320 = serializers.SerializerMethodField()
+    thumbnail_square_640 = serializers.SerializerMethodField()
+    thumbnail_width_480 = serializers.SerializerMethodField()
+    thumbnail_width_960 = serializers.SerializerMethodField()
+    thumbnail_width_1440 = serializers.SerializerMethodField()
+    
+    # Legacy thumbnail fields for backward compatibility
     thumbnail_url = serializers.SerializerMethodField()
     thumbnail_small = serializers.SerializerMethodField()
     thumbnail_medium = serializers.SerializerMethodField()
     thumbnail_large = serializers.SerializerMethodField()
+    
     tags = TagSerializer(many=True, read_only=True)
     tag_names = serializers.ListField(child=serializers.CharField(), write_only=True, required=False)
     
     class Meta:
         model = Image
-        fields = ['id', 'title', 'description', 'image_file', 'thumbnail_url', 'thumbnail_small', 
-                 'thumbnail_medium', 'thumbnail_large', 'uploader', 'uploaded_at', 'updated_at', 
+        fields = ['id', 'title', 'description', 'image_file', 
+                 'thumbnail_square_160', 'thumbnail_square_320', 'thumbnail_square_640',
+                 'thumbnail_width_480', 'thumbnail_width_960', 'thumbnail_width_1440',
+                 'thumbnail_url', 'thumbnail_small', 'thumbnail_medium', 'thumbnail_large',
+                 'uploader', 'uploaded_at', 'updated_at', 
                  'comments', 'comment_count', 'like_count', 'user_has_liked', 'tags', 'tag_names']
         read_only_fields = ['id', 'uploader', 'uploaded_at', 'updated_at']
     
@@ -80,35 +94,58 @@ class ImageSerializer(serializers.ModelSerializer):
         # Legacy method - use medium thumbnail for backward compatibility
         return self.get_thumbnail_medium(obj)
     
-    def get_thumbnail_small(self, obj):
+    def _get_thumbnail_with_face_data(self, obj, alias):
+        """Helper method to get thumbnail URL with face detection data"""
         if obj.image_file:
             try:
                 thumbnailer = get_thumbnailer(obj.image_file)
-                thumbnail = thumbnailer.get_thumbnail({'size': (150, 150), 'crop': True, 'quality': 85})
+                options = {'alias': alias}
+                
+                # Pass face coordinates to the processor if available
+                if obj.face_x is not None:
+                    options.update({
+                        'face_x': obj.face_x,
+                        'face_y': obj.face_y,
+                        'face_width': obj.face_width,
+                        'face_height': obj.face_height,
+                    })
+                
+                thumbnail = thumbnailer.get_thumbnail(options)
                 return thumbnail.url
-            except Exception:
+            except Exception as e:
+                print(f"Thumbnail generation error for {alias}: {e}")
                 return obj.image_file.url
         return None
+    
+    # Responsive square thumbnails (face-aware cropping)
+    def get_thumbnail_square_160(self, obj):
+        return self._get_thumbnail_with_face_data(obj, 'square_160')
+    
+    def get_thumbnail_square_320(self, obj):
+        return self._get_thumbnail_with_face_data(obj, 'square_320')
+    
+    def get_thumbnail_square_640(self, obj):
+        return self._get_thumbnail_with_face_data(obj, 'square_640')
+    
+    # Width-constrained thumbnails (maintain aspect ratio)
+    def get_thumbnail_width_480(self, obj):
+        return self._get_thumbnail_with_face_data(obj, 'width_480')
+    
+    def get_thumbnail_width_960(self, obj):
+        return self._get_thumbnail_with_face_data(obj, 'width_960')
+    
+    def get_thumbnail_width_1440(self, obj):
+        return self._get_thumbnail_with_face_data(obj, 'width_1440')
+    
+    # Legacy thumbnail methods for backward compatibility
+    def get_thumbnail_small(self, obj):
+        return self._get_thumbnail_with_face_data(obj, 'small')
     
     def get_thumbnail_medium(self, obj):
-        if obj.image_file:
-            try:
-                thumbnailer = get_thumbnailer(obj.image_file)
-                thumbnail = thumbnailer.get_thumbnail({'size': (300, 300), 'crop': True, 'quality': 85})
-                return thumbnail.url
-            except Exception:
-                return obj.image_file.url
-        return None
+        return self._get_thumbnail_with_face_data(obj, 'medium')
     
     def get_thumbnail_large(self, obj):
-        if obj.image_file:
-            try:
-                thumbnailer = get_thumbnailer(obj.image_file)
-                thumbnail = thumbnailer.get_thumbnail({'size': (600, 600), 'crop': False, 'quality': 90})
-                return thumbnail.url
-            except Exception:
-                return obj.image_file.url
-        return None
+        return self._get_thumbnail_with_face_data(obj, 'large')
 
 
 class ImageCreateSerializer(serializers.ModelSerializer):
