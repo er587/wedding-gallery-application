@@ -101,6 +101,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'images.middleware.MediaCacheMiddleware',  # Cache headers for media files
 ]
 
 # Only use clickjacking protection in production (not DEBUG) because the Development Web View uses
