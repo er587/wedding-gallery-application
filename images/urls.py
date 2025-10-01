@@ -30,6 +30,6 @@ urlpatterns = [
     path('api/cloud/files/', views.list_user_files, name='list-user-files'),
     path('api/files/<path:file_path>', views.serve_protected_file, name='serve-protected-file'),
     
-    # Serve React frontend for all non-API routes
-    re_path(r'^(?!api/).*$', views.serve_frontend, name='frontend'),
+    # Serve React frontend for all non-API and non-media routes
+    re_path(r'^(?!(api/|media/|admin/)).*$', views.serve_frontend, name='frontend'),
 ]
