@@ -308,6 +308,9 @@ def register_view(request):
             profile.role = invitation.role
             profile.save()
         
+        # Automatically log in the user after registration
+        login(request, user)
+        
         # Build response data - use email as display username
         user_data = {
             'id': user.id,
