@@ -56,6 +56,13 @@ class Image(models.Model):
     description = models.TextField(blank=True)
     image_file = models.ImageField(upload_to=get_image_upload_path)
     thumbnail = models.ImageField(upload_to=get_thumbnail_upload_path, blank=True, null=True)
+    
+    # Face detection coordinates for smart cropping (normalized 0-1)
+    face_x = models.FloatField(null=True, blank=True, help_text="Face center X coordinate (0-1)")
+    face_y = models.FloatField(null=True, blank=True, help_text="Face center Y coordinate (0-1)")
+    face_width = models.FloatField(null=True, blank=True, help_text="Face width (0-1)")
+    face_height = models.FloatField(null=True, blank=True, help_text="Face height (0-1)")
+    
     uploader = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE,
@@ -72,12 +79,57 @@ class Image(models.Model):
         return self.title
     
     def save(self, *args, **kwargs):
-        """Override save to generate thumbnail"""
+        """Override save to detect faces and store coordinates"""
+        is_new = self.pk is None
         super().save(*args, **kwargs)
         
-        # Generate thumbnail if image_file exists but thumbnail doesn't
+        # Detect and store face coordinates if this is a new image
+        if is_new and self.image_file and self.face_x is None:
+            self.detect_and_store_face_coordinates()
+        
+        # Legacy: Generate thumbnail if image_file exists but thumbnail doesn't
+        # (will be deprecated once easy-thumbnails is fully integrated)
         if self.image_file and not self.thumbnail:
             self.create_thumbnail()
+    
+    def detect_and_store_face_coordinates(self):
+        """Detect faces and store normalized coordinates for smart cropping"""
+        if not self.image_file:
+            return
+            
+        try:
+            import cv2
+            
+            # Load image with OpenCV for face detection
+            cv_image = cv2.imread(self.image_file.path)
+            if cv_image is None:
+                return
+            
+            # Detect faces in the image
+            face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+            gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+            
+            if len(faces) > 0:
+                # Get the largest face
+                largest_face = max(faces, key=lambda rect: rect[2] * rect[3])
+                x, y, w, h = largest_face
+                
+                # Normalize coordinates (0-1) based on image dimensions
+                img_height, img_width = cv_image.shape[:2]
+                self.face_x = (x + w/2) / img_width  # Center X
+                self.face_y = (y + h/2) / img_height  # Center Y
+                self.face_width = w / img_width
+                self.face_height = h / img_height
+                
+                # Save face coordinates without triggering recursion
+                super(Image, self).save(update_fields=['face_x', 'face_y', 'face_width', 'face_height'])
+                
+        except ImportError:
+            # OpenCV not available - skip face detection
+            pass
+        except Exception as e:
+            print(f"Error detecting face for image {self.id}: {e}")
     
     def create_thumbnail(self):
         """Create a smart thumbnail version of the image with face detection"""
