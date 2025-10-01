@@ -147,13 +147,18 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
           <img
             src={imageData.image_file}
             srcSet={`
-              ${imageData.thumbnail_large} 600w,
-              ${imageData.image_file} 1200w
+              ${imageData.thumbnail_width_480 || imageData.thumbnail_large} 480w,
+              ${imageData.thumbnail_width_960 || imageData.image_file} 960w,
+              ${imageData.thumbnail_width_1440 || imageData.image_file} 1440w,
+              ${imageData.image_file} 2000w
             `.trim()}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 100vw"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1440px"
             alt={imageData.title}
             className="max-w-full max-h-full object-contain w-full"
-            style={{ maxHeight: 'calc(100vh - 200px)' }} // Reserve space for mobile social bar
+            style={{ maxHeight: 'calc(100vh - 200px)' }}
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
           />
         </div>
         

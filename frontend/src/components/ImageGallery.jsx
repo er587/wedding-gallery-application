@@ -503,17 +503,18 @@ export default function ImageGallery({ user, refresh }) {
                 {/* Loading placeholder with shimmer effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
                 <img
-                  src={image.thumbnail_medium || image.thumbnail_url || image.image_file}
+                  src={image.thumbnail_square_320 || image.thumbnail_medium || image.thumbnail_url || image.image_file}
                   srcSet={`
-                    ${image.thumbnail_small} 150w,
-                    ${image.thumbnail_medium} 300w,
-                    ${image.thumbnail_large} 600w
+                    ${image.thumbnail_square_160 || image.thumbnail_small} 160w,
+                    ${image.thumbnail_square_320 || image.thumbnail_medium} 320w,
+                    ${image.thumbnail_square_640 || image.thumbnail_large} 640w
                   `.trim()}
                   sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   alt={image.title}
                   className="absolute inset-0 w-full h-full object-cover transition-transform hover:scale-105 z-10"
                   style={{ aspectRatio: '1/1' }}
                   loading="lazy"
+                  decoding="async"
                   onLoad={(e) => {
                     // Hide shimmer effect once image loads
                     const shimmer = e.target.previousElementSibling
