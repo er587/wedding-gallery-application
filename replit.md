@@ -6,6 +6,13 @@ This is a full-stack wedding gallery application built with Django REST Framewor
 
 ## Recent Changes
 
+**October 1, 2025 - Enhanced Registration UX & Media File Serving:**
+- **Added password preview toggle with eye icon on registration form**
+- **Implemented password confirmation field with matching validation**
+- **Real-time validation feedback with error highlighting for mismatched passwords**
+- **Fixed media file serving by excluding /media/ from frontend catch-all route**
+- **Thumbnails and original images now load correctly with proper Content-Type headers**
+
 **October 1, 2025 - Responsive Thumbnail Optimization with Face-Aware Cropping:**
 - **Implemented comprehensive responsive thumbnail system using easy-thumbnails**
 - **Added face detection coordinate storage (face_x, face_y, face_width, face_height) to Image model**
