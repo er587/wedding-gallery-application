@@ -6,6 +6,18 @@ This is a full-stack wedding gallery application built with Django REST Framewor
 
 ## Recent Changes
 
+**October 1, 2025 - Responsive Thumbnail Optimization with Face-Aware Cropping:**
+- **Implemented comprehensive responsive thumbnail system using easy-thumbnails**
+- **Added face detection coordinate storage (face_x, face_y, face_width, face_height) to Image model**
+- **Created custom smart_crop processor for face-aware cropping with center-crop fallback**
+- **Configured multiple responsive thumbnail sizes:**
+  - Square thumbnails with face-aware cropping: 160px, 320px, 640px
+  - Width-constrained thumbnails maintaining aspect ratio: 480px, 960px, 1440px
+- **Integrated WebP format for smaller file sizes with JPEG fallback**
+- **Updated frontend with responsive srcset and sizes attributes for optimal delivery**
+- **Added MediaCacheMiddleware for long-term caching headers (1 year) and ETag support**
+- **Optimized image delivery across mobile, tablet, and desktop platforms**
+
 **September 21, 2025 - Production Deployment Ready:**
 - **Configured PostgreSQL database for production use**
 - **Added WhiteNoise middleware for production static file serving**
@@ -60,10 +72,16 @@ Preferred communication style: Simple, everyday language.
 - Permission-based access control (authenticated users for creation, public for reading)
 - Serialized responses with related data (user info, comment counts, nested replies)
 
-### File Upload Strategy
+### File Upload & Thumbnail Strategy
 - Custom upload path generation using username and timestamp
 - ImageField for automatic image validation and processing
 - Static file serving during development through Django
+- **Responsive thumbnail generation with easy-thumbnails:**
+  - Face detection coordinates stored per image for smart cropping
+  - Custom face-aware crop processor with center-crop fallback
+  - Multiple responsive sizes optimized for mobile/tablet/desktop
+  - WebP format with quality optimization (82-95%) for smaller file sizes
+  - Long-term browser caching (1 year) with ETag support for performance
 
 ### Authentication & Authorization
 - Django session-based authentication with CSRF protection

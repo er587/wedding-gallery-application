@@ -278,47 +278,44 @@ if not DEBUG and SECRET_KEY == 'django-insecure-change-this-in-production':
 # Easy-thumbnails configuration with responsive sizes and WebP support
 THUMBNAIL_ALIASES = {
     '': {
-        # Square thumbnails for gallery grid (face-aware cropping)
+        # Square thumbnails for gallery grid (face-aware cropping with WebP)
         'square_160': {
             'size': (160, 160),
             'crop': True,
             'quality': 80,
-            'PROCESSORS': (
-                'images.thumbnail_processors.smart_crop.face_aware_crop',
-            ),
+            'format': 'WEBP',
         },
         'square_320': {
             'size': (320, 320),
             'crop': True,
             'quality': 80,
-            'PROCESSORS': (
-                'images.thumbnail_processors.smart_crop.face_aware_crop',
-            ),
+            'format': 'WEBP',
         },
         'square_640': {
             'size': (640, 640),
             'crop': True,
             'quality': 80,
-            'PROCESSORS': (
-                'images.thumbnail_processors.smart_crop.face_aware_crop',
-            ),
+            'format': 'WEBP',
         },
         
-        # Width-constrained images for viewing (maintain aspect ratio)
+        # Width-constrained images for viewing (maintain aspect ratio, WebP)
         'width_480': {
             'size': (480, 0),
             'crop': False,
             'quality': 82,
+            'format': 'WEBP',
         },
         'width_960': {
             'size': (960, 0),
             'crop': False,
             'quality': 82,
+            'format': 'WEBP',
         },
         'width_1440': {
             'size': (1440, 0),
             'crop': False,
             'quality': 82,
+            'format': 'WEBP',
         },
         
         # Legacy aliases for backward compatibility
@@ -326,22 +323,19 @@ THUMBNAIL_ALIASES = {
             'size': (150, 150),
             'crop': True,
             'quality': 85,
-            'PROCESSORS': (
-                'images.thumbnail_processors.smart_crop.face_aware_crop',
-            ),
+            'format': 'WEBP',
         },
         'medium': {
             'size': (300, 300),
             'crop': True,
             'quality': 85,
-            'PROCESSORS': (
-                'images.thumbnail_processors.smart_crop.face_aware_crop',
-            ),
+            'format': 'WEBP',
         },
         'large': {
             'size': (600, 600),
             'crop': False,
             'quality': 90,
+            'format': 'WEBP',
         },
     },
 }
@@ -349,6 +343,7 @@ THUMBNAIL_ALIASES = {
 THUMBNAIL_PROCESSORS = [
     'easy_thumbnails.processors.colorspace',
     'easy_thumbnails.processors.autocrop',
+    'images.thumbnail_processors.smart_crop.face_aware_crop',
     'easy_thumbnails.processors.scale_and_crop',
     'easy_thumbnails.processors.filters',
 ]
@@ -357,4 +352,4 @@ THUMBNAIL_PROCESSORS = [
 THUMBNAIL_PRESERVE_FORMAT = True  # Keep original format unless converting to WebP
 THUMBNAIL_HIGH_RESOLUTION = True  # Support high-DPI displays
 THUMBNAIL_BASEDIR = 'thumbnails'  # Store in dedicated directory
-THUMBNAIL_DEFAULT_STORAGE = 'django.core.files.storage.FileSystemStorage'
+THUMBNAIL_DEFAULT_STORAGE = DEFAULT_FILE_STORAGE  # Use same storage backend as originals

@@ -98,10 +98,15 @@ class ImageSerializer(serializers.ModelSerializer):
         """Helper method to get thumbnail URL with face detection data"""
         if obj.image_file:
             try:
-                thumbnailer = get_thumbnailer(obj.image_file)
-                options = {'alias': alias}
+                from django.conf import settings
                 
-                # Pass face coordinates to the processor if available
+                thumbnailer = get_thumbnailer(obj.image_file)
+                
+                # Get alias options from settings
+                alias_options = settings.THUMBNAIL_ALIASES.get('', {}).get(alias, {})
+                
+                # Create a copy of options and merge face data if available
+                options = alias_options.copy()
                 if obj.face_x is not None:
                     options.update({
                         'face_x': obj.face_x,
@@ -110,6 +115,7 @@ class ImageSerializer(serializers.ModelSerializer):
                         'face_height': obj.face_height,
                     })
                 
+                # Generate thumbnail with merged options
                 thumbnail = thumbnailer.get_thumbnail(options)
                 return thumbnail.url
             except Exception as e:
