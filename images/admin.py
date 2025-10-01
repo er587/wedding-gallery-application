@@ -106,15 +106,8 @@ class InvitationCodeAdmin(admin.ModelAdmin):
     list_display = ['code', 'role', 'is_active', 'usage_count', 'created_by', 'created_at', 'last_used_at']
     list_filter = ['role', 'is_active', 'created_at', 'last_used_at', 'created_by']
     search_fields = ['code', 'created_by__username', 'notes']
-    readonly_fields = ['code', 'created_by', 'usage_count', 'last_used_at', 'created_at']
-    fields = ['role', 'is_active', 'notes', 'code', 'created_by', 'created_at', 'usage_count', 'last_used_at']
-    
-    def save_model(self, request, obj, form, change):
-        """Auto-generate code and set creator on new invitation codes"""
-        if not change:  # Only for new objects
-            obj.code = InvitationCode.generate_code()
-            obj.created_by = request.user
-        super().save_model(request, obj, form, change)
+    readonly_fields = ['usage_count', 'last_used_at', 'created_at']
+    fields = ['code', 'role', 'created_by', 'is_active', 'notes', 'created_at', 'usage_count', 'last_used_at']
     
     actions = ['generate_full_user_codes', 'generate_memory_user_codes']
     
