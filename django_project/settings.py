@@ -274,23 +274,73 @@ if not DEBUG:
 if not DEBUG and SECRET_KEY == 'django-insecure-change-this-in-production':
     raise Exception("Production deployment requires a secure SECRET_KEY. Please set a proper SECRET_KEY environment variable.")
 
-# Easy-thumbnails configuration
+# Easy-thumbnails configuration with responsive sizes and WebP support
 THUMBNAIL_ALIASES = {
     '': {
+        # Square thumbnails for gallery grid (face-aware cropping)
+        'square_160': {
+            'size': (160, 160),
+            'crop': True,
+            'quality': 80,
+            'PROCESSORS': (
+                'images.thumbnail_processors.smart_crop.face_aware_crop',
+            ),
+        },
+        'square_320': {
+            'size': (320, 320),
+            'crop': True,
+            'quality': 80,
+            'PROCESSORS': (
+                'images.thumbnail_processors.smart_crop.face_aware_crop',
+            ),
+        },
+        'square_640': {
+            'size': (640, 640),
+            'crop': True,
+            'quality': 80,
+            'PROCESSORS': (
+                'images.thumbnail_processors.smart_crop.face_aware_crop',
+            ),
+        },
+        
+        # Width-constrained images for viewing (maintain aspect ratio)
+        'width_480': {
+            'size': (480, 0),
+            'crop': False,
+            'quality': 82,
+        },
+        'width_960': {
+            'size': (960, 0),
+            'crop': False,
+            'quality': 82,
+        },
+        'width_1440': {
+            'size': (1440, 0),
+            'crop': False,
+            'quality': 82,
+        },
+        
+        # Legacy aliases for backward compatibility
         'small': {
             'size': (150, 150),
             'crop': True,
-            'quality': 85
+            'quality': 85,
+            'PROCESSORS': (
+                'images.thumbnail_processors.smart_crop.face_aware_crop',
+            ),
         },
         'medium': {
             'size': (300, 300),
             'crop': True,
-            'quality': 85
+            'quality': 85,
+            'PROCESSORS': (
+                'images.thumbnail_processors.smart_crop.face_aware_crop',
+            ),
         },
         'large': {
             'size': (600, 600),
             'crop': False,
-            'quality': 90
+            'quality': 90,
         },
     },
 }
@@ -302,4 +352,8 @@ THUMBNAIL_PROCESSORS = [
     'easy_thumbnails.processors.filters',
 ]
 
+# Thumbnail storage and processing settings
+THUMBNAIL_PRESERVE_FORMAT = True  # Keep original format unless converting to WebP
+THUMBNAIL_HIGH_RESOLUTION = True  # Support high-DPI displays
+THUMBNAIL_BASEDIR = 'thumbnails'  # Store in dedicated directory
 THUMBNAIL_DEFAULT_STORAGE = 'django.core.files.storage.FileSystemStorage'
