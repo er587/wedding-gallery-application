@@ -4,7 +4,7 @@ import InlineEditableText from './InlineEditableText'
 import { apiService } from '../services/api'
 import { useToast } from './Toast'
 
-export default function ImageViewer({ image, user, onClose, onImageDeleted, onTitleUpdated }) {
+export default function ImageViewer({ image, user, onClose, onImageDeleted, onTitleUpdated, images = [], currentIndex = 0, onNavigate }) {
   const toast = useToast()
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
@@ -12,6 +12,22 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
   const [imageData, setImageData] = useState(image) // Local copy for like updates
   const [showMobileComments, setShowMobileComments] = useState(false)
   const intervalRef = useRef(null)
+
+  // Navigation helpers
+  const hasPrevious = currentIndex > 0
+  const hasNext = currentIndex < images.length - 1
+
+  const handlePrevious = () => {
+    if (hasPrevious && onNavigate) {
+      onNavigate('previous')
+    }
+  }
+
+  const handleNext = () => {
+    if (hasNext && onNavigate) {
+      onNavigate('next')
+    }
+  }
 
   useEffect(() => {
     fetchComments()
@@ -28,6 +44,35 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
       }
     }
   }, [imageData.id])
+
+  // Update imageData when image prop changes (navigation)
+  useEffect(() => {
+    setImageData(image)
+  }, [image])
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger if user is typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return
+      }
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        handlePrevious()
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        handleNext()
+      } else if (e.key === 'Escape') {
+        e.preventDefault()
+        onClose()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [hasPrevious, hasNext, onClose])
 
   const fetchComments = async () => {
     try {
