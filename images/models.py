@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password, check_password
 from django.db import models
 from django.conf import settings
 from django.db.models.signals import post_save
@@ -418,7 +419,7 @@ class EmailVerificationToken(models.Model):
         on_delete=models.CASCADE,
         related_name='email_verification_tokens'
     )
-    token = models.CharField(max_length=64, unique=True)
+    token_hash = models.CharField(max_length=128, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     is_used = models.BooleanField(default=False)
@@ -431,15 +432,27 @@ class EmailVerificationToken(models.Model):
     
     @classmethod
     def generate_token(cls, user):
-        """Generate a unique verification token for a user"""
-        token = secrets.token_urlsafe(48)
+        """Generate a unique verification token for a user and return raw token"""
+        raw_token = secrets.token_urlsafe(48)
+        token_hash = make_password(raw_token)
         expires_at = timezone.now() + timedelta(hours=24)
         
-        return cls.objects.create(
+        token_obj = cls.objects.create(
             user=user,
-            token=token,
+            token_hash=token_hash,
             expires_at=expires_at
         )
+        
+        token_obj.raw_token = raw_token
+        return token_obj
+    
+    @classmethod
+    def verify_token(cls, raw_token):
+        """Verify a token and return the token object if valid"""
+        for token_obj in cls.objects.filter(is_used=False, expires_at__gt=timezone.now()):
+            if check_password(raw_token, token_obj.token_hash):
+                return token_obj
+        return None
     
     def is_valid(self):
         """Check if token is still valid"""
@@ -453,7 +466,7 @@ class PasswordResetToken(models.Model):
         on_delete=models.CASCADE,
         related_name='password_reset_tokens'
     )
-    token = models.CharField(max_length=64, unique=True)
+    token_hash = models.CharField(max_length=128, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     is_used = models.BooleanField(default=False)
@@ -466,17 +479,29 @@ class PasswordResetToken(models.Model):
     
     @classmethod
     def generate_token(cls, user):
-        """Generate a unique password reset token for a user"""
-        token = secrets.token_urlsafe(48)
+        """Generate a unique password reset token for a user and return raw token"""
+        raw_token = secrets.token_urlsafe(48)
+        token_hash = make_password(raw_token)
         expires_at = timezone.now() + timedelta(hours=1)
         
         cls.objects.filter(user=user, is_used=False).update(is_used=True)
         
-        return cls.objects.create(
+        token_obj = cls.objects.create(
             user=user,
-            token=token,
+            token_hash=token_hash,
             expires_at=expires_at
         )
+        
+        token_obj.raw_token = raw_token
+        return token_obj
+    
+    @classmethod
+    def verify_token(cls, raw_token):
+        """Verify a token and return the token object if valid"""
+        for token_obj in cls.objects.filter(is_used=False, expires_at__gt=timezone.now()):
+            if check_password(raw_token, token_obj.token_hash):
+                return token_obj
+        return None
     
     def is_valid(self):
         """Check if token is still valid"""
