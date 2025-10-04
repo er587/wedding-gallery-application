@@ -103,8 +103,8 @@ class ImageSerializer(serializers.ModelSerializer):
                 # Generate thumbnail with merged options
                 thumbnail = thumbnailer.get_thumbnail(options)
                 return thumbnail.url
-            except Exception as e:
-                print(f"Thumbnail generation error for {alias}: {e}")
+            except Exception:
+                # Fallback to original image if thumbnail generation fails
                 return obj.image_file.url
         return None
     

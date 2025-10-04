@@ -1,0 +1,30 @@
+[Unit]
+Description=Gunicorn daemon for Wedding Gallery
+Requires=gunicorn-wedding.socket
+After=network.target postgresql.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+RuntimeDirectory=gunicorn-wedding
+WorkingDirectory=/var/www/wedding-gallery
+Environment="PATH=/var/www/wedding-gallery/venv/bin"
+EnvironmentFile=/var/www/wedding-gallery/.env
+ExecStart=/var/www/wedding-gallery/venv/bin/gunicorn \
+          --workers 3 \
+          --bind unix:/run/gunicorn-wedding.sock \
+          --timeout 60 \
+          --access-logfile /var/log/wedding-gallery/gunicorn-access.log \
+          --error-logfile /var/log/wedding-gallery/gunicorn-error.log \
+          --log-level info \
+          django_project.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

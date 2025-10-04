@@ -32,50 +32,25 @@ env.read_env(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# Get SECRET_KEY directly from os.environ to ensure Replit secrets work properly
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-# Handle Replit domains and custom domains if present, otherwise use env defaults
-custom_domains = [
-    'wedding-website-replit2779.replit.app',
-    'reneeanderic.wedding',
-    'www.reneeanderic.wedding'
-]
+# ALLOWED_HOSTS - Use environment variable for production domains
+ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
-try:
-    replit_domains = os.environ["REPLIT_DOMAINS"].split(',')
-    ALLOWED_HOSTS = replit_domains + custom_domains + env('ALLOWED_HOSTS')
-except KeyError:
-    ALLOWED_HOSTS = custom_domains + env('ALLOWED_HOSTS')
-# Configure CSRF trusted origins
-csrf_production_origins = [
-    'https://wedding-website-replit2779.replit.app',
-    'https://reneeanderic.wedding',
-    'https://www.reneeanderic.wedding'
-]
+# CSRF trusted origins - Add development origins only if DEBUG is True
+development_csrf_origins = [
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+] if DEBUG else []
 
-try:
-    replit_domains = os.environ["REPLIT_DOMAINS"].split(',')
-    CSRF_TRUSTED_ORIGINS = [
-        "https://" + domain for domain in replit_domains
-    ] + ["https://" + domain + ":5000" for domain in replit_domains] + [
-        "https://" + domain + ":8000" for domain in replit_domains
-    ] + csrf_production_origins + [
-        'http://localhost:5000',
-        'http://127.0.0.1:5000',
-        'http://localhost:8000',
-        'http://127.0.0.1:8000',
-    ]
-except KeyError:
-    CSRF_TRUSTED_ORIGINS = csrf_production_origins + [
-        'http://localhost:5000',
-        'http://127.0.0.1:5000',
-        'http://localhost:8000',
-        'http://127.0.0.1:8000',
-    ]
+# Get production CSRF origins from environment
+csrf_origins_env = env.list('CSRF_TRUSTED_ORIGINS') if 'CSRF_TRUSTED_ORIGINS' in os.environ else []
+CSRF_TRUSTED_ORIGINS = development_csrf_origins + csrf_origins_env
 
 # Application definition
 
@@ -206,54 +181,24 @@ REST_FRAMEWORK = {
     ],
 }
 
-# CORS settings from environment - SECURE DEFAULT FOR PRODUCTION
+# CORS settings - SECURE DEFAULT FOR PRODUCTION
 CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS') if 'CORS_ALLOW_ALL_ORIGINS' in os.environ else DEBUG
 
 # Configure CORS allowed origins - restrict localhost to DEBUG environments
-cors_defaults = [
+development_cors_origins = [
     'http://localhost:5000',
     'http://127.0.0.1:5000',
 ] if DEBUG else []
 
-# Add production domains for CORS
-production_origins = [
-    'https://wedding-website-replit2779.replit.app',
-    'https://reneeanderic.wedding',
-    'https://www.reneeanderic.wedding'
-]
-
-try:
-    replit_domains = os.environ["REPLIT_DOMAINS"].split(',')
-    replit_cors_origins = [
-        "https://" + domain for domain in replit_domains
-    ] + ["https://" + domain + ":5000" for domain in replit_domains]
-    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS') if 'CORS_ALLOWED_ORIGINS' in os.environ else (cors_defaults + replit_cors_origins + production_origins)
-except KeyError:
-    CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS') if 'CORS_ALLOWED_ORIGINS' in os.environ else (cors_defaults + production_origins)
+# Get production CORS origins from environment
+cors_origins_env = env.list('CORS_ALLOWED_ORIGINS') if 'CORS_ALLOWED_ORIGINS' in os.environ else []
+CORS_ALLOWED_ORIGINS = development_cors_origins + cors_origins_env
 
 CORS_ALLOW_CREDENTIALS = env.bool('CORS_ALLOW_CREDENTIALS') if 'CORS_ALLOW_CREDENTIALS' in os.environ else True
 
-# Media files - Cloud Storage Configuration
+# Media files configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = env('MEDIA_ROOT') if 'MEDIA_ROOT' in os.environ else os.path.join(BASE_DIR, 'media')
-
-# Cloud Storage Configuration for Replit App Storage
-USE_CLOUD_STORAGE = env.bool('USE_CLOUD_STORAGE') if 'USE_CLOUD_STORAGE' in os.environ else False
-
-if USE_CLOUD_STORAGE:
-    # Use custom Replit App Storage backend for media files
-    DEFAULT_FILE_STORAGE = 'images.storage.ReplitAppStorage'
-    
-    # Environment variables for cloud storage paths
-    # These should be set in the Replit environment after creating buckets
-    PRIVATE_OBJECT_DIR = env('PRIVATE_OBJECT_DIR') if 'PRIVATE_OBJECT_DIR' in os.environ else '/wedding-gallery/private'
-    PUBLIC_OBJECT_SEARCH_PATHS = env('PUBLIC_OBJECT_SEARCH_PATHS') if 'PUBLIC_OBJECT_SEARCH_PATHS' in os.environ else '/wedding-gallery/public'
-    
-    # Cloud storage URLs will be served through Django for access control
-    MEDIA_URL = '/api/files/'
-else:
-    # Fall back to local storage for development
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 # Force HTTPS URLs in production
 USE_TLS = True
@@ -343,4 +288,3 @@ THUMBNAIL_PROCESSORS = [
 THUMBNAIL_PRESERVE_FORMAT = True  # Keep original format unless converting to WebP
 THUMBNAIL_HIGH_RESOLUTION = True  # Support high-DPI displays
 THUMBNAIL_BASEDIR = 'thumbnails'  # Store in dedicated directory
-THUMBNAIL_DEFAULT_STORAGE = DEFAULT_FILE_STORAGE  # Use same storage backend as originals
