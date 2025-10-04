@@ -166,25 +166,25 @@ class LikeAdmin(admin.ModelAdmin):
 
 @admin.register(EmailVerificationToken)
 class EmailVerificationTokenAdmin(admin.ModelAdmin):
-    list_display = ['user', 'token_preview', 'is_used', 'created_at', 'expires_at']
+    list_display = ['user', 'token_hash_preview', 'is_used', 'created_at', 'expires_at']
     list_filter = ['is_used', 'created_at', 'expires_at']
-    search_fields = ['user__username', 'user__email', 'token']
-    readonly_fields = ['token', 'created_at']
+    search_fields = ['user__username', 'user__email']
+    readonly_fields = ['token_hash', 'created_at']
     ordering = ['-created_at']
     
-    def token_preview(self, obj):
-        return f"{obj.token[:20]}..." if len(obj.token) > 20 else obj.token
-    token_preview.short_description = 'Token'
+    def token_hash_preview(self, obj):
+        return f"{obj.token_hash[:30]}..." if len(obj.token_hash) > 30 else obj.token_hash
+    token_hash_preview.short_description = 'Token Hash'
 
 
 @admin.register(PasswordResetToken)
 class PasswordResetTokenAdmin(admin.ModelAdmin):
-    list_display = ['user', 'token_preview', 'is_used', 'created_at', 'expires_at']
+    list_display = ['user', 'token_hash_preview', 'is_used', 'created_at', 'expires_at']
     list_filter = ['is_used', 'created_at', 'expires_at']
-    search_fields = ['user__username', 'user__email', 'token']
-    readonly_fields = ['token', 'created_at']
+    search_fields = ['user__username', 'user__email']
+    readonly_fields = ['token_hash', 'created_at']
     ordering = ['-created_at']
     
-    def token_preview(self, obj):
-        return f"{obj.token[:20]}..." if len(obj.token) > 20 else obj.token
-    token_preview.short_description = 'Token'
+    def token_hash_preview(self, obj):
+        return f"{obj.token_hash[:30]}..." if len(obj.token_hash) > 30 else obj.token_hash
+    token_hash_preview.short_description = 'Token Hash'
