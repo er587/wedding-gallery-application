@@ -59,5 +59,61 @@ export const authService = {
 
   isAuthenticated: () => {
     return localStorage.getItem('isAuthenticated') === 'true'
+  },
+
+  requestPasswordReset: async (email) => {
+    try {
+      await apiService.getCsrfToken()
+      const response = await apiService.requestPasswordReset(email)
+      return response.data
+    } catch (error) {
+      console.error('Password reset request error:', error)
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error)
+      }
+      throw new Error('Failed to request password reset. Please try again.')
+    }
+  },
+
+  resetPassword: async (token, password) => {
+    try {
+      await apiService.getCsrfToken()
+      const response = await apiService.resetPassword(token, password)
+      return response.data
+    } catch (error) {
+      console.error('Password reset error:', error)
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error)
+      }
+      throw new Error('Password reset failed. Please try again.')
+    }
+  },
+
+  sendVerificationEmail: async () => {
+    try {
+      await apiService.getCsrfToken()
+      const response = await apiService.sendVerificationEmail()
+      return response.data
+    } catch (error) {
+      console.error('Send verification email error:', error)
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error)
+      }
+      throw new Error('Failed to send verification email. Please try again.')
+    }
+  },
+
+  verifyEmail: async (token) => {
+    try {
+      await apiService.getCsrfToken()
+      const response = await apiService.verifyEmail(token)
+      return response.data
+    } catch (error) {
+      console.error('Email verification error:', error)
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error)
+      }
+      throw new Error('Email verification failed. Please try again.')
+    }
   }
 }

@@ -5,10 +5,13 @@ import { useToast } from './Toast'
 export default function Auth({ onLogin }) {
   const toast = useToast()
   const [showSignupModal, setShowSignupModal] = useState(false)
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
+  const [resetEmail, setResetEmail] = useState('')
+  const [isSubmittingReset, setIsSubmittingReset] = useState(false)
   const [loginData, setLoginData] = useState({
     username: '',
     password: ''
@@ -76,6 +79,24 @@ export default function Auth({ onLogin }) {
     }))
   }
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault()
+    setIsSubmittingReset(true)
+    
+    try {
+      await authService.requestPasswordReset(resetEmail)
+      toast.success('Password reset instructions sent to your email')
+      setShowForgotPasswordModal(false)
+      setResetEmail('')
+    } catch (error) {
+      toast.success('If an account exists with this email, password reset instructions will be sent')
+      setShowForgotPasswordModal(false)
+      setResetEmail('')
+    } finally {
+      setIsSubmittingReset(false)
+    }
+  }
+
   return (
     <>
       {/* Login Form */}
@@ -111,6 +132,13 @@ export default function Auth({ onLogin }) {
             className="text-blue-600 text-sm hover:underline"
           >
             Sign Up
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowForgotPasswordModal(true)}
+            className="text-gray-600 text-sm hover:underline"
+          >
+            Forgot Password?
           </button>
         </form>
       </div>
@@ -259,6 +287,57 @@ export default function Auth({ onLogin }) {
                   className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
                 >
                   Sign Up
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Forgot Password Modal */}
+      {showForgotPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Reset Password</h2>
+              <button
+                onClick={() => setShowForgotPasswordModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <p className="text-gray-600 text-sm mb-4">
+              Enter your email address and we'll send you instructions to reset your password.
+            </p>
+            
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <input
+                type="email"
+                placeholder="Email Address"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPasswordModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingReset}
+                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:bg-blue-300"
+                >
+                  {isSubmittingReset ? 'Sending...' : 'Send Reset Link'}
                 </button>
               </div>
             </form>

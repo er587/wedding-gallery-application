@@ -49,6 +49,12 @@ export const apiService = {
   getUserProfile: () => api.get('/api/auth/profile/'),
   updateProfile: (profileData) => api.put('/api/auth/profile/update/', profileData),
   changePassword: (passwordData) => api.post('/api/auth/change-password/', passwordData),
+
+  // Email verification and password reset
+  sendVerificationEmail: () => api.post('/api/auth/send-verification/'),
+  verifyEmail: (token) => api.post('/api/auth/verify-email/', { token }),
+  requestPasswordReset: (email) => api.post('/api/auth/request-password-reset/', { email }),
+  resetPassword: (token, password) => api.post('/api/auth/reset-password/', { token, password }),
 }
 
 // Request interceptor for CSRF tokens and auth
