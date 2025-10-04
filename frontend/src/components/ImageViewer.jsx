@@ -188,7 +188,20 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
         </button>
         
         {/* Image Section - Full height on mobile, flexible on desktop */}
-        <div className="flex-1 bg-black flex items-center justify-center min-h-0 order-1 md:order-1">
+        <div className="flex-1 bg-black flex items-center justify-center min-h-0 order-1 md:order-1 relative">
+          {/* Previous Arrow */}
+          {hasPrevious && (
+            <button
+              onClick={handlePrevious}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-white transition-all shadow-lg hover:scale-110"
+              title="Previous image (←)"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+          )}
+
           <img
             src={imageData.image_file}
             srcSet={`
@@ -205,6 +218,19 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
             decoding="async"
             fetchpriority="high"
           />
+
+          {/* Next Arrow */}
+          {hasNext && (
+            <button
+              onClick={handleNext}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-white transition-all shadow-lg hover:scale-110"
+              title="Next image (→)"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          )}
         </div>
         
         {/* Mobile Social Bar - Bottom overlay */}
