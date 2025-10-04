@@ -292,6 +292,24 @@ export default function ImageGallery({ user, refresh }) {
     )
   }
 
+  const handleNavigateToImage = (direction) => {
+    if (!selectedImage) return
+    
+    const currentIndex = images.findIndex(img => img.id === selectedImage.id)
+    if (currentIndex === -1) return
+    
+    let newIndex
+    if (direction === 'next') {
+      newIndex = currentIndex + 1
+      if (newIndex >= images.length) return // At the end
+    } else {
+      newIndex = currentIndex - 1
+      if (newIndex < 0) return // At the beginning
+    }
+    
+    setSelectedImage(images[newIndex])
+  }
+
   const handleSearch = (searchTerm) => {
     setSearchParams(prev => ({ ...prev, search: searchTerm }))
   }
@@ -693,6 +711,9 @@ export default function ImageGallery({ user, refresh }) {
           onClose={() => setSelectedImage(null)}
           onImageDeleted={handleImageDeleted}
           onTitleUpdated={handleImageTitleUpdated}
+          images={images}
+          currentIndex={images.findIndex(img => img.id === selectedImage.id)}
+          onNavigate={handleNavigateToImage}
         />
       )}
     </>
