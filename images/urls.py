@@ -24,6 +24,12 @@ urlpatterns = [
     path('api/auth/profile/update/', views.update_profile, name='update-profile'),
     path('api/auth/change-password/', views.change_password, name='change-password'),
     
+    # Email verification and password reset endpoints
+    path('api/auth/send-verification/', views.send_verification_email, name='send-verification'),
+    path('api/auth/verify-email/', views.verify_email, name='verify-email'),
+    path('api/auth/request-password-reset/', views.request_password_reset, name='request-password-reset'),
+    path('api/auth/reset-password/', views.reset_password, name='reset-password'),
+    
     # Cloud Storage endpoints with authentication and access controls
     path('api/cloud/upload-url/', views.get_upload_url, name='get-upload-url'),
     path('api/cloud/set-acl/', views.set_file_acl, name='set-file-acl'),

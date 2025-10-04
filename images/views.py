@@ -14,7 +14,7 @@ import uuid
 import requests
 import os
 from django.utils import timezone
-from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like
+from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken
 from .serializers import ImageSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer
 from .storage import ReplitAppStorage, FileAccessControl
 
@@ -748,6 +748,219 @@ def list_user_files(request):
         
         return Response({
             'error': 'Failed to retrieve file list.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def send_verification_email(request):
+    """Send email verification link to user's email"""
+    try:
+        user = request.user
+        
+        if not user.email:
+            return Response({
+                'error': 'No email address associated with this account'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        token_obj = EmailVerificationToken.generate_token(user)
+        
+        verification_url = f"{settings.FRONTEND_URL}/verify-email/{token_obj.token}"
+        
+        from django.core.mail import send_mail
+        from django.template.loader import render_to_string
+        
+        subject = 'Verify Your Email Address'
+        message = f'''
+Hi {user.first_name or user.username},
+
+Please verify your email address by clicking the link below:
+
+{verification_url}
+
+This link will expire in 24 hours.
+
+If you didn't request this verification, please ignore this email.
+
+Best regards,
+Wedding Gallery Team
+        '''
+        
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+            
+            return Response({
+                'message': 'Verification email sent successfully'
+            }, status=status.HTTP_200_OK)
+        except Exception as email_error:
+            return Response({
+                'error': f'Failed to send email: {str(email_error)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Failed to send verification email: {str(e)}')
+        return Response({
+            'error': 'Failed to send verification email'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def verify_email(request):
+    """Verify email using token"""
+    try:
+        token = request.data.get('token')
+        
+        if not token:
+            return Response({
+                'error': 'Token is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            token_obj = EmailVerificationToken.objects.get(token=token)
+        except EmailVerificationToken.DoesNotExist:
+            return Response({
+                'error': 'Invalid verification token'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not token_obj.is_valid():
+            return Response({
+                'error': 'Verification token has expired or been used'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        token_obj.is_used = True
+        token_obj.save()
+        
+        return Response({
+            'message': 'Email verified successfully'
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Email verification failed: {str(e)}')
+        return Response({
+            'error': 'Email verification failed'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def request_password_reset(request):
+    """Request password reset - sends email with reset link"""
+    try:
+        email = request.data.get('email')
+        
+        if not email:
+            return Response({
+                'error': 'Email is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({
+                'message': 'If an account exists with this email, a password reset link will be sent'
+            }, status=status.HTTP_200_OK)
+        
+        token_obj = PasswordResetToken.generate_token(user)
+        
+        reset_url = f"{settings.FRONTEND_URL}/reset-password/{token_obj.token}"
+        
+        from django.core.mail import send_mail
+        
+        subject = 'Reset Your Password'
+        message = f'''
+Hi {user.first_name or user.username},
+
+You requested to reset your password. Click the link below to set a new password:
+
+{reset_url}
+
+This link will expire in 1 hour.
+
+If you didn't request this password reset, please ignore this email or contact support if you're concerned.
+
+Best regards,
+Wedding Gallery Team
+        '''
+        
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+        except Exception as email_error:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Failed to send password reset email: {str(email_error)}')
+        
+        return Response({
+            'message': 'If an account exists with this email, a password reset link will be sent'
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Password reset request failed: {str(e)}')
+        return Response({
+            'error': 'Failed to process password reset request'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def reset_password(request):
+    """Reset password using token"""
+    try:
+        token = request.data.get('token')
+        new_password = request.data.get('password')
+        
+        if not token or not new_password:
+            return Response({
+                'error': 'Token and new password are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            token_obj = PasswordResetToken.objects.get(token=token)
+        except PasswordResetToken.DoesNotExist:
+            return Response({
+                'error': 'Invalid password reset token'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not token_obj.is_valid():
+            return Response({
+                'error': 'Password reset token has expired or been used'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = token_obj.user
+        user.set_password(new_password)
+        user.save()
+        
+        token_obj.is_used = True
+        token_obj.save()
+        
+        return Response({
+            'message': 'Password reset successfully'
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Password reset failed: {str(e)}')
+        return Response({
+            'error': 'Password reset failed'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
