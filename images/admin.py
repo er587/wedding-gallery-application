@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User, Group
-from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like
+from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken
 
 
 # Customize User admin to show groups and roles
@@ -162,3 +162,29 @@ class LikeAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user', 'image')
+
+
+@admin.register(EmailVerificationToken)
+class EmailVerificationTokenAdmin(admin.ModelAdmin):
+    list_display = ['user', 'token_preview', 'is_used', 'created_at', 'expires_at']
+    list_filter = ['is_used', 'created_at', 'expires_at']
+    search_fields = ['user__username', 'user__email', 'token']
+    readonly_fields = ['token', 'created_at']
+    ordering = ['-created_at']
+    
+    def token_preview(self, obj):
+        return f"{obj.token[:20]}..." if len(obj.token) > 20 else obj.token
+    token_preview.short_description = 'Token'
+
+
+@admin.register(PasswordResetToken)
+class PasswordResetTokenAdmin(admin.ModelAdmin):
+    list_display = ['user', 'token_preview', 'is_used', 'created_at', 'expires_at']
+    list_filter = ['is_used', 'created_at', 'expires_at']
+    search_fields = ['user__username', 'user__email', 'token']
+    readonly_fields = ['token', 'created_at']
+    ordering = ['-created_at']
+    
+    def token_preview(self, obj):
+        return f"{obj.token[:20]}..." if len(obj.token) > 20 else obj.token
+    token_preview.short_description = 'Token'
