@@ -288,3 +288,15 @@ THUMBNAIL_PROCESSORS = [
 THUMBNAIL_PRESERVE_FORMAT = True  # Keep original format unless converting to WebP
 THUMBNAIL_HIGH_RESOLUTION = True  # Support high-DPI displays
 THUMBNAIL_BASEDIR = 'thumbnails'  # Store in dedicated directory
+
+# Email configuration
+EMAIL_BACKEND = env('EMAIL_BACKEND') if 'EMAIL_BACKEND' in os.environ else 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = env('EMAIL_HOST') if 'EMAIL_HOST' in os.environ else 'smtp.gmail.com'
+EMAIL_PORT = env.int('EMAIL_PORT') if 'EMAIL_PORT' in os.environ else 587
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS') if 'EMAIL_USE_TLS' in os.environ else True
+EMAIL_HOST_USER = env('EMAIL_HOST_USER') if 'EMAIL_HOST_USER' in os.environ else ''
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD') if 'EMAIL_HOST_PASSWORD' in os.environ else ''
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL') if 'DEFAULT_FROM_EMAIL' in os.environ else EMAIL_HOST_USER
+
+# Base URL for email links (verification and password reset)
+FRONTEND_URL = env('FRONTEND_URL') if 'FRONTEND_URL' in os.environ else 'http://localhost:5000'

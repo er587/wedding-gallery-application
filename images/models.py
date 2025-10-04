@@ -3,7 +3,8 @@ from django.db import models
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.utils import timezone
 from PIL import Image as PILImage
 from io import BytesIO
 from django.core.files.base import ContentFile
@@ -408,3 +409,75 @@ class Like(models.Model):
     
     def __str__(self):
         return f"{self.user.username} likes {self.image.title}"
+
+
+class EmailVerificationToken(models.Model):
+    """Token for email verification (used for password recovery)"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='email_verification_tokens'
+    )
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Email verification for {self.user.email}"
+    
+    @classmethod
+    def generate_token(cls, user):
+        """Generate a unique verification token for a user"""
+        token = secrets.token_urlsafe(48)
+        expires_at = timezone.now() + timedelta(hours=24)
+        
+        return cls.objects.create(
+            user=user,
+            token=token,
+            expires_at=expires_at
+        )
+    
+    def is_valid(self):
+        """Check if token is still valid"""
+        return not self.is_used and timezone.now() < self.expires_at
+
+
+class PasswordResetToken(models.Model):
+    """Token for password reset"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='password_reset_tokens'
+    )
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Password reset for {self.user.email}"
+    
+    @classmethod
+    def generate_token(cls, user):
+        """Generate a unique password reset token for a user"""
+        token = secrets.token_urlsafe(48)
+        expires_at = timezone.now() + timedelta(hours=1)
+        
+        cls.objects.filter(user=user, is_used=False).update(is_used=True)
+        
+        return cls.objects.create(
+            user=user,
+            token=token,
+            expires_at=expires_at
+        )
+    
+    def is_valid(self):
+        """Check if token is still valid"""
+        return not self.is_used and timezone.now() < self.expires_at
