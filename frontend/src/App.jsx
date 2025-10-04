@@ -12,31 +12,21 @@ import { authService } from './services/auth'
 import { apiService } from './services/api'
 
 function App() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(() => authService.getCurrentUser())
   const [showUpload, setShowUpload] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [showWelcome, setShowWelcome] = useState(false)
   const [refreshGallery, setRefreshGallery] = useState(0)
 
   useEffect(() => {
-    // Initialize app: get CSRF token first, then check authentication
+    // Initialize app: get CSRF token for future requests
     const initializeApp = async () => {
       try {
         // Ensure CSRF cookie is set before making any POST requests
         await apiService.getCsrfToken()
-        
-        // Check if user is already logged in
-        const currentUser = authService.getCurrentUser()
-        if (currentUser) {
-          setUser(currentUser)
-        }
       } catch (error) {
         console.error('Failed to initialize CSRF token:', error)
         // Continue anyway - the user can still try to login/use the app
-        const currentUser = authService.getCurrentUser()
-        if (currentUser) {
-          setUser(currentUser)
-        }
       }
     }
     
