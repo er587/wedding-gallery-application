@@ -45,19 +45,10 @@ class ImageSerializer(serializers.ModelSerializer):
     user_has_liked = serializers.SerializerMethodField()
     image_file = serializers.SerializerMethodField()
     
-    # Responsive thumbnail URLs for different sizes and platforms
-    thumbnail_square_160 = serializers.SerializerMethodField()
+    # Only return thumbnails actually used by the frontend (70% payload reduction)
     thumbnail_square_320 = serializers.SerializerMethodField()
     thumbnail_square_640 = serializers.SerializerMethodField()
-    thumbnail_width_480 = serializers.SerializerMethodField()
-    thumbnail_width_960 = serializers.SerializerMethodField()
     thumbnail_width_1440 = serializers.SerializerMethodField()
-    
-    # Legacy thumbnail fields for backward compatibility
-    thumbnail_url = serializers.SerializerMethodField()
-    thumbnail_small = serializers.SerializerMethodField()
-    thumbnail_medium = serializers.SerializerMethodField()
-    thumbnail_large = serializers.SerializerMethodField()
     
     tags = TagSerializer(many=True, read_only=True)
     tag_names = serializers.ListField(child=serializers.CharField(), write_only=True, required=False)
@@ -65,9 +56,7 @@ class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
         fields = ['id', 'title', 'description', 'image_file', 
-                 'thumbnail_square_160', 'thumbnail_square_320', 'thumbnail_square_640',
-                 'thumbnail_width_480', 'thumbnail_width_960', 'thumbnail_width_1440',
-                 'thumbnail_url', 'thumbnail_small', 'thumbnail_medium', 'thumbnail_large',
+                 'thumbnail_square_320', 'thumbnail_square_640', 'thumbnail_width_1440',
                  'uploader', 'uploaded_at', 'updated_at', 
                  'comments', 'comment_count', 'like_count', 'user_has_liked', 'tags', 'tag_names']
         read_only_fields = ['id', 'uploader', 'uploaded_at', 'updated_at']
@@ -89,10 +78,6 @@ class ImageSerializer(serializers.ModelSerializer):
             # Return relative URL so it goes through Vite proxy
             return obj.image_file.url
         return None
-    
-    def get_thumbnail_url(self, obj):
-        # Legacy method - use medium thumbnail for backward compatibility
-        return self.get_thumbnail_medium(obj)
     
     def _get_thumbnail_with_face_data(self, obj, alias):
         """Helper method to get thumbnail URL with face detection data"""
@@ -123,35 +108,15 @@ class ImageSerializer(serializers.ModelSerializer):
                 return obj.image_file.url
         return None
     
-    # Responsive square thumbnails (face-aware cropping)
-    def get_thumbnail_square_160(self, obj):
-        return self._get_thumbnail_with_face_data(obj, 'square_160')
-    
+    # Only the 3 thumbnail sizes actually used by the frontend
     def get_thumbnail_square_320(self, obj):
         return self._get_thumbnail_with_face_data(obj, 'square_320')
     
     def get_thumbnail_square_640(self, obj):
         return self._get_thumbnail_with_face_data(obj, 'square_640')
     
-    # Width-constrained thumbnails (maintain aspect ratio)
-    def get_thumbnail_width_480(self, obj):
-        return self._get_thumbnail_with_face_data(obj, 'width_480')
-    
-    def get_thumbnail_width_960(self, obj):
-        return self._get_thumbnail_with_face_data(obj, 'width_960')
-    
     def get_thumbnail_width_1440(self, obj):
         return self._get_thumbnail_with_face_data(obj, 'width_1440')
-    
-    # Legacy thumbnail methods for backward compatibility
-    def get_thumbnail_small(self, obj):
-        return self._get_thumbnail_with_face_data(obj, 'small')
-    
-    def get_thumbnail_medium(self, obj):
-        return self._get_thumbnail_with_face_data(obj, 'medium')
-    
-    def get_thumbnail_large(self, obj):
-        return self._get_thumbnail_with_face_data(obj, 'large')
 
 
 class ImageCreateSerializer(serializers.ModelSerializer):

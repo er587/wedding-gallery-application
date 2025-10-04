@@ -18,7 +18,7 @@ export default function ImageGallery({ user, refresh }) {
   const [showSearchBar, setShowSearchBar] = useState(false)
   const [pagination, setPagination] = useState({
     page: 1,
-    pageSize: 6,
+    pageSize: 12,
     hasMore: true,
     loadingMore: false
   })
@@ -37,7 +37,7 @@ export default function ImageGallery({ user, refresh }) {
       const currentPage = isInitialLoad ? 1 : pagination.page
       const params = {
         page: currentPage,
-        page_size: isInitialLoad ? pagination.pageSize : 3 // Load 3 more after initial 6
+        page_size: pagination.pageSize // Load 12 images per batch
       }
       if (searchParams.search) params.search = searchParams.search
       if (searchParams.tags) params.tags = searchParams.tags
@@ -66,7 +66,7 @@ export default function ImageGallery({ user, refresh }) {
           setPagination(prev => ({ 
             ...prev, 
             page: prev.page + 1, 
-            hasMore: hasMore && newImages.length === 3
+            hasMore: hasMore && newImages.length === pagination.pageSize
           }))
         } else {
           // No more images to load
@@ -228,51 +228,6 @@ export default function ImageGallery({ user, refresh }) {
       if (loadingTriggerRef.current) {
         observer.unobserve(loadingTriggerRef.current)
       }
-    }
-  }, [pagination.loadingMore, pagination.hasMore])
-
-  // Fallback scroll listener for additional compatibility
-  useEffect(() => {
-    const handleScroll = () => {
-      if (pagination.loadingMore || !pagination.hasMore) return
-      
-      // More robust scroll detection for different contexts (iframe, full browser)
-      const windowHeight = window.innerHeight
-      const documentHeight = Math.max(
-        document.documentElement.scrollHeight,
-        document.documentElement.offsetHeight,
-        document.body.scrollHeight,
-        document.body.offsetHeight
-      )
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
-      
-      // Trigger loading when user is 500px from bottom (closer than intersection observer)
-      const scrolledToBottom = windowHeight + scrollTop >= documentHeight - 500
-      
-      if (scrolledToBottom) {
-        loadMoreImages()
-      }
-    }
-
-    // Throttle scroll events to prevent excessive API calls
-    let ticking = false
-    const throttledScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          handleScroll()
-          ticking = false
-        })
-        ticking = true
-      }
-    }
-
-    // Listen to both window and document scroll events for better compatibility
-    window.addEventListener('scroll', throttledScroll, { passive: true })
-    document.addEventListener('scroll', throttledScroll, { passive: true })
-    
-    return () => {
-      window.removeEventListener('scroll', throttledScroll)
-      document.removeEventListener('scroll', throttledScroll)
     }
   }, [pagination.loadingMore, pagination.hasMore])
 
