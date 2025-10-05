@@ -372,6 +372,13 @@ export default function ImageGallery({ user, refresh }) {
 
   return (
     <>
+      {/* Wedding Gallery Information */}
+      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 p-6 mb-6">
+        <p className="text-gray-700 leading-relaxed text-center">
+          Welcome to our wedding gallery! Browse and enjoy photos from our special day. Click any image to view it full-size, leave comments to share your memories, and download images to keep. We'd love for you to upload any photos you took of us to add to this collection of treasured moments.
+        </p>
+      </div>
+
       {/* Search & Filter Toggle */}
       <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
         <div className="flex items-center justify-between">
