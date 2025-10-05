@@ -6,7 +6,11 @@ This is a full-stack wedding gallery application built with Django REST Framewor
 
 ## Recent Changes
 
-**October 5, 2025 - UX Improvements & Wedding Hero Image:**
+**October 5, 2025 - Responsive Navigation & Mobile Optimization:**
+- **Implemented fully responsive navigation bar** - Mobile hamburger menu with slide-out panel for authenticated users
+- **Touch-friendly buttons** - All mobile navigation elements meet 44x44px minimum touch target requirements
+- **Responsive logo** - Shows "WG" on mobile, full "Wedding Gallery" on tablet/desktop
+- **Mobile-optimized login form** - Stacks vertically on mobile, displays horizontally on desktop
 - **Eliminated comment loading flash** - Separated initial load from background refreshes using ref-based tracking
 - **Silent background updates** - Comments refresh every 15 seconds without visual disruption
 - **Added informational paragraph** - Welcoming message explaining gallery purpose, commenting, and download features
