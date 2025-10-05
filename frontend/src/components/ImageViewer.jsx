@@ -352,8 +352,8 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
         <div className="hidden md:flex md:w-80 bg-white flex-col order-3 md:order-2">
           {/* Header */}
           <div className="p-4 border-b">
-            <div className="flex justify-between items-start">
-              <div>
+            <div>
+              <div className="mb-3">
                 <InlineEditableText
                   value={imageData.title}
                   onSave={handleUpdateImageTitle}
@@ -363,7 +363,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                 />
                 <p className="text-sm text-gray-600">by {imageData.uploader.first_name && imageData.uploader.last_name ? `${imageData.uploader.first_name} ${imageData.uploader.last_name}` : imageData.uploader.first_name || imageData.uploader.username}</p>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-wrap gap-y-2">
                 <button
                   onClick={handleLike}
                   className={`flex items-center space-x-1 px-2 py-1 rounded-md transition-colors ${
