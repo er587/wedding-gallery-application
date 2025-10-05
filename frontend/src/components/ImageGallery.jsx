@@ -355,7 +355,13 @@ export default function ImageGallery({ user, refresh }) {
   if (!user) {
     return (
       <div className="text-center py-16">
-        <div className="text-6xl mb-6">🔒</div>
+        <div className="mb-8 flex justify-center">
+          <img 
+            src="/wedding-hero.png" 
+            alt="Wedding couple silhouette at sunset" 
+            className="rounded-lg shadow-2xl max-w-md w-full object-cover"
+          />
+        </div>
         <h2 className="text-3xl font-bold text-gray-800 mb-4">Welcome to Wedding Gallery</h2>
         <p className="text-xl text-gray-600 mb-8">
           Please log in to view and share precious memories

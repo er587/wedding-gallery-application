@@ -6,6 +6,12 @@ This is a full-stack wedding gallery application built with Django REST Framewor
 
 ## Recent Changes
 
+**October 5, 2025 - UX Improvements & Wedding Hero Image:**
+- **Eliminated comment loading flash** - Separated initial load from background refreshes using ref-based tracking
+- **Silent background updates** - Comments refresh every 15 seconds without visual disruption
+- **Added informational paragraph** - Welcoming message explaining gallery purpose, commenting, and download features
+- **Replaced lock icon with wedding photo** - Beautiful sunset silhouette of couple now displays on landing page
+
 **October 1, 2025 - Enhanced Registration UX & Media File Serving:**
 - **Added password preview toggle with eye icon on registration form**
 - **Implemented password confirmation field with matching validation**
