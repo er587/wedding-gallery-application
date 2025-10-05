@@ -354,19 +354,19 @@ export default function ImageGallery({ user, refresh }) {
   // Show login prompt for logged-out users
   if (!user) {
     return (
-      <div className="text-center py-16">
-        <div className="mb-8 flex justify-center">
+      <div className="text-center py-8 md:py-16">
+        <div className="mb-6 md:mb-8 flex justify-center px-4">
           <img 
             src="/wedding-hero.png" 
             alt="Wedding couple silhouette at sunset" 
-            className="rounded-lg shadow-2xl max-w-md w-full object-cover"
+            className="rounded-lg shadow-2xl w-full max-w-xs md:max-w-sm object-cover"
           />
         </div>
-        <h2 className="text-3xl font-bold text-gray-800 mb-4">Welcome to Wedding Gallery</h2>
-        <p className="text-xl text-gray-600 mb-8">
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 px-4">Welcome to Wedding Gallery</h2>
+        <p className="text-lg md:text-xl text-gray-600 mb-8 px-4">
           Please log in to view and share precious memories
         </p>
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md mx-auto">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md mx-auto mx-4">
           <p className="text-blue-800 font-medium mb-2">Ready to explore?</p>
           <p className="text-blue-700 text-sm">
             Log in above to discover shared memories and upload your own special moments.
