@@ -12,6 +12,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
   const [imageData, setImageData] = useState(image) // Local copy for like updates
   const [showMobileComments, setShowMobileComments] = useState(false)
   const intervalRef = useRef(null)
+  const hasInitialLoad = useRef(false)
 
   // Navigation helpers
   const hasPrevious = currentIndex > 0
@@ -30,12 +31,14 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
   }
 
   useEffect(() => {
-    fetchComments()
+    // Reset initial load flag when image changes
+    hasInitialLoad.current = false
+    fetchComments(false)
     
-    // Set up real-time comment updates (every 10 seconds)
+    // Set up real-time comment updates (every 15 seconds)
     intervalRef.current = setInterval(() => {
-      fetchComments()
-    }, 10000)
+      fetchComments(true) // Silent background refresh
+    }, 15000)
     
     // Cleanup interval on unmount
     return () => {
@@ -74,11 +77,16 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [hasPrevious, hasNext, onClose])
 
-  const fetchComments = async () => {
+  const fetchComments = async (silent = false) => {
     try {
-      setLoading(true)
+      // Only show loading spinner on initial load, not background refreshes
+      if (!hasInitialLoad.current && !silent) {
+        setLoading(true)
+      }
+      
       const response = await apiService.getComments(imageData.id)
       setComments(response.data)
+      hasInitialLoad.current = true
     } catch (error) {
       console.error('Error fetching comments:', error)
       setComments([])
