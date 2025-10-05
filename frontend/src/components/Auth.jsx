@@ -99,47 +99,54 @@ export default function Auth({ onLogin }) {
 
   return (
     <>
-      {/* Login Form */}
-      <div className="flex items-center space-x-4">
-        <form onSubmit={handleLogin} className="flex items-center space-x-2">
-          <input
-            type="email"
-            name="username"
-            placeholder="Email Address"
-            value={loginData.username}
-            onChange={handleLoginInputChange}
-            required
-            className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={loginData.password}
-            onChange={handleLoginInputChange}
-            required
-            className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            type="submit"
-            className="bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
-          >
-            Login
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowSignupModal(true)}
-            className="text-blue-600 text-sm hover:underline"
-          >
-            Sign Up
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowForgotPasswordModal(true)}
-            className="text-gray-600 text-sm hover:underline"
-          >
-            Forgot Password?
-          </button>
+      {/* Login Form - Responsive */}
+      <div className="flex items-center">
+        <form onSubmit={handleLogin} className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+          {/* Email and Password Row */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="email"
+              name="username"
+              placeholder="Email Address"
+              value={loginData.username}
+              onChange={handleLoginInputChange}
+              required
+              className="px-3 py-2 md:py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto min-h-[44px] md:min-h-0"
+            />
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={loginData.password}
+              onChange={handleLoginInputChange}
+              required
+              className="px-3 py-2 md:py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto min-h-[44px] md:min-h-0"
+            />
+          </div>
+          
+          {/* Buttons Row */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-3 md:py-2 rounded text-sm hover:bg-blue-700 transition-colors whitespace-nowrap min-h-[44px] md:min-h-0"
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSignupModal(true)}
+              className="text-blue-600 text-sm hover:underline px-4 py-3 md:py-2 min-h-[44px] md:min-h-0"
+            >
+              Sign Up
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowForgotPasswordModal(true)}
+              className="text-gray-600 text-sm hover:underline px-4 py-3 md:py-2 whitespace-nowrap min-h-[44px] md:min-h-0"
+            >
+              Forgot Password?
+            </button>
+          </div>
         </form>
       </div>
 
