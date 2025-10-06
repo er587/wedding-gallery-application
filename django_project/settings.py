@@ -62,6 +62,17 @@ development_csrf_origins = [
 csrf_origins_env = env.list('CSRF_TRUSTED_ORIGINS') if 'CSRF_TRUSTED_ORIGINS' in os.environ else []
 CSRF_TRUSTED_ORIGINS = development_csrf_origins + csrf_origins_env
 
+# Add Replit dev URLs to CSRF trusted origins
+if replit_dev_domain:
+    replit_origins = [
+        f'https://{replit_dev_domain}',
+        f'https://{replit_dev_domain}:5000',
+        f'https://{replit_dev_domain}:8000',
+    ]
+    for origin in replit_origins:
+        if origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin)
+
 # Application definition
 
 INSTALLED_APPS = [
