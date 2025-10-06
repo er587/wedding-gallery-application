@@ -12,9 +12,9 @@ packages = ["freetype", "lcms2", "libGL", "libGLU", "libimagequant", "libjpeg", 
 language = "python3"
 
 [deployment]
-run = ["sh", "-c", "source venv/bin/activate && python manage.py migrate && gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 120 django_project.wsgi:application"]
+run = ["sh", "-c", ". venv/bin/activate && python manage.py migrate && gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 120 django_project.wsgi:application"]
 deploymentTarget = "vm"
-build = ["sh", "-c", "python3 -m venv venv && source venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt && cd frontend && npm install && npm run build && cd .. && python manage.py collectstatic --noinput"]
+build = ["sh", "-c", "python3 -m venv venv && . venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt && cd frontend && npm install && npm run build && cd .. && python manage.py collectstatic --noinput"]
 
 [[ports]]
 localPort = 5000
