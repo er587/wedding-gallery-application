@@ -11,9 +11,20 @@ Complete deployment guide for setting up the Wedding Gallery application on your
 
 ## Quick Start
 
-For automated deployment, run the automated script:
+**Before deploying, verify all files are present locally:**
 
 ```bash
+# On your local machine/Replit - verify git repository
+bash deployment/git-verify.sh
+
+# Commit any missing files and push
+git push
+```
+
+**On your Debian server, run automated deployment:**
+
+```bash
+# The script now includes automatic file verification
 sudo bash deployment/deploy.sh
 ```
 
@@ -22,6 +33,8 @@ Then configure SSL:
 ```bash
 sudo bash deployment/ssl-setup.sh
 ```
+
+**Note:** The deployment script will automatically verify all required files before proceeding. If verification fails, it will stop and show you what's missing.
 
 ## Manual Setup Instructions
 
@@ -78,6 +91,38 @@ sudo git clone <your-repo-url> .
 
 # Or upload your code via SCP/SFTP to this directory
 ```
+
+### 4.5. **IMPORTANT: Verify All Files Are Present**
+
+Before proceeding, verify that all required files exist to prevent deployment failures:
+
+```bash
+cd /var/www/wedding-gallery
+
+# Run verification script
+bash deployment/verify-deployment.sh
+```
+
+**This verification step will check for:**
+- All core Django files
+- Custom modules (storage.py, face_recognition_utils.py, middleware.py)
+- Thumbnail processors directory
+- Frontend components
+- Deployment configuration files
+
+**If verification fails:**
+- Check which files are missing from the output
+- Ensure all files are committed: `bash deployment/git-verify.sh` (run locally before pushing)
+- Pull latest changes: `git pull`
+- Or manually copy missing files from your source
+
+**Common missing files that cause failures:**
+- `images/storage.py` - Replit storage backend
+- `images/thumbnail_processors/` - Custom thumbnail processing
+- `images/face_recognition_utils.py` - Face detection logic
+- `images/middleware.py` - Media caching
+
+**Do not proceed until verification passes!** ✅
 
 ### 5. Set Up Python Virtual Environment
 
@@ -351,6 +396,66 @@ sudo tar -czf /backups/wedding-gallery/media-$(date +%Y%m%d-%H%M%S).tar.gz /var/
 ```
 
 ## Troubleshooting
+
+### Missing Files / ModuleNotFoundError
+
+**Symptom:** Deployment fails with errors like:
+- `ModuleNotFoundError: No module named 'images.storage'`
+- `ModuleNotFoundError: No module named 'images.thumbnail_processors'`
+- `ImportError: cannot import name 'ReplitAppStorage'`
+
+**Cause:** Critical custom files are missing from the deployment.
+
+**Solution:**
+
+1. **Run verification script to identify missing files:**
+   ```bash
+   cd /var/www/wedding-gallery
+   bash deployment/verify-deployment.sh
+   ```
+
+2. **If files are missing, pull from git:**
+   ```bash
+   git pull
+   bash deployment/verify-deployment.sh  # Verify again
+   ```
+
+3. **If still missing, check on your local/Replit environment:**
+   ```bash
+   # Run locally before deploying
+   bash deployment/git-verify.sh
+   
+   # Add missing files
+   git add images/storage.py images/thumbnail_processors/
+   git commit -m "Add missing custom modules"
+   git push
+   ```
+
+4. **Manually copy if needed (emergency fix):**
+   ```bash
+   # From local machine
+   scp images/storage.py user@server:/var/www/wedding-gallery/images/
+   scp -r images/thumbnail_processors/ user@server:/var/www/wedding-gallery/images/
+   
+   # On server, fix permissions
+   sudo chown -R www-data:www-data /var/www/wedding-gallery/images
+   sudo systemctl restart gunicorn-wedding.service
+   ```
+
+5. **Test imports manually:**
+   ```bash
+   source venv/bin/activate
+   python -c "from images.storage import ReplitAppStorage; print('✓ OK')"
+   python -c "from images.thumbnail_processors.smart_crop import face_aware_crop; print('✓ OK')"
+   ```
+
+**Most commonly missing files:**
+- `images/storage.py` (209 lines - Replit storage backend)
+- `images/thumbnail_processors/smart_crop.py` (Face-aware cropping)
+- `images/face_recognition_utils.py` (Face detection)
+- `images/middleware.py` (Media caching)
+
+**Prevention:** Always run `bash deployment/verify-deployment.sh` before deploying!
 
 ### Application won't start
 
