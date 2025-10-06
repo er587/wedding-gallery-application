@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name='EmailVerificationToken',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('token', models.CharField(max_length=64, unique=True)),
+                ('token_hash', models.CharField(max_length=128, unique=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('expires_at', models.DateTimeField()),
                 ('is_used', models.BooleanField(default=False)),
@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
             name='PasswordResetToken',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('token', models.CharField(max_length=64, unique=True)),
+                ('token_hash', models.CharField(max_length=128, unique=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('expires_at', models.DateTimeField()),
                 ('is_used', models.BooleanField(default=False)),
