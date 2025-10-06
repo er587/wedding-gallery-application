@@ -16,17 +16,17 @@ run = ["sh", "-c", "python manage.py migrate && gunicorn --bind 0.0.0.0:${PORT:-
 deploymentTarget = "vm"
 build = ["sh", "-c", "cd frontend && npm install && npm run build && cd .. && python manage.py collectstatic --noinput"]
 
-[[ports]]
-localPort = 5000
-externalPort = 5000
+#[[ports]]
+#localPort = 5000
+#externalPort = 5000
 
 [[ports]]
 localPort = 8000
-externalPort = 8000
-
-[[ports]]
-localPort = 24678
 externalPort = 80
+
+#[[ports]]
+#localPort = 24678
+#externalPort = 80
 
 [agent]
 expertMode = true
