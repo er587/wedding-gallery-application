@@ -40,6 +40,16 @@ DEBUG = env('DEBUG')
 # ALLOWED_HOSTS - Use environment variable for production domains
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
+# Add Replit dev URL if running in Replit environment
+replit_dev_domain = os.environ.get('REPLIT_DEV_DOMAIN')
+if replit_dev_domain and replit_dev_domain not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(replit_dev_domain)
+
+# Also check for any .replit.dev domains in environment
+for key, value in os.environ.items():
+    if isinstance(value, str) and '.replit.dev' in value and value not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(value)
+
 # CSRF trusted origins - Add development origins only if DEBUG is True
 development_csrf_origins = [
     'http://localhost:5000',
@@ -107,8 +117,10 @@ WSGI_APPLICATION = 'django_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# Use PostgreSQL if DATABASE_URL is provided, otherwise fallback to SQLite
-database_url = env('DATABASE_URL')
+# For Replit development, use SQLite. For production deployment, use PostgreSQL via DATABASE_URL
+# This prevents database connection issues during development
+database_url = env('DATABASE_URL') if not DEBUG else None
+
 if database_url:
     DATABASES = {
         'default': dj_database_url.parse(database_url, conn_max_age=600)
