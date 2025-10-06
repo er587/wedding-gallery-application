@@ -93,6 +93,27 @@ fi
 
 cd ${APP_DIR}
 
+# Step 5.5: Verify deployment files
+print_info "Verifying all required files are present..."
+if [ -f "deployment/verify-deployment.sh" ]; then
+    bash deployment/verify-deployment.sh
+    if [ $? -ne 0 ]; then
+        print_error "Deployment verification failed!"
+        print_info "Missing critical files. Please ensure all files are present before deploying."
+        print_info "Run 'bash deployment/git-verify.sh' locally to check git status"
+        exit 1
+    fi
+    print_success "All required files verified"
+else
+    print_error "Verification script not found: deployment/verify-deployment.sh"
+    print_info "This may indicate incomplete code deployment"
+    read -p "Continue anyway? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
 # Step 6: Create Python virtual environment
 print_info "Creating Python virtual environment..."
 python3 -m venv venv
