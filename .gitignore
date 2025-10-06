@@ -74,7 +74,7 @@ staticfiles/
 *.webp
 *.tiff
 # Exclude from any subdirectory
-**/images/
+
 **/media/
 **/uploads/
 **/staticfiles/
