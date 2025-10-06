@@ -1,0 +1,66 @@
+# Wedding Gallery - Debian Server Production Requirements
+# Optimized for production deployment on Debian/Ubuntu servers
+# Install with: pip install -r requirements-debian.txt
+
+# ============================================================================
+# DJANGO CORE
+# ============================================================================
+Django==5.0.2
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+
+# ============================================================================
+# IMAGE PROCESSING & THUMBNAILS
+# ============================================================================
+Pillow==10.2.0
+# Use headless OpenCV for servers (no GUI dependencies)
+opencv-python-headless==4.9.0.80
+easy-thumbnails==2.10.1
+
+# ============================================================================
+# DATABASE (PostgreSQL for production)
+# ============================================================================
+psycopg2-binary==2.9.10
+dj-database-url==2.1.0
+
+# ============================================================================
+# CLOUD STORAGE (Optional - for Google Cloud Storage)
+# ============================================================================
+google-cloud-storage==2.14.0
+django-storages==1.14.2
+
+# ============================================================================
+# SECURITY & RATE LIMITING
+# ============================================================================
+django-ratelimit==4.1.0
+
+# ============================================================================
+# PRODUCTION SERVER & STATIC FILES
+# ============================================================================
+gunicorn==21.2.0
+whitenoise==6.6.0
+django-environ==0.11.2
+
+# ============================================================================
+# HTTP & API
+# ============================================================================
+requests==2.31.0
+
+# ============================================================================
+# OPTIONAL: MONITORING & ERROR TRACKING
+# ============================================================================
+# Uncomment if you want production monitoring
+# sentry-sdk==1.40.6
+
+# ============================================================================
+# OPTIONAL: PERFORMANCE OPTIMIZATION
+# ============================================================================
+# Uncomment if you need background task processing
+# celery==5.3.4
+# redis==5.0.1
+
+# ============================================================================
+# OPTIONAL: DEVELOPMENT TOOLS (Remove in strict production)
+# ============================================================================
+# django-extensions==3.2.3
+# django-debug-toolbar==4.2.0

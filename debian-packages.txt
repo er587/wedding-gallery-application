@@ -1,0 +1,43 @@
+# Wedding Gallery - Debian/Ubuntu System Packages
+# Install all at once with: sudo apt install -y $(cat debian-packages.txt)
+# Or install individually as needed
+
+# Python & Development
+python3
+python3-pip
+python3-venv
+python3-dev
+build-essential
+
+# Database
+postgresql
+postgresql-contrib
+libpq-dev
+
+# Web Server
+nginx
+
+# Version Control
+git
+
+# Image Processing Libraries
+libopencv-dev
+libjpeg-dev
+libpng-dev
+libwebp-dev
+libtiff-dev
+
+# SSL/Security
+certbot
+python3-certbot-nginx
+ufw
+
+# JavaScript Runtime (for frontend build)
+nodejs
+npm
+
+# Optional: System Utilities
+curl
+wget
+htop
+net-tools
