@@ -250,7 +250,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
             style={{ maxHeight: 'calc(100vh - 200px)' }}
             loading="eager"
             decoding="async"
-            fetchpriority="high"
+            fetchPriority="high"
           />
 
           {/* Next Arrow */}
