@@ -20,7 +20,8 @@ export const authService = {
       return userData
     } catch (error) {
       console.error('Django authentication failed:', error.response?.data || error.message)
-      throw error
+      // Throw a generic error message for security
+      throw new Error('Authentication failed')
     }
   },
 
