@@ -123,11 +123,6 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
         user = request.user
         image = self.get_object()
         
-        # Debug logging
-        print(f"DEBUG: Current user: {user}, User ID: {user.id if user.is_authenticated else 'Not authenticated'}")
-        print(f"DEBUG: Image uploader: {image.uploader}, Uploader ID: {image.uploader.id if image.uploader else 'None'}")
-        print(f"DEBUG: Are they equal? {image.uploader == user}")
-        
         # Only allow image owner to update their own image
         if image.uploader != user:
             return Response(
