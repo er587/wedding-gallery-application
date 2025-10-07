@@ -26,7 +26,7 @@ export const apiService = {
   createImage: (formData) => api.post('/api/images/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
-  updateImage: (id, data) => api.put(`/api/images/${id}/`, data),
+  updateImage: (id, data) => api.patch(`/api/images/${id}/`, data),
   deleteImage: (id) => api.delete(`/api/images/${id}/`),
 
   // Comments
