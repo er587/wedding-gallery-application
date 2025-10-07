@@ -117,6 +117,25 @@ class ImageSerializer(serializers.ModelSerializer):
     
     def get_thumbnail_width_1440(self, obj):
         return self._get_thumbnail_with_face_data(obj, 'width_1440')
+    
+    def update(self, instance, validated_data):
+        tag_names = validated_data.pop('tag_names', None)
+        
+        # Update regular fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Update tags if provided
+        if tag_names is not None:
+            instance.tags.clear()
+            for tag_name in tag_names:
+                tag_name = tag_name.strip().lower()
+                if tag_name:
+                    tag, created = Tag.objects.get_or_create(name=tag_name)
+                    instance.tags.add(tag)
+        
+        return instance
 
 
 class ImageCreateSerializer(serializers.ModelSerializer):
