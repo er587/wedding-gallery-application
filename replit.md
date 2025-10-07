@@ -6,6 +6,14 @@ This is a full-stack wedding gallery application built with Django REST Framewor
 
 ## Recent Changes
 
+**October 7, 2025 - Editable Tags and Descriptions:**
+- **Implemented editable image descriptions** - Click to edit descriptions inline when viewing images
+- **Added tag management system** - Create, add, and remove tags for images with autocomplete suggestions
+- **Tag autocomplete** - Suggests existing tags while typing to promote consistency
+- **Mobile-responsive tag/description editing** - Works seamlessly on both desktop sidebar and mobile drawer
+- **Persistent tag storage** - Tags saved to database and synced across all users viewing the image
+- **Owner-only editing** - Only image owners can edit descriptions and tags for their images
+
 **October 5, 2025 - Responsive Navigation & Mobile Optimization:**
 - **Implemented fully responsive navigation bar** - Mobile hamburger menu with slide-out panel for authenticated users
 - **Touch-friendly buttons** - All mobile navigation elements meet 44x44px minimum touch target requirements
@@ -79,9 +87,11 @@ Preferred communication style: Simple, everyday language.
 - **Development Server**: Vite dev server configured for hot module replacement on port 5000
 
 ### Data Models
-- **Image Model**: Core entity with title, description, file, uploader reference, and timestamps
+- **Image Model**: Core entity with title, description, file, uploader reference, tags (many-to-many), and timestamps
 - **Comment Model**: Supports nested commenting with parent-child relationships
 - **User Model**: Django's built-in User model for authentication
+- **Tag Model**: Simple tag system with unique names for categorizing images
+- **Like Model**: Track user likes for images with user and image relationships
 
 ### API Design
 - RESTful API structure with standard CRUD operations
