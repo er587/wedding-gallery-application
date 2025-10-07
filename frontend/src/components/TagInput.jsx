@@ -61,11 +61,11 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
   const addTag = (tagName) => {
     const trimmedTag = tagName.trim().toLowerCase()
     if (trimmedTag && !tags.some(t => t.name.toLowerCase() === trimmedTag)) {
-      // Find existing tag or create new one
+      // Only add if tag exists in database
       const existingTag = allTags.find(t => t.name.toLowerCase() === trimmedTag)
-      const newTag = existingTag || { id: null, name: trimmedTag }
-      
-      onTagsChange([...tags, newTag])
+      if (existingTag) {
+        onTagsChange([...tags, existingTag])
+      }
     }
     setInputValue('')
     setSuggestions([])
@@ -73,9 +73,13 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && inputValue.trim()) {
+    if (e.key === 'Enter') {
       e.preventDefault()
-      addTag(inputValue)
+      // Only add if exact match exists in suggestions
+      const exactMatch = allTags.find(t => t.name.toLowerCase() === inputValue.trim().toLowerCase())
+      if (exactMatch) {
+        addTag(exactMatch.name)
+      }
     }
   }
 
@@ -112,7 +116,7 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
         ))}
       </div>
 
-      {/* Input for adding new tags */}
+      {/* Input for selecting existing tags */}
       {canEdit && (
         <div className="relative">
           <input
@@ -122,7 +126,7 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             onFocus={() => inputValue.trim() && setShowSuggestions(true)}
-            placeholder="Add a tag..."
+            placeholder="Select from existing tags..."
             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
 

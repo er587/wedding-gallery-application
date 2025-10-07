@@ -126,14 +126,18 @@ class ImageSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         
-        # Update tags if provided
+        # Update tags if provided - only allow existing tags
         if tag_names is not None:
             instance.tags.clear()
             for tag_name in tag_names:
                 tag_name = tag_name.strip().lower()
                 if tag_name:
-                    tag, created = Tag.objects.get_or_create(name=tag_name)
-                    instance.tags.add(tag)
+                    try:
+                        tag = Tag.objects.get(name=tag_name)
+                        instance.tags.add(tag)
+                    except Tag.DoesNotExist:
+                        # Skip non-existent tags silently
+                        pass
         
         return instance
 
@@ -149,11 +153,15 @@ class ImageCreateSerializer(serializers.ModelSerializer):
         tag_names = validated_data.pop('tag_names', [])
         image = Image.objects.create(**validated_data)
         
-        # Create or get tags and add to image
+        # Only add existing tags to image
         for tag_name in tag_names:
             tag_name = tag_name.strip().lower()
             if tag_name:
-                tag, created = Tag.objects.get_or_create(name=tag_name)
-                image.tags.add(tag)
+                try:
+                    tag = Tag.objects.get(name=tag_name)
+                    image.tags.add(tag)
+                except Tag.DoesNotExist:
+                    # Skip non-existent tags silently
+                    pass
         
         return image
