@@ -40,6 +40,15 @@ DEBUG = env('DEBUG')
 # ALLOWED_HOSTS - Use environment variable for production domains
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
+# Add production domains
+production_domains = [
+    'reneeanderic.wedding',
+    'wedding-website-replit2779.replit.app',
+]
+for domain in production_domains:
+    if domain not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(domain)
+
 # Add Replit dev URL if running in Replit environment
 replit_dev_domain = os.environ.get('REPLIT_DEV_DOMAIN')
 if replit_dev_domain and replit_dev_domain not in ALLOWED_HOSTS:
@@ -61,6 +70,15 @@ development_csrf_origins = [
 # Get production CSRF origins from environment
 csrf_origins_env = env.list('CSRF_TRUSTED_ORIGINS') if 'CSRF_TRUSTED_ORIGINS' in os.environ else []
 CSRF_TRUSTED_ORIGINS = development_csrf_origins + csrf_origins_env
+
+# Add production domains to CSRF trusted origins
+production_csrf_origins = [
+    'https://reneeanderic.wedding',
+    'https://wedding-website-replit2779.replit.app',
+]
+for origin in production_csrf_origins:
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
 
 # Add Replit dev URLs to CSRF trusted origins
 if replit_dev_domain:
@@ -215,7 +233,14 @@ development_cors_origins = [
 
 # Get production CORS origins from environment
 cors_origins_env = env.list('CORS_ALLOWED_ORIGINS') if 'CORS_ALLOWED_ORIGINS' in os.environ else []
-CORS_ALLOWED_ORIGINS = development_cors_origins + cors_origins_env
+
+# Add production domains to CORS
+production_cors_origins = [
+    'https://reneeanderic.wedding',
+    'https://wedding-website-replit2779.replit.app',
+]
+
+CORS_ALLOWED_ORIGINS = development_cors_origins + cors_origins_env + production_cors_origins
 
 CORS_ALLOW_CREDENTIALS = env.bool('CORS_ALLOW_CREDENTIALS') if 'CORS_ALLOW_CREDENTIALS' in os.environ else True
 

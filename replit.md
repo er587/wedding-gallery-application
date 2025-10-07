@@ -6,6 +6,12 @@ This is a full-stack wedding gallery application built with Django REST Framewor
 
 ## Recent Changes
 
+**October 7, 2025 - Production Deployment Configuration:**
+- **Configured production domains** - Added reneeanderic.wedding and wedding-website-replit2779.replit.app to ALLOWED_HOSTS
+- **CSRF protection updated** - Production domains added to CSRF_TRUSTED_ORIGINS
+- **CORS configuration** - Production domains properly configured for cross-origin requests
+- **Deployment ready** - VM deployment with Gunicorn, migrations, and static file collection
+
 **October 7, 2025 - Tag System with Import/Export:**
 - **Restricted tag selection** - Users can only select from existing tags (no ad-hoc creation)
 - **Tag autocomplete in upload** - Upload form now uses autocomplete for tag selection
@@ -145,11 +151,15 @@ Preferred communication style: Simple, everyday language.
 - **PostCSS & Autoprefixer**: CSS processing pipeline
 
 ### Production Configuration
-- **PostgreSQL Database**: Production-ready database with connection pooling
+- **PostgreSQL Database**: Production-ready database with connection pooling (Neon)
 - **WhiteNoise Static Files**: Compressed static file serving
 - **Security Headers**: Production security middleware and settings
-- **Gunicorn WSGI Server**: Multi-worker production server
-- **Autoscale Deployment**: Replit deployment configuration with build pipeline
+- **Gunicorn WSGI Server**: Multi-worker production server (3 workers, 120s timeout)
+- **VM Deployment**: Replit deployment configuration with build pipeline
+- **Production Domains**:
+  - reneeanderic.wedding (custom domain)
+  - wedding-website-replit2779.replit.app (Replit domain)
+- **Deployment Process**: Automated build (frontend) → collect static files → migrate database → start Gunicorn
 
 ## Project Structure
 
