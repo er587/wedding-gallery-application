@@ -6,13 +6,16 @@ This is a full-stack wedding gallery application built with Django REST Framewor
 
 ## Recent Changes
 
-**October 7, 2025 - Editable Tags and Descriptions:**
-- **Implemented editable image descriptions** - Click to edit descriptions inline when viewing images
-- **Added tag management system** - Create, add, and remove tags for images with autocomplete suggestions
-- **Tag autocomplete** - Suggests existing tags while typing to promote consistency
+**October 7, 2025 - Tag System with Import/Export:**
+- **Restricted tag selection** - Users can only select from existing tags (no ad-hoc creation)
+- **Tag autocomplete in upload** - Upload form now uses autocomplete for tag selection
+- **Admin import/export** - Admins can import tags from CSV and export tags to CSV
+- **Editable image descriptions** - Click to edit descriptions inline when viewing images
+- **Tag management system** - Add and remove tags for images with autocomplete suggestions
 - **Mobile-responsive tag/description editing** - Works seamlessly on both desktop sidebar and mobile drawer
 - **Persistent tag storage** - Tags saved to database and synced across all users viewing the image
 - **Owner-only editing** - Only image owners can edit descriptions and tags for their images
+- **Sample CSV provided** - `sample_tags.csv` included with common wedding tags
 
 **October 5, 2025 - Responsive Navigation & Mobile Optimization:**
 - **Implemented fully responsive navigation bar** - Mobile hamburger menu with slide-out panel for authenticated users

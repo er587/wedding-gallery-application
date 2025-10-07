@@ -1,0 +1,43 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{{ title }}</h1>
+    
+    <div class="module" style="max-width: 800px;">
+        <div class="module">
+            <h2>Upload CSV File</h2>
+            <p>Upload a CSV file with tag names to import. The CSV file should have one column with header "Tag Name".</p>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div>
+                        <label for="csv_file">CSV File:</label>
+                        <input type="file" name="csv_file" id="csv_file" accept=".csv" required>
+                    </div>
+                </div>
+                
+                <div class="submit-row">
+                    <input type="submit" value="Import Tags" class="default">
+                    <a href=".." class="button cancel-link">Cancel</a>
+                </div>
+            </form>
+        </div>
+        
+        <div class="module" style="margin-top: 20px;">
+            <h2>CSV Format Example</h2>
+            <p>Your CSV file should look like this:</p>
+            <pre style="background: #f8f8f8; padding: 10px; border: 1px solid #ddd;">Tag Name
+wedding
+reception
+ceremony
+family
+friends
+bride
+groom</pre>
+            <p><strong>Note:</strong> Existing tags will be skipped. Tag names will be automatically converted to lowercase.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User, Group
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from django.urls import path
+from django.contrib import messages
+import csv
 from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken
 
 
@@ -78,10 +83,88 @@ class TagAdmin(admin.ModelAdmin):
     list_display = ['name', 'created_at', 'image_count']
     search_fields = ['name']
     readonly_fields = ['created_at']
+    actions = ['export_tags']
     
     def image_count(self, obj):
         return obj.images.count()
     image_count.short_description = 'Images Count'
+    
+    def export_tags(self, request, queryset):
+        """Export selected tags to CSV"""
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="tags_export.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Tag Name'])
+        
+        for tag in queryset:
+            writer.writerow([tag.name])
+        
+        return response
+    export_tags.short_description = "Export selected tags to CSV"
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('import/', self.import_tags_view, name='tags_import'),
+        ]
+        return custom_urls + urls
+    
+    def import_tags_view(self, request):
+        """Custom view for importing tags from CSV"""
+        if request.method == 'POST':
+            csv_file = request.FILES.get('csv_file')
+            
+            if not csv_file:
+                messages.error(request, 'Please select a CSV file to upload.')
+                return redirect('..')
+            
+            if not csv_file.name.endswith('.csv'):
+                messages.error(request, 'Please upload a valid CSV file.')
+                return redirect('..')
+            
+            try:
+                # Read CSV file
+                decoded_file = csv_file.read().decode('utf-8').splitlines()
+                reader = csv.DictReader(decoded_file)
+                
+                created_count = 0
+                skipped_count = 0
+                
+                for row in reader:
+                    tag_name = row.get('Tag Name', '').strip().lower()
+                    
+                    if tag_name:
+                        tag, created = Tag.objects.get_or_create(name=tag_name)
+                        if created:
+                            created_count += 1
+                        else:
+                            skipped_count += 1
+                
+                messages.success(
+                    request, 
+                    f'Import complete! Created {created_count} new tags. Skipped {skipped_count} existing tags.'
+                )
+                
+            except Exception as e:
+                messages.error(request, f'Error importing tags: {str(e)}')
+            
+            return redirect('..')
+        
+        # GET request - show upload form
+        context = {
+            'site_title': 'Import Tags',
+            'title': 'Import Tags from CSV',
+            'opts': self.model._meta,
+            'has_view_permission': self.has_view_permission(request),
+        }
+        return render(request, 'admin/tags_import.html', context)
+    
+    def changelist_view(self, request, extra_context=None):
+        """Add import button to the changelist view"""
+        extra_context = extra_context or {}
+        extra_context['show_import_button'] = True
+        return super().changelist_view(request, extra_context=extra_context)
 
 
 # Customize Group admin to show users
