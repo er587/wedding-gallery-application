@@ -123,6 +123,9 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
         user = request.user
         image = self.get_object()
         
+        # Debug logging
+        print(f"DEBUG PATCH: Image ID: {image.id}, Current user: {user} (ID: {user.id if user.is_authenticated else 'Not authenticated'}), Image uploader: {image.uploader} (ID: {image.uploader.id if image.uploader else 'None'})")
+        
         # Only allow image owner to update their own image
         if image.uploader != user:
             return Response(
