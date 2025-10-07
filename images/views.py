@@ -25,6 +25,12 @@ class ImagePagination(PageNumberPagination):
     max_page_size = 50
 
 
+class TagListView(generics.ListAPIView):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = [permissions.AllowAny]
+
+
 class ImageListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = ImagePagination

@@ -38,6 +38,9 @@ export const apiService = {
   toggleLike: (imageId) => api.post(`/api/images/${imageId}/like/`),
   getLikedImages: (page = 1) => api.get(`/api/auth/liked-images/?page=${page}`),
 
+  // Tags
+  getTags: () => api.get('/api/tags/'),
+
   // Authentication
   getCsrfToken: () => api.get('/api/auth/csrf/'),
   login: (credentials) => api.post('/api/auth/login/', credentials),

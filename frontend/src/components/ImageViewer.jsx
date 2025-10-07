@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import CommentSystem from './CommentSystem'
 import InlineEditableText from './InlineEditableText'
+import TagInput from './TagInput'
 import { apiService } from '../services/api'
 import { useToast } from './Toast'
 
@@ -141,6 +142,31 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
     } catch (error) {
       console.error('Error updating image title:', error)
       throw error // Re-throw so InlineEditableText can handle the error
+    }
+  }
+
+  const handleUpdateImageDescription = async (newDescription) => {
+    try {
+      await apiService.updateImage(imageData.id, { description: newDescription })
+      
+      // Update the local state
+      setImageData(prev => ({ ...prev, description: newDescription }))
+    } catch (error) {
+      console.error('Error updating image description:', error)
+      throw error // Re-throw so InlineEditableText can handle the error
+    }
+  }
+
+  const handleUpdateTags = async (newTags) => {
+    try {
+      const tagNames = newTags.map(tag => tag.name)
+      await apiService.updateImage(imageData.id, { tag_names: tagNames })
+      
+      // Update the local state
+      setImageData(prev => ({ ...prev, tags: newTags }))
+    } catch (error) {
+      console.error('Error updating image tags:', error)
+      toast.error('Failed to update tags. Please try again.')
     }
   }
 
@@ -330,7 +356,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                     placeholder="Enter image title..."
                     canEdit={canEditImage()}
                   />
-                  <p className="text-sm text-gray-600">Comments & Memories</p>
+                  <p className="text-sm text-gray-600">Details & Comments</p>
                 </div>
                 <button
                   onClick={() => setShowMobileComments(false)}
@@ -342,6 +368,26 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                   </svg>
                 </button>
               </div>
+              
+              {/* Description & Tags Section */}
+              <div className="px-4 pb-3 border-b">
+                <div className="mb-2">
+                  <InlineEditableText
+                    value={imageData.description || ''}
+                    onSave={handleUpdateImageDescription}
+                    className="text-sm text-gray-700"
+                    placeholder="Add a description..."
+                    canEdit={canEditImage()}
+                    multiline={true}
+                  />
+                </div>
+                <TagInput
+                  tags={imageData.tags || []}
+                  onTagsChange={handleUpdateTags}
+                  canEdit={canEditImage()}
+                />
+              </div>
+              
               {/* Comments Content */}
               <div className="flex-1 overflow-y-auto">
                 <CommentSystem
@@ -419,9 +465,25 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                 )}
               </div>
             </div>
-            {imageData.description && (
-              <p className="text-gray-700 mt-2">{imageData.description}</p>
-            )}
+            
+            {/* Description */}
+            <div className="mt-3">
+              <InlineEditableText
+                value={imageData.description || ''}
+                onSave={handleUpdateImageDescription}
+                className="text-sm text-gray-700"
+                placeholder="Add a description..."
+                canEdit={canEditImage()}
+                multiline={true}
+              />
+            </div>
+
+            {/* Tags */}
+            <TagInput
+              tags={imageData.tags || []}
+              onTagsChange={handleUpdateTags}
+              canEdit={canEditImage()}
+            />
           </div>
 
           {/* Comments */}

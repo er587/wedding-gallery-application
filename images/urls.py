@@ -11,6 +11,9 @@ urlpatterns = [
     path('api/images/<int:image_id>/comments/', views.CommentListCreateView.as_view(), name='comment-list-create'),
     path('api/comments/<int:comment_id>/reply/', views.create_reply, name='comment-reply'),
     
+    # Tag endpoints
+    path('api/tags/', views.TagListView.as_view(), name='tag-list'),
+    
     # Like endpoints
     path('api/images/<int:image_id>/like/', views.toggle_like, name='toggle-like'),
     path('api/auth/liked-images/', views.user_liked_images, name='user-liked-images'),
