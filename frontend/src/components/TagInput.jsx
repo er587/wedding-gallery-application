@@ -83,7 +83,11 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
     onTagsChange(tags.filter(tag => tag.name !== tagToRemove.name))
   }
 
+  // Debug logging
+  console.log('TagInput render - canEdit:', canEdit, 'tags:', tags, 'tags.length:', tags.length)
+  
   if (!canEdit && tags.length === 0) {
+    console.log('TagInput: Not rendering (canEdit=false and no tags)')
     return null
   }
 

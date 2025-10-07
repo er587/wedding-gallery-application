@@ -122,10 +122,19 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
   }
 
   const canEditImage = () => {
-    if (!user) return false
+    if (!user) {
+      console.log('canEditImage: No user')
+      return false
+    }
     
     // Only allow image owner to edit their own image
-    return (imageData.uploader && user.id === imageData.uploader.id)
+    const canEdit = (imageData.uploader && user.id === imageData.uploader.id)
+    console.log('canEditImage:', {
+      userId: user.id,
+      uploaderId: imageData.uploader?.id,
+      canEdit
+    })
+    return canEdit
   }
 
   const handleUpdateImageTitle = async (newTitle) => {
