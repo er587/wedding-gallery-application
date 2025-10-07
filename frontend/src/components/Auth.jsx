@@ -30,7 +30,7 @@ export default function Auth({ onLogin }) {
       const userData = await authService.login(loginData.username, loginData.password)
       onLogin(userData)
     } catch (error) {
-      toast.error('Login failed. Please check your credentials and try again.')
+      toast.error('Login failed. Please check your credentials and try again.', 6000)
     }
   }
 
