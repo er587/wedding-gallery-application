@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { apiService } from '../services/api'
 import { useToast } from './Toast'
+import TagInput from './TagInput'
 
 export default function ImageUpload({ user, onImageUploaded, onCancel }) {
   const toast = useToast()
@@ -8,7 +9,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
     title: '',
     description: '',
     image_file: null,
-    tags: ''
+    tags: []
   })
   const [preview, setPreview] = useState(null)
   const [uploading, setUploading] = useState(false)
@@ -18,7 +19,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
   const [selectedFiles, setSelectedFiles] = useState([])
   const [uploadQueue, setUploadQueue] = useState([])
   const [sharedMetadata, setSharedMetadata] = useState({
-    tags: '',
+    tags: [],
     description: ''
   })
 
@@ -115,10 +116,9 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
       formDataToSend.append('image_file', formData.image_file)
       
       // Add tags as an array
-      if (formData.tags.trim()) {
-        const tagArray = formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
-        tagArray.forEach(tag => {
-          formDataToSend.append('tag_names', tag)
+      if (formData.tags.length > 0) {
+        formData.tags.forEach(tag => {
+          formDataToSend.append('tag_names', tag.name)
         })
       }
       
@@ -154,10 +154,9 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
         formDataToSend.append('image_file', fileObj.file)
         
         // Add shared tags
-        if (sharedMetadata.tags.trim()) {
-          const tagArray = sharedMetadata.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
-          tagArray.forEach(tag => {
-            formDataToSend.append('tag_names', tag)
+        if (sharedMetadata.tags.length > 0) {
+          sharedMetadata.tags.forEach(tag => {
+            formDataToSend.append('tag_names', tag.name)
           })
         }
         
@@ -214,10 +213,10 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
       title: '',
       description: '',
       image_file: null,
-      tags: ''
+      tags: []
     })
     setPreview(null)
-    setSharedMetadata({ tags: '', description: '' })
+    setSharedMetadata({ tags: [], description: '' })
   }
 
   return (
@@ -393,15 +392,10 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tags
-              </label>
-              <input
-                type="text"
-                value={sharedMetadata.tags}
-                onChange={(e) => setSharedMetadata(prev => ({ ...prev, tags: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter tags separated by commas (applied to all images)"
+              <TagInput
+                tags={sharedMetadata.tags}
+                onTagsChange={(tags) => setSharedMetadata(prev => ({ ...prev, tags }))}
+                canEdit={true}
               />
               <p className="text-xs text-gray-500 mt-1">
                 These tags will be applied to all uploaded images
@@ -441,16 +435,10 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tags
-              </label>
-              <input
-                type="text"
-                name="tags"
-                value={formData.tags}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter tags separated by commas (e.g., family, vacation, birthday)"
+              <TagInput
+                tags={formData.tags}
+                onTagsChange={(tags) => setFormData(prev => ({ ...prev, tags }))}
+                canEdit={true}
               />
               <p className="text-xs text-gray-500 mt-1">
                 Tags help others find and filter images by themes or events
