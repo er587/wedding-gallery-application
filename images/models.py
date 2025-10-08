@@ -57,8 +57,11 @@ def get_thumbnail_upload_path(instance, filename):
 class Image(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    image_file = models.ImageField(upload_to=get_image_upload_path)
+    image_file = models.ImageField(upload_to=get_image_upload_path, blank=True, null=True)
     thumbnail = models.ImageField(upload_to=get_thumbnail_upload_path, blank=True, null=True)
+    
+    # Vimeo embed URL for videos (domain-level privacy links)
+    vimeo_url = models.URLField(blank=True, null=True, help_text="Vimeo embed URL with domain-level privacy")
     
     # Face detection coordinates for smart cropping (normalized 0-1)
     face_x = models.FloatField(null=True, blank=True, help_text="Face center X coordinate (0-1)")
@@ -77,6 +80,11 @@ class Image(models.Model):
     
     class Meta:
         ordering = ['-uploaded_at']
+    
+    @property
+    def is_video(self):
+        """Check if this entry is a video (has vimeo_url)"""
+        return bool(self.vimeo_url)
         
     def __str__(self):
         return self.title
