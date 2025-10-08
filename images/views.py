@@ -339,6 +339,36 @@ def register_view(request):
             profile.role = invitation.role
             profile.save()
         
+        # Send notification email to admin about new user registration
+        try:
+            from django.core.mail import send_mail
+            
+            admin_subject = 'New User Registration'
+            admin_message = f'''
+A new user has registered on the Wedding Gallery:
+
+Name: {user.first_name} {user.last_name}
+Email: {user.email}
+Role: {profile.get_role_display()}
+Invitation Code Used: {invitation_code}
+Registration Time: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+You can manage this user in the admin panel at {settings.FRONTEND_URL}/admin/
+            '''
+            
+            send_mail(
+                admin_subject,
+                admin_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [settings.SERVER_EMAIL],
+                fail_silently=True,  # Don't break registration if email fails
+            )
+        except Exception as email_error:
+            # Log the error but don't fail the registration
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Failed to send admin notification email: {str(email_error)}')
+        
         # Automatically log in the user after registration
         login(request, user)
         

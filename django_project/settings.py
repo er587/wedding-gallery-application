@@ -341,6 +341,7 @@ EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS') if 'EMAIL_USE_TLS' in os.environ else 
 EMAIL_HOST_USER = env('EMAIL_HOST_USER') if 'EMAIL_HOST_USER' in os.environ else ''
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD') if 'EMAIL_HOST_PASSWORD' in os.environ else ''
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL') if 'DEFAULT_FROM_EMAIL' in os.environ else EMAIL_HOST_USER
+SERVER_EMAIL = env('SERVER_EMAIL') if 'SERVER_EMAIL' in os.environ else 'admin@localhost'
 
 # Base URL for email links (verification and password reset)
 FRONTEND_URL = env('FRONTEND_URL') if 'FRONTEND_URL' in os.environ else 'http://localhost:5000'
