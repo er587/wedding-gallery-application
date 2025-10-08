@@ -121,9 +121,17 @@ EMAIL_USE_TLS=True
 EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
 DEFAULT_FROM_EMAIL=noreply@yourdomain.com
-FRONTEND_URL=https://yourdomain.com
 TEST_EMAIL=your-email@gmail.com  # Optional: for testing email functionality
+
+# CRITICAL: Frontend URL for email links
+FRONTEND_URL=https://yourdomain.com
 ```
+
+**⚠️ IMPORTANT:** The `FRONTEND_URL` must be set to your actual production domain (e.g., `https://reneeanderic.wedding`). This URL is used in:
+- Password reset email links
+- Email verification links
+
+If not set correctly, users will receive broken links pointing to localhost instead of your production site.
 
 ### Email Testing
 
