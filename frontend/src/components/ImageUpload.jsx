@@ -286,61 +286,61 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
             </p>
           </div>
         ) : (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {bulkMode ? 'Images' : 'Image'}
-          </label>
-          <div
-            className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-          >
-            {!bulkMode && preview ? (
-              <div className="space-y-4">
-                <img 
-                  src={preview} 
-                  alt="Preview" 
-                  className="max-h-64 mx-auto rounded"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPreview(null)
-                    setFormData(prev => ({ ...prev, image_file: null }))
-                  }}
-                  className="text-sm text-red-600 hover:text-red-800"
-                >
-                  Remove
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="text-gray-400 mb-2">
-                  <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {bulkMode ? 'Images' : 'Image'}
+            </label>
+            <div
+              className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
+              {!bulkMode && preview ? (
+                <div className="space-y-4">
+                  <img 
+                    src={preview} 
+                    alt="Preview" 
+                    className="max-h-64 mx-auto rounded"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPreview(null)
+                      setFormData(prev => ({ ...prev, image_file: null }))
+                    }}
+                    className="text-sm text-red-600 hover:text-red-800"
+                  >
+                    Remove
+                  </button>
                 </div>
-                <p className="text-gray-600 mb-2">
-                  {bulkMode ? 'Drag and drop multiple images here, or' : 'Drag and drop your image here, or'}
-                </p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple={bulkMode}
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="image-upload"
-                />
-                <label
-                  htmlFor="image-upload"
-                  className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-                >
-                  {bulkMode ? 'Choose Multiple Files' : 'Choose File'}
-                </label>
-              </>
-            )}
+              ) : (
+                <>
+                  <div className="text-gray-400 mb-2">
+                    <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-600 mb-2">
+                    {bulkMode ? 'Drag and drop multiple images here, or' : 'Drag and drop your image here, or'}
+                  </p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple={bulkMode}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                  >
+                    {bulkMode ? 'Choose Multiple Files' : 'Choose File'}
+                  </label>
+                </>
+              )}
+            </div>
           </div>
-        </div>
         )}
 
         {/* Bulk Upload: Selected Files Preview */}
