@@ -90,6 +90,7 @@ def test_email_configuration():
         print("   EMAIL_HOST_USER=your-email@gmail.com")
         print("   EMAIL_HOST_PASSWORD=your-app-password")
         print("   DEFAULT_FROM_EMAIL=noreply@yourdomain.com")
+        print("   TEST_EMAIL=your-real-email@gmail.com")
     else:
         print("✓ Email backend is configured for SMTP delivery")
         if not settings.DEFAULT_FROM_EMAIL:
@@ -98,7 +99,18 @@ def test_email_configuration():
             print("✓ SMTP credentials are configured")
         else:
             print("⚠ WARNING: EMAIL_HOST_USER or EMAIL_HOST_PASSWORD may not be set")
+        
+        # Critical check for SMTP + example.com
+        if not test_email:
+            print()
+            print("❌ ERROR: TEST_EMAIL must be set when using SMTP!")
+            print("   example.com addresses cannot receive email.")
+            print("   Set TEST_EMAIL in your .env file or as environment variable:")
+            print("   TEST_EMAIL=your-real-email@gmail.com")
+            print()
+            return False
     print()
+    return True
 
 
 def test_verification_email():
@@ -281,13 +293,16 @@ def test_basic_email():
     print("Testing Basic Email Sending")
     print("=" * 60)
     
-    print("Sending test email...")
+    # Use TEST_EMAIL if available
+    test_email = os.environ.get('TEST_EMAIL', 'test@example.com')
+    
+    print(f"Sending test email to {test_email}...")
     try:
         send_mail(
             'Test Email from Wedding Gallery',
             'This is a test email to verify email configuration is working correctly.',
             settings.DEFAULT_FROM_EMAIL,
-            ['test@example.com'],
+            [test_email],
             fail_silently=False,
         )
         print("✓ Basic email sent successfully!")
@@ -303,9 +318,18 @@ def cleanup_test_data():
     print("Cleanup")
     print("=" * 60)
     
+    # Build list of test email addresses to clean up
+    test_email = os.environ.get('TEST_EMAIL')
+    emails_to_delete = []
+    
+    if test_email:
+        emails_to_delete.append(test_email)
+    else:
+        emails_to_delete.extend(['test_email_user@example.com', 'test_reset_user@example.com'])
+    
     # Delete test users
     deleted_count = User.objects.filter(
-        email__in=['test_email_user@example.com', 'test_reset_user@example.com']
+        email__in=emails_to_delete
     ).delete()[0]
     
     if deleted_count > 0:
@@ -325,7 +349,12 @@ def main():
     
     try:
         # Test email configuration
-        test_email_configuration()
+        config_ok = test_email_configuration()
+        if not config_ok:
+            print("=" * 60)
+            print("❌ Configuration Error - Tests Aborted")
+            print("=" * 60)
+            sys.exit(1)
         
         # Test basic email
         test_basic_email()

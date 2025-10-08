@@ -116,6 +116,8 @@ TEST_EMAIL=your-email@gmail.com
 TEST_EMAIL=your-email@gmail.com python deployment/test_email.py
 ```
 
+**⚠️ IMPORTANT:** When using SMTP (production email), `TEST_EMAIL` **must** be set to a real email address. The script will abort if you try to use SMTP without setting `TEST_EMAIL`, as example.com addresses cannot receive email.
+
 **Note:** The script automatically handles being run from either the project root or the deployment folder.
 
 ## 🔧 Maintenance Tasks

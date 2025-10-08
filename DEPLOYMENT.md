@@ -148,7 +148,14 @@ The test script will verify:
 - ✅ Password reset tokens work
 - ✅ Email delivery functions properly
 
-**Tip:** Add `TEST_EMAIL=your-email@gmail.com` to your `.env` file to always test with your real email address.
+**⚠️ IMPORTANT:** When using SMTP (production email), you **must** set `TEST_EMAIL` to a real email address:
+
+```bash
+# Add to .env file
+TEST_EMAIL=your-email@gmail.com
+```
+
+The test script will abort if SMTP is enabled without `TEST_EMAIL`, as example.com addresses cannot receive email.
 
 **Gmail App Password Setup:**
 1. Enable 2-Factor Authentication on your Google account
