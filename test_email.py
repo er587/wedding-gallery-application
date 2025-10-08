@@ -6,6 +6,25 @@ This script tests:
 1. Email verification functionality
 2. Password reset functionality
 
+Configuration:
+    Email settings are read from environment variables or .env file.
+    
+    To use .env file, create a .env file in the project root with:
+    
+    # For console output (development/testing)
+    EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+    FRONTEND_URL=http://localhost:5000
+    
+    # For SMTP (production)
+    # EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+    # EMAIL_HOST=smtp.gmail.com
+    # EMAIL_PORT=587
+    # EMAIL_USE_TLS=True
+    # EMAIL_HOST_USER=your-email@gmail.com
+    # EMAIL_HOST_PASSWORD=your-app-password
+    # DEFAULT_FROM_EMAIL=noreply@yourdomain.com
+    # FRONTEND_URL=https://yourdomain.com
+
 Usage:
     python test_email.py
 """
@@ -34,14 +53,29 @@ def test_email_configuration():
     print(f"Email Host: {settings.EMAIL_HOST}")
     print(f"Email Port: {settings.EMAIL_PORT}")
     print(f"Email Use TLS: {settings.EMAIL_USE_TLS}")
-    print(f"Email From: {settings.DEFAULT_FROM_EMAIL}")
+    print(f"Email From: {settings.DEFAULT_FROM_EMAIL or 'Not set'}")
     print(f"Frontend URL: {settings.FRONTEND_URL}")
     print()
     
     if settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
         print("✓ Email backend is set to CONSOLE - emails will print to console")
+        print()
+        print("📝 To send real emails via SMTP, set these environment variables:")
+        print("   EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend")
+        print("   EMAIL_HOST=smtp.gmail.com")
+        print("   EMAIL_PORT=587")
+        print("   EMAIL_USE_TLS=True")
+        print("   EMAIL_HOST_USER=your-email@gmail.com")
+        print("   EMAIL_HOST_PASSWORD=your-app-password")
+        print("   DEFAULT_FROM_EMAIL=noreply@yourdomain.com")
     else:
         print("✓ Email backend is configured for SMTP delivery")
+        if not settings.DEFAULT_FROM_EMAIL:
+            print("⚠ WARNING: DEFAULT_FROM_EMAIL is not set!")
+        if settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD:
+            print("✓ SMTP credentials are configured")
+        else:
+            print("⚠ WARNING: EMAIL_HOST_USER or EMAIL_HOST_PASSWORD may not be set")
     print()
 
 
