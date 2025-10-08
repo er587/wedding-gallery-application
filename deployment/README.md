@@ -104,6 +104,18 @@ This tests:
 - ✅ Password reset email sending
 - ✅ Token generation and validation
 
+**Testing with Real Email:**
+
+To receive test emails at your actual email address, set the `TEST_EMAIL` environment variable:
+
+```bash
+# Add to .env file
+TEST_EMAIL=your-email@gmail.com
+
+# Or set temporarily for one test
+TEST_EMAIL=your-email@gmail.com python deployment/test_email.py
+```
+
 **Note:** The script automatically handles being run from either the project root or the deployment folder.
 
 ## 🔧 Maintenance Tasks

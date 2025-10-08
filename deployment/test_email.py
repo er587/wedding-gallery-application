@@ -24,6 +24,7 @@ Configuration:
     # EMAIL_HOST_PASSWORD=your-app-password
     # DEFAULT_FROM_EMAIL=noreply@yourdomain.com
     # FRONTEND_URL=https://yourdomain.com
+    # TEST_EMAIL=your-real-email@gmail.com  # Optional: for testing with real email
 
 Usage:
     # From project root
@@ -70,6 +71,12 @@ def test_email_configuration():
     print(f"Email Use TLS: {settings.EMAIL_USE_TLS}")
     print(f"Email From: {settings.DEFAULT_FROM_EMAIL or 'Not set'}")
     print(f"Frontend URL: {settings.FRONTEND_URL}")
+    
+    test_email = os.environ.get('TEST_EMAIL')
+    if test_email:
+        print(f"Test Email: {test_email} ✓")
+    else:
+        print(f"Test Email: Not set (using example.com addresses)")
     print()
     
     if settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
@@ -100,10 +107,13 @@ def test_verification_email():
     print("Testing Email Verification")
     print("=" * 60)
     
+    # Use TEST_EMAIL from environment if set, otherwise use example.com
+    test_email = os.environ.get('TEST_EMAIL', 'test_email_user@example.com')
+    
     # Get or create a test user
     user, created = User.objects.get_or_create(
-        username='test_email_user@example.com',
-        email='test_email_user@example.com',
+        username=test_email,
+        email=test_email,
         defaults={
             'first_name': 'Test',
             'last_name': 'User'
@@ -184,10 +194,13 @@ def test_password_reset_email():
     print("Testing Password Reset")
     print("=" * 60)
     
+    # Use TEST_EMAIL from environment if set, otherwise use example.com
+    test_email = os.environ.get('TEST_EMAIL', 'test_reset_user@example.com')
+    
     # Get or create a test user
     user, created = User.objects.get_or_create(
-        username='test_reset_user@example.com',
-        email='test_reset_user@example.com',
+        username=test_email,
+        email=test_email,
         defaults={
             'first_name': 'Reset',
             'last_name': 'Tester'

@@ -122,6 +122,7 @@ EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
 DEFAULT_FROM_EMAIL=noreply@yourdomain.com
 FRONTEND_URL=https://yourdomain.com
+TEST_EMAIL=your-email@gmail.com  # Optional: for testing email functionality
 ```
 
 ### Email Testing
@@ -134,8 +135,11 @@ bash deployment/setup_email_env.sh
 
 **Verify Email Functionality:**
 ```bash
-# Test email sending and token generation
+# Test with console output (default)
 python deployment/test_email.py
+
+# Test with your real email address
+TEST_EMAIL=your-email@gmail.com python deployment/test_email.py
 ```
 
 The test script will verify:
@@ -143,6 +147,8 @@ The test script will verify:
 - ✅ Email verification tokens work
 - ✅ Password reset tokens work
 - ✅ Email delivery functions properly
+
+**Tip:** Add `TEST_EMAIL=your-email@gmail.com` to your `.env` file to always test with your real email address.
 
 **Gmail App Password Setup:**
 1. Enable 2-Factor Authentication on your Google account
