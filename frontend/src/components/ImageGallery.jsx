@@ -11,6 +11,7 @@ export default function ImageGallery({ user, refresh }) {
   const [selectedImage, setSelectedImage] = useState(null)
   const [loading, setLoading] = useState(true)
   const [selectedTags, setSelectedTags] = useState('')
+  const [mediaType, setMediaType] = useState('') // '', 'video', or 'image'
   const [selectionMode, setSelectionMode] = useState(false)
   
   const [selectedImages, setSelectedImages] = useState(new Set())
@@ -44,13 +45,14 @@ export default function ImageGallery({ user, refresh }) {
         setPagination(prev => ({ ...prev, loadingMore: true }))
       }
       
-      // Build query parameters for tag filtering
+      // Build query parameters for tag filtering and media type
       const currentPage = isInitialLoad ? 1 : pagination.page
       const params = {
         page: currentPage,
         page_size: pagination.pageSize
       }
       if (selectedTags) params.tags = selectedTags
+      if (mediaType) params.media_type = mediaType
       
       const response = await apiService.getImages(params)
       
@@ -218,7 +220,7 @@ export default function ImageGallery({ user, refresh }) {
       setImages([])
       setLoading(false)
     }
-  }, [refresh, user, selectedTags])
+  }, [refresh, user, selectedTags, mediaType])
 
   // Track scroll position for back-to-top button
   useEffect(() => {
@@ -296,6 +298,10 @@ export default function ImageGallery({ user, refresh }) {
 
   const handleTagFilter = (tags) => {
     setSelectedTags(tags)
+  }
+
+  const handleMediaTypeFilter = (type) => {
+    setMediaType(type)
   }
 
   const toggleSelectionMode = () => {
@@ -508,6 +514,8 @@ export default function ImageGallery({ user, refresh }) {
           <SearchBar 
             onTagFilter={handleTagFilter}
             currentTags={selectedTags}
+            onMediaTypeFilter={handleMediaTypeFilter}
+            currentMediaType={mediaType}
           />
         </div>
       )}
