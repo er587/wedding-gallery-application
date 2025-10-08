@@ -6,7 +6,10 @@ This is a full-stack wedding gallery application built with Django REST Framewor
 
 ## Recent Changes
 
-**October 8, 2025 - Performance Optimizations & UX Enhancements:**
+**October 8, 2025 - Streamlined UI & Performance Optimizations:**
+- **Streamlined filter interface** - Removed Active Filters box and search input, using only hashtag pill filters for cleaner UX
+- **Hashtag-only filtering** - Clickable hashtag pills provide visual feedback, selected tags highlighted with checkmark
+- **Database-wide tag filtering** - Tag filters work across all images in database, not just loaded ones
 - **Comprehensive CPU optimization** - Reduced page size from 12 to 8 images, decreased pre-loading distance from 800px to 200px
 - **Staggered image loading** - 100ms delay between batches with RAF throttling to spread CPU load and prevent spikes
 - **Backend query optimization** - Added select_related/prefetch_related to reduce database hits by up to 80%
@@ -15,9 +18,6 @@ This is a full-stack wedding gallery application built with Django REST Framewor
 - **Thumbnail quality optimization** - Reduced JPEG quality from 80-90% to 75-80% for faster encoding
 - **Enhanced loading spinner** - Larger, more visible spinner with white background and shadow when loading more images
 - **Floating back-to-top button** - Appears after scrolling 400px down, provides smooth scroll to top with animated arrow icon
-- **Active filter display** - Selected filters shown as removable badges with X buttons in shadow box
-- **Database-driven tag selection** - Tag filter dropdown now pulls tags from database with multi-select capability
-- **Individual filter removal** - Users can remove specific search or tag filters without clearing all filters
 - **Expected 50-70% CPU reduction** when scrolling through gallery
 
 **October 7, 2025 - Production Deployment Configuration:**
