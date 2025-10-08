@@ -10,7 +10,7 @@ export default function ImageGallery({ user, refresh }) {
   const [images, setImages] = useState([])
   const [selectedImage, setSelectedImage] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [searchParams, setSearchParams] = useState({ search: '', tags: '' })
+  const [selectedTags, setSelectedTags] = useState('')
   const [selectionMode, setSelectionMode] = useState(false)
   
   const [selectedImages, setSelectedImages] = useState(new Set())
@@ -34,14 +34,13 @@ export default function ImageGallery({ user, refresh }) {
         setPagination(prev => ({ ...prev, loadingMore: true }))
       }
       
-      // Build query parameters for search and filtering
+      // Build query parameters for tag filtering
       const currentPage = isInitialLoad ? 1 : pagination.page
       const params = {
         page: currentPage,
-        page_size: pagination.pageSize // Load 12 images per batch
+        page_size: pagination.pageSize
       }
-      if (searchParams.search) params.search = searchParams.search
-      if (searchParams.tags) params.tags = searchParams.tags
+      if (selectedTags) params.tags = selectedTags
       
       const response = await apiService.getImages(params)
       
@@ -205,7 +204,7 @@ export default function ImageGallery({ user, refresh }) {
       setImages([])
       setLoading(false)
     }
-  }, [refresh, user, searchParams])
+  }, [refresh, user, selectedTags])
 
   // Track scroll position for back-to-top button
   useEffect(() => {
@@ -281,26 +280,8 @@ export default function ImageGallery({ user, refresh }) {
     setSelectedImage(images[newIndex])
   }
 
-  const handleSearch = (searchTerm) => {
-    setSearchParams(prev => ({ ...prev, search: searchTerm }))
-  }
-
   const handleTagFilter = (tags) => {
-    setSearchParams(prev => ({ ...prev, tags: tags }))
-  }
-
-  const removeSearchFilter = () => {
-    setSearchParams(prev => ({ ...prev, search: '' }))
-  }
-
-  const removeTagFilter = (tagToRemove) => {
-    const currentTags = searchParams.tags.split(',').map(t => t.trim()).filter(Boolean)
-    const newTags = currentTags.filter(tag => tag !== tagToRemove)
-    setSearchParams(prev => ({ ...prev, tags: newTags.join(',') }))
-  }
-
-  const clearAllFilters = () => {
-    setSearchParams({ search: '', tags: '' })
+    setSelectedTags(tags)
   }
 
   const toggleSelectionMode = () => {
@@ -441,9 +422,9 @@ export default function ImageGallery({ user, refresh }) {
             >
               <span className="flex items-center space-x-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
-                <span>{showSearchBar ? 'Hide Search' : 'Search & Filter'}</span>
+                <span>{showSearchBar ? 'Hide Filters' : 'Filter by Tags'}</span>
               </span>
             </button>
             
@@ -500,75 +481,13 @@ export default function ImageGallery({ user, refresh }) {
         </div>
       </div>
       
-      {/* Collapsible Search Bar */}
+      {/* Tag Filter Bar */}
       {showSearchBar && (
         <div className="mb-6">
           <SearchBar 
-            onSearch={handleSearch} 
             onTagFilter={handleTagFilter}
-            currentSearch={searchParams.search}
-            currentTags={searchParams.tags}
+            currentTags={selectedTags}
           />
-        </div>
-      )}
-
-      {/* Active Filters Display - Always shows above images when filters are active */}
-      {(searchParams.search || searchParams.tags) && (
-        <div className="bg-white rounded-lg shadow-md border p-4 mb-6">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium text-gray-700">Active Filters:</span>
-              
-              {/* Search filter badge */}
-              {searchParams.search && (
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  Search: "{searchParams.search}"
-                  <button
-                    onClick={removeSearchFilter}
-                    className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
-                    aria-label="Remove search filter"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </span>
-              )}
-              
-              {/* Tag filter badges */}
-              {searchParams.tags && searchParams.tags.split(',').map(t => t.trim()).filter(Boolean).map((tag, index) => (
-                <span 
-                  key={index}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-800 rounded-full text-sm"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                  </svg>
-                  #{tag}
-                  <button
-                    onClick={() => removeTagFilter(tag)}
-                    className="hover:bg-purple-200 rounded-full p-0.5 transition-colors"
-                    aria-label={`Remove ${tag} filter`}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </span>
-              ))}
-            </div>
-
-            {/* Clear all button */}
-            <button
-              onClick={clearAllFilters}
-              className="text-sm text-gray-600 hover:text-gray-800 hover:underline transition-colors"
-            >
-              Clear All
-            </button>
-          </div>
         </div>
       )}
       
