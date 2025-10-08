@@ -162,6 +162,18 @@ else:
         }
     }
 
+# Cache configuration for performance optimization
+# Using LocMemCache for simplicity (no table setup required)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
+    }
+}
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -269,57 +281,41 @@ if not DEBUG and SECRET_KEY == 'django-insecure-change-this-in-production':
     raise Exception("Production deployment requires a secure SECRET_KEY. Please set a proper SECRET_KEY environment variable.")
 
 # Easy-thumbnails configuration with responsive sizes
+# Optimized for performance - reduced quality and removed unused legacy aliases
 THUMBNAIL_ALIASES = {
     '': {
         # Square thumbnails for gallery grid (face-aware cropping)
         'square_160': {
             'size': (160, 160),
             'crop': True,
-            'quality': 80,
+            'quality': 75,  # Reduced from 80 for better CPU performance
         },
         'square_320': {
             'size': (320, 320),
             'crop': True,
-            'quality': 80,
+            'quality': 75,  # Reduced from 80 for better CPU performance
         },
         'square_640': {
             'size': (640, 640),
             'crop': True,
-            'quality': 80,
+            'quality': 78,  # Reduced from 80 for better CPU performance
         },
         
         # Width-constrained images for viewing (maintain aspect ratio)
         'width_480': {
             'size': (480, 0),
             'crop': False,
-            'quality': 82,
+            'quality': 78,  # Reduced from 82 for better CPU performance
         },
         'width_960': {
             'size': (960, 0),
             'crop': False,
-            'quality': 82,
+            'quality': 78,  # Reduced from 82 for better CPU performance
         },
         'width_1440': {
             'size': (1440, 0),
             'crop': False,
-            'quality': 82,
-        },
-        
-        # Legacy aliases for backward compatibility
-        'small': {
-            'size': (150, 150),
-            'crop': True,
-            'quality': 85,
-        },
-        'medium': {
-            'size': (300, 300),
-            'crop': True,
-            'quality': 85,
-        },
-        'large': {
-            'size': (600, 600),
-            'crop': False,
-            'quality': 90,
+            'quality': 80,  # Reduced from 82 for better CPU performance
         },
     },
 }

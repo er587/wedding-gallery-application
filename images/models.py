@@ -12,6 +12,7 @@ from django.core.files.base import ContentFile
 import os
 import secrets
 import string
+import threading
 
 
 class UserProfile(models.Model):
@@ -81,18 +82,32 @@ class Image(models.Model):
         return self.title
     
     def save(self, *args, **kwargs):
-        """Override save to detect faces and store coordinates"""
+        """Override save - face detection moved to async processing"""
         is_new = self.pk is None
         super().save(*args, **kwargs)
         
-        # Detect and store face coordinates if this is a new image
+        # Move face detection to background thread to prevent blocking upload
         if is_new and self.image_file and self.face_x is None:
-            self.detect_and_store_face_coordinates()
+            threading.Thread(
+                target=self._async_detect_and_store_face_coordinates,
+                daemon=True
+            ).start()
         
         # Legacy: Generate thumbnail if image_file exists but thumbnail doesn't
         # (will be deprecated once easy-thumbnails is fully integrated)
         if self.image_file and not self.thumbnail:
-            self.create_thumbnail()
+            # Also run thumbnail generation in background to prevent blocking
+            threading.Thread(
+                target=self.create_thumbnail,
+                daemon=True
+            ).start()
+    
+    def _async_detect_and_store_face_coordinates(self):
+        """Async wrapper for face detection - runs in background thread"""
+        try:
+            self.detect_and_store_face_coordinates()
+        except Exception as e:
+            print(f"Error in async face detection for image {self.id}: {e}")
     
     def detect_and_store_face_coordinates(self):
         """Detect faces and store normalized coordinates for smart cropping"""

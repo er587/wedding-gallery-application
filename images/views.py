@@ -6,7 +6,9 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
+from django.core.cache import cache
 from django.http import JsonResponse, HttpResponse, Http404
 from django.conf import settings
 import json
@@ -35,8 +37,19 @@ class ImageListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = ImagePagination
     
+    # Cache the list view for 2 minutes to reduce database load
+    @method_decorator(cache_page(120))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
     def get_queryset(self):
-        queryset = Image.objects.all()
+        # Optimize queries with select_related and prefetch_related to reduce database hits
+        queryset = Image.objects.select_related('uploader').prefetch_related(
+            'tags', 
+            'comments',
+            'likes'
+        )
+        
         search = self.request.query_params.get('search', None)
         tags = self.request.query_params.get('tags', None)
         
@@ -86,10 +99,17 @@ class ImageListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         # Save the image with the authenticated user as uploader
         serializer.save(uploader=self.request.user)
+        # Invalidate cache when new image is created
+        cache.clear()
 
 
 class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Image.objects.all()
+    # Optimize queries with select_related and prefetch_related
+    queryset = Image.objects.select_related('uploader').prefetch_related(
+        'tags', 
+        'comments', 
+        'likes'
+    )
     serializer_class = ImageSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     
@@ -104,6 +124,8 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
+        # Invalidate cache when image is deleted
+        cache.clear()
         return super().destroy(request, *args, **kwargs)
     
     def update(self, request, *args, **kwargs):

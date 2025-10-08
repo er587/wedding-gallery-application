@@ -18,7 +18,7 @@ export default function ImageGallery({ user, refresh }) {
   const [showSearchBar, setShowSearchBar] = useState(false)
   const [pagination, setPagination] = useState({
     page: 1,
-    pageSize: 12,
+    pageSize: 8, // Reduced from 12 to 8 for better CPU performance
     hasMore: true,
     loadingMore: false
   })
@@ -47,6 +47,11 @@ export default function ImageGallery({ user, refresh }) {
       // Handle both paginated and non-paginated responses
       const newImages = response.data.results || response.data
       const hasMore = response.data.next ? true : false
+      
+      // Add staggered loading delay to prevent CPU spike from decoding all images at once
+      if (!isInitialLoad && Array.isArray(newImages) && newImages.length > 0) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
       
       if (isInitialLoad) {
         setImages(Array.isArray(newImages) ? newImages : [])
@@ -215,7 +220,7 @@ export default function ImageGallery({ user, refresh }) {
       },
       {
         root: null, // Use viewport as root
-        rootMargin: '800px', // Trigger 800px before element comes into view
+        rootMargin: '200px', // Reduced from 800px to 200px to prevent aggressive pre-loading
         threshold: 0
       }
     )
@@ -506,13 +511,19 @@ export default function ImageGallery({ user, refresh }) {
                   sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   alt={image.title}
                   className="absolute inset-0 w-full h-full object-cover transition-transform hover:scale-105 z-10"
-                  style={{ aspectRatio: '1/1' }}
+                  style={{ 
+                    aspectRatio: '1/1',
+                    // Stagger image decode start based on index to spread CPU load
+                    animationDelay: `${index * 50}ms`
+                  }}
                   loading="lazy"
                   decoding="async"
                   onLoad={(e) => {
-                    // Hide shimmer effect once image loads
-                    const shimmer = e.target.previousElementSibling
-                    if (shimmer) shimmer.style.display = 'none'
+                    // Use RAF to prevent layout thrashing
+                    requestAnimationFrame(() => {
+                      const shimmer = e.target.previousElementSibling
+                      if (shimmer) shimmer.style.display = 'none'
+                    })
                   }}
                 />
                 
