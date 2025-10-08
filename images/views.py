@@ -52,6 +52,7 @@ class ImageListCreateView(generics.ListCreateAPIView):
         
         search = self.request.query_params.get('search', None)
         tags = self.request.query_params.get('tags', None)
+        media_type = self.request.query_params.get('media_type', None)
         
         if search:
             queryset = queryset.filter(
@@ -64,6 +65,14 @@ class ImageListCreateView(generics.ListCreateAPIView):
             tag_list = [tag.strip() for tag in str(tags).split(',') if tag.strip()]
             for tag in tag_list:
                 queryset = queryset.filter(tags__name__icontains=tag)
+        
+        if media_type:
+            if media_type.lower() == 'video':
+                # Filter for videos only (entries with vimeo_url)
+                queryset = queryset.filter(vimeo_url__isnull=False).exclude(vimeo_url='')
+            elif media_type.lower() == 'image':
+                # Filter for images only (entries without vimeo_url)
+                queryset = queryset.filter(Q(vimeo_url__isnull=True) | Q(vimeo_url=''))
         
         return queryset.distinct()
     
