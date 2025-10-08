@@ -912,7 +912,7 @@ def request_password_reset(request):
         
         token_obj = PasswordResetToken.generate_token(user)
         
-        reset_url = f"{settings.FRONTEND_URL}/reset-password/{token_obj.token}"
+        reset_url = f"{settings.FRONTEND_URL}/reset-password/{token_obj.raw_token}"
         
         from django.core.mail import send_mail
         
@@ -971,9 +971,8 @@ def reset_password(request):
                 'error': 'Token and new password are required'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        try:
-            token_obj = PasswordResetToken.objects.get(token=token)
-        except PasswordResetToken.DoesNotExist:
+        token_obj = PasswordResetToken.verify_token(token)
+        if not token_obj:
             return Response({
                 'error': 'Invalid password reset token'
             }, status=status.HTTP_400_BAD_REQUEST)
