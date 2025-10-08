@@ -44,6 +44,7 @@ class ImageSerializer(serializers.ModelSerializer):
     like_count = serializers.SerializerMethodField()
     user_has_liked = serializers.SerializerMethodField()
     image_file = serializers.SerializerMethodField()
+    is_video = serializers.BooleanField(read_only=True)
     
     # Only return thumbnails actually used by the frontend (70% payload reduction)
     thumbnail_square_320 = serializers.SerializerMethodField()
@@ -55,7 +56,7 @@ class ImageSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Image
-        fields = ['id', 'title', 'description', 'image_file', 
+        fields = ['id', 'title', 'description', 'image_file', 'vimeo_url', 'is_video',
                  'thumbnail_square_320', 'thumbnail_square_640', 'thumbnail_width_1440',
                  'uploader', 'uploaded_at', 'updated_at', 
                  'comments', 'comment_count', 'like_count', 'user_has_liked', 'tags', 'tag_names']
@@ -144,10 +145,18 @@ class ImageSerializer(serializers.ModelSerializer):
 
 class ImageCreateSerializer(serializers.ModelSerializer):
     tag_names = serializers.ListField(child=serializers.CharField(), required=False, allow_empty=True)
+    image_file = serializers.ImageField(required=False, allow_null=True)
+    vimeo_url = serializers.URLField(required=False, allow_blank=True, allow_null=True)
     
     class Meta:
         model = Image
-        fields = ['title', 'description', 'image_file', 'tag_names']
+        fields = ['title', 'description', 'image_file', 'vimeo_url', 'tag_names']
+    
+    def validate(self, data):
+        """Ensure either image_file or vimeo_url is provided"""
+        if not data.get('image_file') and not data.get('vimeo_url'):
+            raise serializers.ValidationError("Either image_file or vimeo_url must be provided")
+        return data
     
     def create(self, validated_data):
         tag_names = validated_data.pop('tag_names', [])
