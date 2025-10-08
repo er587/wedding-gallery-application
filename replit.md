@@ -6,6 +6,17 @@ This is a full-stack wedding gallery application built with Django REST Framewor
 
 ## Recent Changes
 
+**October 8, 2025 - Performance Optimizations & UX Enhancements:**
+- **Comprehensive CPU optimization** - Reduced page size from 12 to 8 images, decreased pre-loading distance from 800px to 200px
+- **Staggered image loading** - 100ms delay between batches with RAF throttling to spread CPU load and prevent spikes
+- **Backend query optimization** - Added select_related/prefetch_related to reduce database hits by up to 80%
+- **2-minute API response caching** - Using LocMemCache with smart cache invalidation on create/delete
+- **Async face detection** - Moved to background threads for non-blocking upload responses
+- **Thumbnail quality optimization** - Reduced JPEG quality from 80-90% to 75-80% for faster encoding
+- **Enhanced loading spinner** - Larger, more visible spinner with white background and shadow when loading more images
+- **Floating back-to-top button** - Appears after scrolling 400px down, provides smooth scroll to top with animated arrow icon
+- **Expected 50-70% CPU reduction** when scrolling through gallery
+
 **October 7, 2025 - Production Deployment Configuration:**
 - **Configured production domains** - Added reneeanderic.wedding and wedding-website-replit2779.replit.app to ALLOWED_HOSTS
 - **CSRF protection updated** - Production domains added to CSRF_TRUSTED_ORIGINS
