@@ -145,6 +145,8 @@ check_file "deployment/gunicorn.service"
 check_file "deployment/gunicorn.socket"
 check_file "deployment/nginx.conf"
 check_file "deployment/ssl-setup.sh"
+check_file "deployment/test_email.py"
+check_file "deployment/setup_email_env.sh"
 echo ""
 
 # Documentation

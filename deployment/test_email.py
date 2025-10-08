@@ -26,12 +26,27 @@ Configuration:
     # FRONTEND_URL=https://yourdomain.com
 
 Usage:
-    python test_email.py
+    # From project root
+    python deployment/test_email.py
+    
+    # Or from deployment folder
+    cd deployment && python test_email.py
 """
 
 import os
 import sys
 import django
+
+# Add project root to Python path if running from deployment folder
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(script_dir) if 'deployment' in script_dir else script_dir
+
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+# Change to project root directory for Django setup
+original_dir = os.getcwd()
+os.chdir(project_root)
 
 # Setup Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django_project.settings')

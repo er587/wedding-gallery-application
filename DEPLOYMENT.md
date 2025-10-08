@@ -100,6 +100,56 @@ The `scripts/init_db.py` script will:
 - ✅ Create default invitation codes
 - ✅ Set up initial data
 
+## 📧 Email Configuration
+
+### Email Setup
+
+Configure email settings for password reset and email verification features:
+
+**For Development (Console):**
+```env
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+FRONTEND_URL=http://localhost:5000
+```
+
+**For Production (SMTP):**
+```env
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+DEFAULT_FROM_EMAIL=noreply@yourdomain.com
+FRONTEND_URL=https://yourdomain.com
+```
+
+### Email Testing
+
+**Automated Setup:**
+```bash
+# Interactive email configuration helper
+bash deployment/setup_email_env.sh
+```
+
+**Verify Email Functionality:**
+```bash
+# Test email sending and token generation
+python deployment/test_email.py
+```
+
+The test script will verify:
+- ✅ Email configuration is correct
+- ✅ Email verification tokens work
+- ✅ Password reset tokens work
+- ✅ Email delivery functions properly
+
+**Gmail App Password Setup:**
+1. Enable 2-Factor Authentication on your Google account
+2. Go to: https://myaccount.google.com/apppasswords
+3. Generate an app password for "Mail"
+4. Use this password (not your regular password) in `EMAIL_HOST_PASSWORD`
+
 ## 🔒 Security Configuration
 
 ### Production Security Features
@@ -232,6 +282,9 @@ curl https://your-domain.com/api/auth/csrf/
 
 # Check database connection
 python manage.py shell -c "from django.db import connection; connection.ensure_connection(); print('DB OK')"
+
+# Test email functionality
+python deployment/test_email.py
 ```
 
 ### Log Monitoring
@@ -239,6 +292,27 @@ python manage.py shell -c "from django.db import connection; connection.ensure_c
 - **Application logs**: Check your deployment platform's logging
 - **Database logs**: Monitor PostgreSQL performance
 - **Static files**: WhiteNoise serves with proper caching headers
+- **Email logs**: Monitor email delivery (check console or SMTP logs)
+
+### Regular Maintenance Tasks
+
+**Weekly:**
+- ✅ Verify email functionality: `python deployment/test_email.py`
+- ✅ Check database backups are running
+- ✅ Review application logs for errors
+- ✅ Monitor disk space usage
+
+**Monthly:**
+- ✅ Update dependencies: `pip install -r requirements.txt --upgrade`
+- ✅ Run database optimizations
+- ✅ Review and clean old email verification tokens
+- ✅ Test all critical features (upload, download, comments)
+
+**After Major Updates:**
+- ✅ Run deployment verification: `bash deployment/verify-deployment.sh`
+- ✅ Test email system: `python deployment/test_email.py`
+- ✅ Verify image uploads and face detection
+- ✅ Check all API endpoints
 
 ### Backup Strategy
 
