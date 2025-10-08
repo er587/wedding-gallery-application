@@ -6,11 +6,11 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
   const [inputValue, setInputValue] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef(null)
   const suggestionsRef = useRef(null)
 
   useEffect(() => {
-    // Fetch all available tags for autocomplete
     const fetchTags = async () => {
       try {
         const response = await apiService.getTags()
@@ -23,7 +23,6 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
   }, [])
 
   useEffect(() => {
-    // Close suggestions when clicking outside
     const handleClickOutside = (event) => {
       if (
         suggestionsRef.current &&
@@ -31,6 +30,7 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
         !inputRef.current.contains(event.target)
       ) {
         setShowSuggestions(false)
+        setSelectedIndex(-1)
       }
     }
 
@@ -38,12 +38,15 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  useEffect(() => {
+    setSelectedIndex(-1)
+  }, [suggestions])
+
   const handleInputChange = (e) => {
     const value = e.target.value
     setInputValue(value)
 
     if (value.trim()) {
-      // Filter tags that match the input and aren't already selected
       const currentTagNames = tags.map(t => t.name.toLowerCase())
       const filtered = allTags.filter(
         tag => 
@@ -61,7 +64,6 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
   const addTag = (tagName) => {
     const trimmedTag = tagName.trim().toLowerCase()
     if (trimmedTag && !tags.some(t => t.name.toLowerCase() === trimmedTag)) {
-      // Only add if tag exists in database
       const existingTag = allTags.find(t => t.name.toLowerCase() === trimmedTag)
       if (existingTag) {
         onTagsChange([...tags, existingTag])
@@ -70,16 +72,51 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
     setInputValue('')
     setSuggestions([])
     setShowSuggestions(false)
+    setSelectedIndex(-1)
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      // Only add if exact match exists in suggestions
-      const exactMatch = allTags.find(t => t.name.toLowerCase() === inputValue.trim().toLowerCase())
-      if (exactMatch) {
-        addTag(exactMatch.name)
+    if (!showSuggestions || suggestions.length === 0) {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        const exactMatch = allTags.find(t => t.name.toLowerCase() === inputValue.trim().toLowerCase())
+        if (exactMatch) {
+          addTag(exactMatch.name)
+        }
       }
+      return
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setSelectedIndex(prev => 
+          prev < suggestions.length - 1 ? prev + 1 : prev
+        )
+        break
+      
+      case 'ArrowUp':
+        e.preventDefault()
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1)
+        break
+      
+      case 'Enter':
+        e.preventDefault()
+        if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
+          addTag(suggestions[selectedIndex].name)
+        } else {
+          const exactMatch = allTags.find(t => t.name.toLowerCase() === inputValue.trim().toLowerCase())
+          if (exactMatch) {
+            addTag(exactMatch.name)
+          }
+        }
+        break
+      
+      case 'Escape':
+        e.preventDefault()
+        setShowSuggestions(false)
+        setSelectedIndex(-1)
+        break
     }
   }
 
@@ -95,7 +132,6 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
     <div className="mt-3">
       <label className="text-sm font-medium text-gray-700 block mb-1">Tags</label>
       
-      {/* Tag chips */}
       <div className="flex flex-wrap gap-1 mb-2">
         {tags.map((tag, index) => (
           <span
@@ -116,7 +152,6 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
         ))}
       </div>
 
-      {/* Input for selecting existing tags */}
       {canEdit && (
         <div className="relative">
           <input
@@ -130,17 +165,21 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
 
-          {/* Autocomplete suggestions */}
           {showSuggestions && suggestions.length > 0 && (
             <div
               ref={suggestionsRef}
               className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-40 overflow-y-auto"
             >
-              {suggestions.map((tag) => (
+              {suggestions.map((tag, index) => (
                 <button
                   key={tag.id}
                   onClick={() => addTag(tag.name)}
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none"
+                  onMouseEnter={() => setSelectedIndex(index)}
+                  className={`w-full px-3 py-2 text-left text-sm focus:outline-none transition-colors ${
+                    selectedIndex === index 
+                      ? 'bg-blue-100 text-blue-900' 
+                      : 'hover:bg-blue-50'
+                  }`}
                   type="button"
                 >
                   {tag.name}
