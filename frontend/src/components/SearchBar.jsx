@@ -116,7 +116,7 @@ export default function SearchBar({ onSearch, onTagFilter, currentSearch, curren
 
             {/* Dropdown menu */}
             {showTagDropdown && availableTags.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
                 {availableTags.map((tag) => (
                   <button
                     key={tag.id}
