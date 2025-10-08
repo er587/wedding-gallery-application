@@ -353,14 +353,25 @@ export default function ImageGallery({ user, refresh }) {
 
   // Show login prompt for logged-out users
   if (!user) {
+    // Check if wedding-hero.png exists in root, otherwise use /assets/ (for production)
+    const heroImageSrc = import.meta.env.PROD ? '/assets/wedding-hero.png' : '/wedding-hero.png'
+    
     return (
       <div className="text-center py-8 md:py-16">
         <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 px-4">Welcome to Wedding Gallery</h2>
         <div className="mb-6 md:mb-8 flex justify-center px-4">
           <img 
-            src="/wedding-hero.png" 
+            src={heroImageSrc}
             alt="Wedding couple silhouette at sunset" 
             className="rounded-lg shadow-2xl w-full max-w-xs md:max-w-sm object-cover"
+            onError={(e) => {
+              // Fallback: if image fails to load, try the alternative path
+              if (e.target.src.includes('/assets/')) {
+                e.target.src = '/wedding-hero.png'
+              } else {
+                e.target.src = '/assets/wedding-hero.png'
+              }
+            }}
           />
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md mx-auto mx-4">
