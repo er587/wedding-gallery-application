@@ -60,6 +60,15 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+*.env
+*.env.*
+!.env.example
+.envrc
+.env.local
+.env.production.local
+.secrets/
+**/settings_local.py
+**/local_settings.py
 
 # Media files (uploaded images and thumbnails)
 media/
