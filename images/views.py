@@ -478,6 +478,14 @@ def user_liked_images(request):
     return Response(serializer.data)
 
 
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def get_image_count(request):
+    """Get total count of all images in the database"""
+    count = Image.objects.count()
+    return Response({'count': count}, status=status.HTTP_200_OK)
+
+
 @api_view(['PUT'])
 @permission_classes([permissions.IsAuthenticated])
 def update_profile(request):

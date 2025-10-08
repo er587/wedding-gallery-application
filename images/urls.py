@@ -18,6 +18,9 @@ urlpatterns = [
     path('api/images/<int:image_id>/like/', views.toggle_like, name='toggle-like'),
     path('api/auth/liked-images/', views.user_liked_images, name='user-liked-images'),
     
+    # Image stats endpoints
+    path('api/images/count/', views.get_image_count, name='image-count'),
+    
     # Authentication endpoints
     path('api/auth/csrf/', views.get_csrf_token, name='csrf-token'),
     path('api/auth/login/', views.login_view, name='login'),

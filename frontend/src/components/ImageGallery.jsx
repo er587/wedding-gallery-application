@@ -17,12 +17,22 @@ export default function ImageGallery({ user, refresh }) {
   const [downloading, setDownloading] = useState(false)
   const [showSearchBar, setShowSearchBar] = useState(false)
   const [showBackToTop, setShowBackToTop] = useState(false)
+  const [totalImageCount, setTotalImageCount] = useState(0)
   const [pagination, setPagination] = useState({
     page: 1,
     pageSize: 8, // Reduced from 12 to 8 for better CPU performance
     hasMore: true,
     loadingMore: false
   })
+
+  const fetchImageCount = async () => {
+    try {
+      const response = await apiService.getImageCount()
+      setTotalImageCount(response.data.count)
+    } catch (error) {
+      console.error('Error fetching image count:', error)
+    }
+  }
 
   const fetchImages = async (isInitialLoad = false) => {
     try {
@@ -145,6 +155,9 @@ export default function ImageGallery({ user, refresh }) {
         setImages(prevImages => prevImages.filter(img => img.id !== imageId))
         toast.success('Image deleted successfully')
         
+        // Update the total image count
+        fetchImageCount()
+        
         // Close image viewer if it's open for this image
         if (selectedImage && selectedImage.id === imageId) {
           setSelectedImage(null)
@@ -200,6 +213,7 @@ export default function ImageGallery({ user, refresh }) {
     // Only fetch images if user is logged in
     if (user) {
       fetchImages(true) // true means reset/initial load
+      fetchImageCount() // Fetch total image count
     } else {
       setImages([])
       setLoading(false)
@@ -429,21 +443,28 @@ export default function ImageGallery({ user, refresh }) {
             </button>
             
             {images.length > 0 && (
-              <button
-                onClick={toggleSelectionMode}
-                className={`px-4 py-2 rounded-md transition-colors ${
-                  selectionMode
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <span className="flex items-center space-x-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                  </svg>
-                  <span>{selectionMode ? 'Cancel Selection' : 'Select Images'}</span>
-                </span>
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={toggleSelectionMode}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    selectionMode
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <span className="flex items-center space-x-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    </svg>
+                    <span>{selectionMode ? 'Cancel Selection' : 'Select Images'}</span>
+                  </span>
+                </button>
+                {totalImageCount > 0 && (
+                  <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                    {totalImageCount} {totalImageCount === 1 ? 'image' : 'images'}
+                  </span>
+                )}
+              </div>
             )}
           </div>
           
