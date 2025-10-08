@@ -512,7 +512,7 @@ export default function ImageGallery({ user, refresh }) {
         </div>
       )}
 
-      {/* Active Filters Display */}
+      {/* Active Filters Display - Always shows above images when filters are active */}
       {(searchParams.search || searchParams.tags) && (
         <div className="bg-white rounded-lg shadow-md border p-4 mb-6">
           <div className="flex items-center justify-between flex-wrap gap-3">
