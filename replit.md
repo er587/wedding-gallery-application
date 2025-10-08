@@ -6,6 +6,15 @@ This is a full-stack wedding gallery application built with Django REST Framewor
 
 ## Recent Changes
 
+**October 8, 2025 - Vimeo Video Embed Support:**
+- **Video upload functionality** - Added optional vimeo_url field to Image model for Vimeo embed URLs
+- **Media type filtering** - Backend API supports filtering by media_type (video/image) based on vimeo_url presence
+- **Upload form enhancements** - Toggle between image upload and Vimeo URL input, with clear visual indicators
+- **Video display** - Vimeo embeds render in iframe with responsive sizing and play icon overlays in gallery
+- **"Videos Only" filter** - Added dedicated filter button to view only video content
+- **Domain-level privacy support** - Vimeo URLs with domain-level privacy restrictions work correctly
+- **Bulk upload exclusion** - Vimeo videos added individually, bulk mode reserved for image uploads
+
 **October 8, 2025 - Streamlined UI & Performance Optimizations:**
 - **Streamlined filter interface** - Removed Active Filters box and search input, using only hashtag pill filters for cleaner UX
 - **Hashtag-only filtering** - Clickable hashtag pills provide visual feedback, selected tags highlighted with checkmark
