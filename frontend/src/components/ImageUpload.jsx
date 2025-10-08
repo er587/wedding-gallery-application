@@ -9,10 +9,12 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
     title: '',
     description: '',
     image_file: null,
+    vimeo_url: '',
     tags: []
   })
   const [preview, setPreview] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadType, setUploadType] = useState('image') // 'image' or 'video'
   
   // Bulk upload states
   const [bulkMode, setBulkMode] = useState(false)
@@ -102,7 +104,9 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
     if (bulkMode) {
       handleBulkUpload()
     } else {
-      if (!formData.image_file) return
+      // Validate based on upload type
+      if (uploadType === 'image' && !formData.image_file) return
+      if (uploadType === 'video' && !formData.vimeo_url) return
       await handleSingleUpload()
     }
   }
@@ -113,7 +117,13 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
       const formDataToSend = new FormData()
       formDataToSend.append('title', formData.title)
       formDataToSend.append('description', formData.description)
-      formDataToSend.append('image_file', formData.image_file)
+      
+      // Add either image_file or vimeo_url based on upload type
+      if (uploadType === 'image' && formData.image_file) {
+        formDataToSend.append('image_file', formData.image_file)
+      } else if (uploadType === 'video' && formData.vimeo_url) {
+        formDataToSend.append('vimeo_url', formData.vimeo_url)
+      }
       
       // Add tags as an array
       if (formData.tags.length > 0) {
@@ -225,9 +235,19 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-4">
           <h2 className="text-xl font-semibold">
-            {bulkMode ? 'Bulk Upload Images' : 'Upload New Image'}
+            {bulkMode ? 'Bulk Upload Images' : (uploadType === 'video' ? 'Add Vimeo Video' : 'Upload New Image')}
           </h2>
+          {!bulkMode && (
+            <button
+              type="button"
+              onClick={() => setUploadType(uploadType === 'image' ? 'video' : 'image')}
+              className="px-3 py-1 text-sm rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+            >
+              {uploadType === 'image' ? '🎬 Add Video' : '🖼️ Upload Image'}
+            </button>
+          )}
           <button
+            type="button"
             onClick={toggleBulkMode}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
               bulkMode 
@@ -247,7 +267,25 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* File Upload Area */}
+        {/* File Upload Area or Vimeo URL Input */}
+        {uploadType === 'video' && !bulkMode ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Vimeo Embed URL
+            </label>
+            <input
+              type="url"
+              value={formData.vimeo_url}
+              onChange={(e) => setFormData(prev => ({ ...prev, vimeo_url: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="https://player.vimeo.com/video/..."
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Enter the Vimeo embed URL with domain-level privacy
+            </p>
+          </div>
+        ) : (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             {bulkMode ? 'Images' : 'Image'}
@@ -303,6 +341,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
             )}
           </div>
         </div>
+        )}
 
         {/* Bulk Upload: Selected Files Preview */}
         {bulkMode && selectedFiles.length > 0 && (
@@ -460,13 +499,13 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
             disabled={
               bulkMode 
                 ? selectedFiles.length === 0 || uploading
-                : !formData.image_file || uploading
+                : (uploadType === 'image' ? !formData.image_file : !formData.vimeo_url) || uploading
             }
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             {uploading 
               ? (bulkMode ? `Uploading... (${selectedFiles.filter(f => f.status === 'success').length}/${selectedFiles.length})` : 'Uploading...')
-              : (bulkMode ? `Upload ${selectedFiles.length} Images` : 'Upload Image')
+              : (bulkMode ? `Upload ${selectedFiles.length} Images` : (uploadType === 'video' ? 'Add Video' : 'Upload Image'))
             }
           </button>
         </div>
