@@ -73,7 +73,7 @@ db.sqlite3-journal
 # Media files (uploaded images and thumbnails)
 media/
 uploads/
-static/uploads/
+static/
 staticfiles/
 *.jpg
 *.jpeg
