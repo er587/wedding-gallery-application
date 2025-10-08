@@ -535,31 +535,43 @@ export default function ImageGallery({ user, refresh }) {
               >
                 {/* Loading placeholder with shimmer effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
-                <img
-                  src={image.thumbnail_square_320 || image.thumbnail_medium || image.thumbnail_url || image.image_file}
-                  srcSet={`
-                    ${image.thumbnail_square_160 || image.thumbnail_small} 160w,
-                    ${image.thumbnail_square_320 || image.thumbnail_medium} 320w,
-                    ${image.thumbnail_square_640 || image.thumbnail_large} 640w
-                  `.trim()}
-                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  alt={image.title}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform hover:scale-105 z-10"
-                  style={{ 
-                    aspectRatio: '1/1',
-                    // Stagger image decode start based on index to spread CPU load
-                    animationDelay: `${index * 50}ms`
-                  }}
-                  loading="lazy"
-                  decoding="async"
-                  onLoad={(e) => {
-                    // Use RAF to prevent layout thrashing
-                    requestAnimationFrame(() => {
-                      const shimmer = e.target.previousElementSibling
-                      if (shimmer) shimmer.style.display = 'none'
-                    })
-                  }}
-                />
+                
+                {image.is_video ? (
+                  <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center z-10">
+                    <div className="text-center">
+                      <svg className="w-20 h-20 mx-auto text-white mb-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                      <p className="text-white text-sm font-medium">Video</p>
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={image.thumbnail_square_320 || image.thumbnail_medium || image.thumbnail_url || image.image_file}
+                    srcSet={`
+                      ${image.thumbnail_square_160 || image.thumbnail_small} 160w,
+                      ${image.thumbnail_square_320 || image.thumbnail_medium} 320w,
+                      ${image.thumbnail_square_640 || image.thumbnail_large} 640w
+                    `.trim()}
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    alt={image.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform hover:scale-105 z-10"
+                    style={{ 
+                      aspectRatio: '1/1',
+                      // Stagger image decode start based on index to spread CPU load
+                      animationDelay: `${index * 50}ms`
+                    }}
+                    loading="lazy"
+                    decoding="async"
+                    onLoad={(e) => {
+                      // Use RAF to prevent layout thrashing
+                      requestAnimationFrame(() => {
+                        const shimmer = e.target.previousElementSibling
+                        if (shimmer) shimmer.style.display = 'none'
+                      })
+                    }}
+                  />
+                )}
                 
                 {/* Selection checkbox - only show in selection mode */}
                 {selectionMode && (

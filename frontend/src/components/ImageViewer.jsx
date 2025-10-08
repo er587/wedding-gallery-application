@@ -236,22 +236,36 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
             </button>
           )}
 
-          <img
-            src={imageData.image_file}
-            srcSet={`
-              ${imageData.thumbnail_width_480 || imageData.thumbnail_large} 480w,
-              ${imageData.thumbnail_width_960 || imageData.image_file} 960w,
-              ${imageData.thumbnail_width_1440 || imageData.image_file} 1440w,
-              ${imageData.image_file} 2000w
-            `.trim()}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1440px"
-            alt={imageData.title}
-            className="max-w-full max-h-full object-contain w-full"
-            style={{ maxHeight: 'calc(100vh - 200px)' }}
-            loading="eager"
-            decoding="async"
-            fetchPriority="high"
-          />
+          {imageData.vimeo_url ? (
+            <div className="w-full h-full flex items-center justify-center p-4">
+              <iframe
+                src={imageData.vimeo_url}
+                className="w-full max-w-5xl aspect-video rounded-lg"
+                style={{ maxHeight: 'calc(100vh - 200px)' }}
+                frameBorder="0"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                title={imageData.title}
+              ></iframe>
+            </div>
+          ) : (
+            <img
+              src={imageData.image_file}
+              srcSet={`
+                ${imageData.thumbnail_width_480 || imageData.thumbnail_large} 480w,
+                ${imageData.thumbnail_width_960 || imageData.image_file} 960w,
+                ${imageData.thumbnail_width_1440 || imageData.image_file} 1440w,
+                ${imageData.image_file} 2000w
+              `.trim()}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1440px"
+              alt={imageData.title}
+              className="max-w-full max-h-full object-contain w-full"
+              style={{ maxHeight: 'calc(100vh - 200px)' }}
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+            />
+          )}
 
           {/* Next Arrow */}
           {hasNext && (
