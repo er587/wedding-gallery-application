@@ -16,6 +16,7 @@ export default function ImageGallery({ user, refresh }) {
   const [selectedImages, setSelectedImages] = useState(new Set())
   const [downloading, setDownloading] = useState(false)
   const [showSearchBar, setShowSearchBar] = useState(false)
+  const [showBackToTop, setShowBackToTop] = useState(false)
   const [pagination, setPagination] = useState({
     page: 1,
     pageSize: 8, // Reduced from 12 to 8 for better CPU performance
@@ -206,6 +207,16 @@ export default function ImageGallery({ user, refresh }) {
     }
   }, [refresh, user, searchParams])
 
+  // Track scroll position for back-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 400)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   // Add ref for intersection observer
   const loadingTriggerRef = useRef(null)
 
@@ -345,6 +356,10 @@ export default function ImageGallery({ user, refresh }) {
     } finally {
       setDownloading(false)
     }
+  }
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
 
@@ -662,9 +677,9 @@ export default function ImageGallery({ user, refresh }) {
       {/* Loading More Indicator */}
       {pagination.loadingMore && (
         <div className="text-center mt-8 mb-8">
-          <div className="inline-flex items-center space-x-2 text-gray-600">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-            <span>Loading more images...</span>
+          <div className="inline-flex items-center space-x-3 bg-white px-6 py-4 rounded-lg shadow-md">
+            <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-200 border-t-blue-600"></div>
+            <span className="text-gray-700 font-medium">Loading more images...</span>
           </div>
         </div>
       )}
@@ -702,6 +717,29 @@ export default function ImageGallery({ user, refresh }) {
           currentIndex={images.findIndex(img => img.id === selectedImage.id)}
           onNavigate={handleNavigateToImage}
         />
+      )}
+
+      {/* Floating Back to Top Button */}
+      {showBackToTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 z-50 group"
+          aria-label="Back to top"
+        >
+          <svg 
+            className="w-6 h-6 transform group-hover:-translate-y-1 transition-transform" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M5 10l7-7m0 0l7 7m-7-7v18" 
+            />
+          </svg>
+        </button>
       )}
     </>
   )
