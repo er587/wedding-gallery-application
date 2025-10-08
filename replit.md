@@ -6,6 +6,13 @@ This is a full-stack wedding gallery application built with Django REST Framewor
 
 ## Recent Changes
 
+**October 8, 2025 - Enhanced Tag Input with Keyboard Navigation:**
+- **Arrow key navigation** - Use ↑/↓ arrow keys to navigate through tag suggestions in autocomplete
+- **Enter to select** - Press Enter to select the highlighted tag from suggestions
+- **Escape to close** - Press Escape to close the autocomplete dropdown
+- **Visual highlighting** - Selected suggestion has blue background for clear visual feedback
+- **Improved UX** - No need to type full tag name or click, seamless keyboard-only workflow
+
 **October 8, 2025 - Vimeo Video Embed Support:**
 - **Video upload functionality** - Added optional vimeo_url field to Image model for Vimeo embed URLs
 - **Media type filtering** - Backend API supports filtering by media_type (video/image) based on vimeo_url presence
