@@ -804,7 +804,7 @@ def send_verification_email(request):
         
         token_obj = EmailVerificationToken.generate_token(user)
         
-        verification_url = f"{settings.FRONTEND_URL}/verify-email/{token_obj.token}"
+        verification_url = f"{settings.FRONTEND_URL}/verify-email/{token_obj.raw_token}"
         
         from django.core.mail import send_mail
         from django.template.loader import render_to_string
