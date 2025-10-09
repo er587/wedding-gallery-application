@@ -8,6 +8,15 @@ This is a full-stack wedding gallery application designed to allow users to uplo
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+**October 9, 2025 - Upload Button Added to User Profile:**
+- **Easy upload access** - Added "Upload New Image" button to the Images tab in user profile
+- **Smooth transition** - Clicking the button closes the profile and opens the upload modal seamlessly
+- **Clear image count** - Images tab header shows "Your Shared Images (X)" with count
+- **Conditional display** - Button only shows for users with upload permissions
+- **Better guidance** - Empty state directs users to click the upload button above
+
 ## System Architecture
 
 ### UI/UX Decisions
