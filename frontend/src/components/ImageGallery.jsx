@@ -25,6 +25,9 @@ export default function ImageGallery({ user, refresh }) {
     hasMore: true,
     loadingMore: false
   })
+  
+  // Ref to track current fetch request ID to prevent stale responses
+  const currentFetchIdRef = useRef(0)
 
   const fetchImageCount = async () => {
     try {
@@ -37,6 +40,9 @@ export default function ImageGallery({ user, refresh }) {
 
   const fetchImages = async (isInitialLoad = false) => {
     try {
+      // Increment fetch ID to invalidate any pending requests
+      const thisFetchId = ++currentFetchIdRef.current
+      
       if (isInitialLoad) {
         setLoading(true)
         setImages([])
@@ -47,33 +53,87 @@ export default function ImageGallery({ user, refresh }) {
       
       // Build query parameters for tag filtering and media type
       const currentPage = isInitialLoad ? 1 : pagination.page
+      
+      // When filtering by tags or media type, fetch ALL matching images
+      // Otherwise use normal pagination for better performance
+      const isFiltering = selectedTags || mediaType
       const params = {
         page: currentPage,
-        page_size: pagination.pageSize
+        page_size: isFiltering ? 1000 : pagination.pageSize
       }
       if (selectedTags) params.tags = selectedTags
       if (mediaType) params.media_type = mediaType
       
       const response = await apiService.getImages(params)
       
+      // Check if this response is stale (newer request started)
+      if (thisFetchId !== currentFetchIdRef.current) {
+        return // Discard stale response
+      }
+      
       // Handle both paginated and non-paginated responses
       const newImages = response.data.results || response.data
       const hasMore = response.data.next ? true : false
       
-      // Add staggered loading delay to prevent CPU spike from decoding all images at once
-      if (!isInitialLoad && Array.isArray(newImages) && newImages.length > 0) {
-        await new Promise(resolve => setTimeout(resolve, 100))
-      }
-      
       if (isInitialLoad) {
-        setImages(Array.isArray(newImages) ? newImages : [])
-        setPagination(prev => ({ 
-          ...prev, 
-          page: 2, 
-          hasMore: hasMore && newImages.length === pagination.pageSize
-        }))
+        // When filtering, load all results but chunk them progressively to prevent CPU spikes
+        if (isFiltering && Array.isArray(newImages) && newImages.length > 8) {
+          // Load first batch immediately
+          const firstBatch = newImages.slice(0, 8)
+          setImages(firstBatch)
+          
+          // Disable pagination BEFORE starting progressive load
+          setPagination(prev => ({ 
+            ...prev, 
+            page: 2, 
+            hasMore: false,
+            loadingMore: false
+          }))
+          
+          // Load remaining images in chunks with delays
+          const remainingImages = newImages.slice(8)
+          const chunkSize = 8
+          
+          // Use setTimeout to avoid blocking the main thread
+          for (let i = 0; i < remainingImages.length; i += chunkSize) {
+            // Check if this request is still current
+            if (thisFetchId !== currentFetchIdRef.current) {
+              break // Abort if newer request started
+            }
+            
+            const chunk = remainingImages.slice(i, i + chunkSize)
+            await new Promise(resolve => setTimeout(resolve, 150))
+            
+            // Check again after delay
+            if (thisFetchId !== currentFetchIdRef.current) {
+              break // Abort if newer request started
+            }
+            
+            setImages(prev => [...prev, ...chunk])
+          }
+        } else {
+          // Normal initial load (not filtering or small result set)
+          setImages(Array.isArray(newImages) ? newImages : [])
+          
+          const shouldLoadMore = isFiltering ? false : (hasMore && newImages.length === pagination.pageSize)
+          
+          setPagination(prev => ({ 
+            ...prev, 
+            page: 2, 
+            hasMore: shouldLoadMore
+          }))
+        }
       } else {
+        // Loading more (non-initial load)
+        // Add staggered loading delay to prevent CPU spike from decoding all images at once
         if (Array.isArray(newImages) && newImages.length > 0) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+          
+          // Check if this request is still current after delay
+          if (thisFetchId !== currentFetchIdRef.current) {
+            return // Discard stale load-more response
+          }
+          
           // Filter out duplicates by checking existing image IDs
           setImages(prev => {
             const existingIds = new Set(prev.map(img => img.id))
