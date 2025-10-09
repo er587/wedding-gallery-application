@@ -182,6 +182,7 @@ function App() {
                 user={user}
                 onClose={() => setShowProfile(false)}
                 onUserUpdate={handleUserUpdate}
+                onUpload={() => setShowUpload(true)}
               />
             )}
 
