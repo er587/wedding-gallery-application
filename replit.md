@@ -6,6 +6,13 @@ This is a full-stack wedding gallery application built with Django REST Framewor
 
 ## Recent Changes
 
+**October 9, 2025 - All Full Users Can Now Tag Any Image:**
+- **Community tagging enabled** - All full users can now add tags to any image in the gallery
+- **Permission separation** - Tag editing separated from ownership - full users can tag, only owners can edit titles/descriptions
+- **Visual indicator** - Blue tag icon with "All full users can add tags" message shows when viewing others' images
+- **Backend security** - API validates tag-only updates for full users, other fields require ownership
+- **Improved collaboration** - Enables community-driven photo organization and categorization
+
 **October 8, 2025 - Enhanced Tag Input with Keyboard Navigation:**
 - **Arrow key navigation** - Use ↑/↓ arrow keys to navigate through tag suggestions in autocomplete
 - **Enter to select** - Press Enter to select the highlighted tag from suggestions
