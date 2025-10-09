@@ -10,8 +10,10 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-**October 9, 2025 - Automatic Vimeo Video Thumbnails:**
-- **Real preview images** - Videos now display actual Vimeo thumbnails instead of purple play icon
+**October 9, 2025 - Fixed Vimeo Thumbnails for Domain-Restricted Videos:**
+- **Domain-restricted support** - Added Referer header (reneeanderic.wedding) to Vimeo API calls for privacy-restricted videos
+- **Responsive thumbnails** - Vimeo thumbnails now processed into 320px, 640px, and 1440px versions like photos
+- **Real preview images** - Videos display actual Vimeo thumbnails with proper responsive sizing
 - **Auto-fetching** - Thumbnails automatically downloaded from Vimeo oEmbed API when video is uploaded
 - **Background processing** - Thumbnail fetch runs async to not block upload response
 - **Visual clarity** - Semi-transparent play button overlay shows which items are videos
