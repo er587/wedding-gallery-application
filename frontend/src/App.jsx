@@ -5,6 +5,7 @@ import ImageUpload from './components/ImageUpload'
 import Auth from './components/Auth'
 import UserProfile from './components/UserProfile'
 import WelcomeModal from './components/WelcomeModal'
+import HelpModal from './components/HelpModal'
 import ResetPassword from './components/ResetPassword'
 import EmailVerification from './components/EmailVerification'
 import MobileMenu from './components/MobileMenu'
@@ -17,6 +18,7 @@ function App() {
   const [showUpload, setShowUpload] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [showWelcome, setShowWelcome] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
   const [refreshGallery, setRefreshGallery] = useState(0)
 
   useEffect(() => {
@@ -100,14 +102,14 @@ function App() {
                           user={user}
                           onUpload={() => setShowUpload(true)}
                           onProfile={() => setShowProfile(true)}
-                          onHelp={() => setShowWelcome(true)}
+                          onHelp={() => setShowHelp(true)}
                           onLogout={handleLogout}
                         />
                         
                         {/* Desktop Navigation */}
                         <div className="hidden md:flex items-center space-x-4">
                           <button
-                            onClick={() => setShowWelcome(true)}
+                            onClick={() => setShowHelp(true)}
                             className="text-gray-600 hover:text-gray-900 transition-colors text-sm"
                           >
                             Help
@@ -186,6 +188,11 @@ function App() {
             <WelcomeModal
               isOpen={showWelcome}
               onClose={handleWelcomeClose}
+            />
+
+            <HelpModal
+              isOpen={showHelp}
+              onClose={() => setShowHelp(false)}
             />
           </div>
         } />
