@@ -13,6 +13,8 @@ import os
 import secrets
 import string
 import threading
+import requests
+import re
 
 
 class UserProfile(models.Model):
@@ -90,9 +92,16 @@ class Image(models.Model):
         return self.title
     
     def save(self, *args, **kwargs):
-        """Override save - face detection moved to async processing"""
+        """Override save - face detection and Vimeo thumbnail fetching moved to async processing"""
         is_new = self.pk is None
         super().save(*args, **kwargs)
+        
+        # Fetch Vimeo thumbnail if this is a video and no thumbnail exists
+        if is_new and self.vimeo_url and not self.thumbnail:
+            threading.Thread(
+                target=self._async_fetch_vimeo_thumbnail,
+                daemon=True
+            ).start()
         
         # Move face detection to background thread to prevent blocking upload
         if is_new and self.image_file and self.face_x is None:
@@ -109,6 +118,13 @@ class Image(models.Model):
                 target=self.create_thumbnail,
                 daemon=True
             ).start()
+    
+    def _async_fetch_vimeo_thumbnail(self):
+        """Async wrapper for Vimeo thumbnail fetching - runs in background thread"""
+        try:
+            self.fetch_vimeo_thumbnail()
+        except Exception as e:
+            print(f"Error fetching Vimeo thumbnail for image {self.id}: {e}")
     
     def _async_detect_and_store_face_coordinates(self):
         """Async wrapper for face detection - runs in background thread"""
@@ -266,6 +282,64 @@ class Image(models.Model):
         # Convert to PIL
         rgb_image = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
         return PILImage.fromarray(rgb_image)
+    
+    def fetch_vimeo_thumbnail(self):
+        """Fetch thumbnail image from Vimeo using oEmbed API"""
+        if not self.vimeo_url:
+            return
+        
+        try:
+            # Extract video ID from Vimeo player URL
+            video_id = self._extract_vimeo_id(self.vimeo_url)
+            if not video_id:
+                print(f"Could not extract video ID from URL: {self.vimeo_url}")
+                return
+            
+            # Fetch thumbnail URL from Vimeo oEmbed API
+            oembed_url = f"https://vimeo.com/api/oembed.json?url=https://vimeo.com/{video_id}"
+            response = requests.get(oembed_url, timeout=10)
+            
+            if response.status_code != 200:
+                print(f"Vimeo oEmbed API returned status {response.status_code}")
+                return
+            
+            data = response.json()
+            thumbnail_url = data.get('thumbnail_url')
+            
+            if not thumbnail_url:
+                print(f"No thumbnail URL in Vimeo response for video {video_id}")
+                return
+            
+            # Download the thumbnail image
+            thumb_response = requests.get(thumbnail_url, timeout=10)
+            if thumb_response.status_code != 200:
+                print(f"Failed to download thumbnail from {thumbnail_url}")
+                return
+            
+            # Save thumbnail to model
+            thumbnail_name = f"vimeo_{video_id}_thumb.jpg"
+            self.thumbnail.save(
+                thumbnail_name,
+                ContentFile(thumb_response.content),
+                save=False
+            )
+            
+            # Update the model
+            super().save(update_fields=['thumbnail'])
+            print(f"Successfully fetched Vimeo thumbnail for video {video_id}")
+            
+        except requests.RequestException as e:
+            print(f"Error fetching Vimeo thumbnail: {e}")
+        except Exception as e:
+            print(f"Unexpected error fetching Vimeo thumbnail: {e}")
+    
+    def _extract_vimeo_id(self, url):
+        """Extract Vimeo video ID from player URL"""
+        # Matches URLs like:
+        # https://player.vimeo.com/video/123456789
+        # https://vimeo.com/123456789
+        match = re.search(r'(?:vimeo\.com/(?:video/)?|player\.vimeo\.com/video/)(\d+)', url)
+        return match.group(1) if match else None
     
     def _create_basic_thumbnail(self):
         """Fallback basic thumbnail creation using PIL only"""
