@@ -20,6 +20,7 @@ urlpatterns = [
     
     # Image stats endpoints
     path('api/images/count/', views.get_image_count, name='image-count'),
+    path('api/auth/upload-count/', views.get_user_upload_count, name='user-upload-count'),
     
     # Authentication endpoints
     path('api/auth/csrf/', views.get_csrf_token, name='csrf-token'),
