@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 9, 2025 - Vimeo Iframe Embed Code Support:**
+- **Easier video uploads** - Users can now paste entire Vimeo iframe embed codes, not just URLs
+- **Auto-parsing** - System automatically extracts the player URL from pasted iframe code
+- **Flexible input** - Accepts both full iframe embed codes and direct player URLs
+- **Clear guidance** - Updated textarea with helpful placeholder and instructions
+- **Improved UX** - 3-row textarea with monospace font for better code visibility
+
 **October 9, 2025 - Fixed User Upload Count Feature:**
 - **Accurate counting** - Upload count now uses dedicated backend API endpoint instead of client-side filtering
 - **Efficient query** - Uses `request.user.uploaded_images.count()` for single database query
