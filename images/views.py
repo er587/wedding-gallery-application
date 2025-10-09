@@ -542,6 +542,14 @@ def get_image_count(request):
     return Response({'count': count}, status=status.HTTP_200_OK)
 
 
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_user_upload_count(request):
+    """Get count of images uploaded by the authenticated user"""
+    count = request.user.uploaded_images.count()
+    return Response({'count': count}, status=status.HTTP_200_OK)
+
+
 @api_view(['PUT'])
 @permission_classes([permissions.IsAuthenticated])
 def update_profile(request):
