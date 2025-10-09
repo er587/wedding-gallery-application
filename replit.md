@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 9, 2025 - Fixed User Upload Count Feature:**
+- **Accurate counting** - Upload count now uses dedicated backend API endpoint instead of client-side filtering
+- **Efficient query** - Uses `request.user.uploaded_images.count()` for single database query
+- **Works with pagination** - Count is accurate regardless of how many images are loaded
+- **Authentication required** - Endpoint is protected and only returns count for authenticated users
+- **Multiple displays** - Count appears in profile tab label, profile info section, and images header
+
 **October 9, 2025 - Smart Tag Filtering Loads All Matching Images:**
 - **Complete results** - Tag filters now load ALL images with that tag, not just currently loaded ones
 - **Progressive loading** - First 8 images appear immediately, remaining load in chunks with delays
