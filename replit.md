@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 9, 2025 - Manual Cover Image Upload for Videos:**
+- **User control** - Users can now upload custom cover images for videos as a reliable fallback
+- **Optional field** - Cover image upload is optional when adding Vimeo videos
+- **Smart priority** - Manual cover images take priority over auto-fetched Vimeo thumbnails
+- **Responsive sizing** - User-uploaded covers are processed into 320px, 640px, and 1440px versions
+- **Visual preview** - Shows preview of selected cover image before upload with remove option
+- **Graceful fallback** - If no cover uploaded, system still tries to auto-fetch from Vimeo
+
 **October 9, 2025 - Fixed Vimeo Thumbnails for Domain-Restricted Videos:**
 - **Domain-restricted support** - Added Referer header (reneeanderic.wedding) to Vimeo API calls for privacy-restricted videos
 - **Responsive thumbnails** - Vimeo thumbnails now processed into 320px, 640px, and 1440px versions like photos
