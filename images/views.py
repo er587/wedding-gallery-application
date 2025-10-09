@@ -141,7 +141,17 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
         user = request.user
         image = self.get_object()
         
-        # Only allow image owner to update their own image
+        # Check if user has profile
+        if not hasattr(user, 'profile'):
+            from .models import UserProfile
+            UserProfile.objects.create(user=user)
+        
+        # Allow tag updates for all full users
+        is_tag_only_update = 'tag_names' in request.data and len(request.data) == 1
+        if is_tag_only_update and user.profile.role == 'full':
+            return super().update(request, *args, **kwargs)
+        
+        # For other updates, only allow image owner
         if image.uploader != user:
             return Response(
                 {"error": "You can only update images you uploaded yourself."},
@@ -154,10 +164,17 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
         user = request.user
         image = self.get_object()
         
-        # Debug logging
-        print(f"DEBUG PATCH: Image ID: {image.id}, Current user: {user} (ID: {user.id if user.is_authenticated else 'Not authenticated'}), Image uploader: {image.uploader} (ID: {image.uploader.id if image.uploader else 'None'})")
+        # Check if user has profile
+        if not hasattr(user, 'profile'):
+            from .models import UserProfile
+            UserProfile.objects.create(user=user)
         
-        # Only allow image owner to update their own image
+        # Allow tag updates for all full users
+        is_tag_only_update = 'tag_names' in request.data and len(request.data) == 1
+        if is_tag_only_update and user.profile.role == 'full':
+            return super().partial_update(request, *args, **kwargs)
+        
+        # For other updates, only allow image owner
         if image.uploader != user:
             return Response(
                 {"error": "You can only update images you uploaded yourself."},

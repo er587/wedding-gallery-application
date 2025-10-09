@@ -128,6 +128,13 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
     return (imageData.uploader && user.id === imageData.uploader.id)
   }
 
+  const canEditTags = () => {
+    if (!user) return false
+    
+    // All full users can edit tags on any image
+    return user.role === 'full'
+  }
+
   const handleUpdateImageTitle = async (newTitle) => {
     try {
       await apiService.updateImage(imageData.id, { title: newTitle })
@@ -395,11 +402,21 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                     multiline={true}
                   />
                 </div>
-                <TagInput
-                  tags={imageData.tags || []}
-                  onTagsChange={handleUpdateTags}
-                  canEdit={canEditImage()}
-                />
+                <div className="relative">
+                  {canEditTags() && !canEditImage() && (
+                    <div className="mb-1 flex items-center gap-1 text-xs text-blue-600">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                      <span>All full users can add tags</span>
+                    </div>
+                  )}
+                  <TagInput
+                    tags={imageData.tags || []}
+                    onTagsChange={handleUpdateTags}
+                    canEdit={canEditTags()}
+                  />
+                </div>
               </div>
               
               {/* Comments Content */}
@@ -493,11 +510,21 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
             </div>
 
             {/* Tags */}
-            <TagInput
-              tags={imageData.tags || []}
-              onTagsChange={handleUpdateTags}
-              canEdit={canEditImage()}
-            />
+            <div className="relative">
+              {canEditTags() && !canEditImage() && (
+                <div className="mb-1 flex items-center gap-1 text-xs text-blue-600">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  <span>All full users can add tags</span>
+                </div>
+              )}
+              <TagInput
+                tags={imageData.tags || []}
+                onTagsChange={handleUpdateTags}
+                canEdit={canEditTags()}
+              />
+            </div>
           </div>
 
           {/* Comments */}
