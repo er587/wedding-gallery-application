@@ -295,12 +295,23 @@ class Image(models.Model):
                 print(f"Could not extract video ID from URL: {self.vimeo_url}")
                 return
             
+            # Get domain for Referer header (needed for domain-restricted videos)
+            # Use production domain first (this is whitelisted on Vimeo for domain-restricted videos)
+            frontend_url = os.environ.get('FRONTEND_URL', '')
+            if frontend_url:
+                referer = frontend_url
+            else:
+                # Use the production domain - this is whitelisted on Vimeo
+                referer = "https://reneeanderic.wedding"
+            
             # Fetch thumbnail URL from Vimeo oEmbed API
-            oembed_url = f"https://vimeo.com/api/oembed.json?url=https://vimeo.com/{video_id}"
-            response = requests.get(oembed_url, timeout=10)
+            # Include Referer header for domain-restricted videos
+            oembed_url = f"https://vimeo.com/api/oembed.json?url=https://vimeo.com/{video_id}&width=640"
+            headers = {'Referer': referer}
+            response = requests.get(oembed_url, headers=headers, timeout=10)
             
             if response.status_code != 200:
-                print(f"Vimeo oEmbed API returned status {response.status_code}")
+                print(f"Vimeo oEmbed API returned status {response.status_code} for video {video_id}")
                 return
             
             data = response.json()
