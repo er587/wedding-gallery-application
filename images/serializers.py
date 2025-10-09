@@ -82,22 +82,31 @@ class ImageSerializer(serializers.ModelSerializer):
     
     def _get_thumbnail_with_face_data(self, obj, alias):
         """Helper method to get thumbnail URL with face detection data"""
-        # For videos with Vimeo thumbnails, generate responsive sizes from the fetched thumbnail
-        if obj.is_video and obj.thumbnail:
-            try:
-                from django.conf import settings
-                
-                thumbnailer = get_thumbnailer(obj.thumbnail)
-                
-                # Get alias options from settings (same as for images)
-                alias_options = settings.THUMBNAIL_ALIASES.get('', {}).get(alias, {})
-                
-                # Generate responsive thumbnail from Vimeo thumbnail
-                thumbnail = thumbnailer.get_thumbnail(alias_options)
-                return thumbnail.url
-            except Exception:
-                # Fallback to original Vimeo thumbnail if generation fails
-                return obj.thumbnail.url
+        # For videos: prioritize manual cover_image, then fall back to auto-fetched Vimeo thumbnail
+        if obj.is_video:
+            # First try manual cover_image (user uploaded)
+            if obj.cover_image:
+                try:
+                    from django.conf import settings
+                    
+                    thumbnailer = get_thumbnailer(obj.cover_image)
+                    alias_options = settings.THUMBNAIL_ALIASES.get('', {}).get(alias, {})
+                    thumbnail = thumbnailer.get_thumbnail(alias_options)
+                    return thumbnail.url
+                except Exception:
+                    return obj.cover_image.url
+            
+            # Fall back to auto-fetched Vimeo thumbnail
+            if obj.thumbnail:
+                try:
+                    from django.conf import settings
+                    
+                    thumbnailer = get_thumbnailer(obj.thumbnail)
+                    alias_options = settings.THUMBNAIL_ALIASES.get('', {}).get(alias, {})
+                    thumbnail = thumbnailer.get_thumbnail(alias_options)
+                    return thumbnail.url
+                except Exception:
+                    return obj.thumbnail.url
             
         # For regular images, generate responsive thumbnails with face detection
         if obj.image_file:
@@ -165,10 +174,11 @@ class ImageCreateSerializer(serializers.ModelSerializer):
     tag_names = serializers.ListField(child=serializers.CharField(), required=False, allow_empty=True)
     image_file = serializers.ImageField(required=False, allow_null=True)
     vimeo_url = serializers.URLField(required=False, allow_blank=True, allow_null=True)
+    cover_image = serializers.ImageField(required=False, allow_null=True)
     
     class Meta:
         model = Image
-        fields = ['title', 'description', 'image_file', 'vimeo_url', 'tag_names']
+        fields = ['title', 'description', 'image_file', 'vimeo_url', 'cover_image', 'tag_names']
     
     def validate(self, data):
         """Ensure either image_file or vimeo_url is provided"""
