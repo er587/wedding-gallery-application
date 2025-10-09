@@ -10,6 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 9, 2025 - Smart Tag Filtering Loads All Matching Images:**
+- **Complete results** - Tag filters now load ALL images with that tag, not just currently loaded ones
+- **Progressive loading** - First 8 images appear immediately, remaining load in chunks with delays
+- **Performance optimized** - Chunked loading prevents CPU spikes from decoding all images at once
+- **Request tracking** - Smart request ID system prevents stale results from overwriting new filters
+- **Rapid switching** - Multiple quick filter changes properly abort older requests
+- **Better UX** - Users see all matching images without clicking "Load More"
+
 **October 9, 2025 - Upload Button Added to User Profile:**
 - **Easy upload access** - Added "Upload New Image" button to the Images tab in user profile
 - **Smooth transition** - Clicking the button closes the profile and opens the upload modal seamlessly
