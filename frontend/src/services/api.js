@@ -29,6 +29,7 @@ export const apiService = {
   updateImage: (id, data) => api.patch(`/api/images/${id}/`, data),
   deleteImage: (id) => api.delete(`/api/images/${id}/`),
   getImageCount: () => api.get('/api/images/count/'),
+  getUserUploadCount: () => api.get('/api/auth/upload-count/'),
 
   // Comments
   getComments: (imageId) => api.get(`/api/images/${imageId}/comments/`),
