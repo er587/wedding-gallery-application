@@ -87,7 +87,7 @@ function App() {
           <div className="min-h-screen bg-gray-50">
             <header className="bg-white shadow-sm border-b">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
+                <div className="flex justify-between items-center min-h-16 py-3 md:py-0 md:h-16">
                   {/* Responsive Logo */}
                   <h1 className="font-bold text-gray-900">
                     <span className="md:hidden text-xl">WG</span>

@@ -100,8 +100,8 @@ export default function Auth({ onLogin }) {
   return (
     <>
       {/* Login Form - Responsive */}
-      <div className="flex items-center">
-        <form onSubmit={handleLogin} className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+      <div className="flex items-center w-full md:w-auto">
+        <form onSubmit={handleLogin} className="flex flex-col md:flex-row items-stretch md:items-center gap-2 w-full md:w-auto">
           {/* Email and Password Row */}
           <div className="flex flex-col sm:flex-row gap-2">
             <input

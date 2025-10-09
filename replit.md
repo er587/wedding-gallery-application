@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 9, 2025 - Fixed Mobile Login Field Visibility:**
+- **Responsive header** - Header now uses `min-h-16` instead of fixed `h-16` on mobile to prevent clipping
+- **Vertical padding** - Added `py-3` padding on mobile for better spacing
+- **Full width form** - Login form takes full width on mobile for better accessibility
+- **Stacked layout** - Login fields properly stack vertically on mobile devices without overflow
+- **iPhone compatible** - Login fields now visible on all mobile devices including iPhone
+
 **October 9, 2025 - Manual Cover Image Upload for Videos:**
 - **User control** - Users can now upload custom cover images for videos as a reliable fallback
 - **Optional field** - Cover image upload is optional when adding Vimeo videos
