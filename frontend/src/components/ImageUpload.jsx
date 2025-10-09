@@ -10,9 +10,11 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
     description: '',
     image_file: null,
     vimeo_url: '',
+    cover_image: null,
     tags: []
   })
   const [preview, setPreview] = useState(null)
+  const [coverPreview, setCoverPreview] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [uploadType, setUploadType] = useState('image') // 'image' or 'video'
   
@@ -123,6 +125,10 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
         formDataToSend.append('image_file', formData.image_file)
       } else if (uploadType === 'video' && formData.vimeo_url) {
         formDataToSend.append('vimeo_url', formData.vimeo_url)
+        // Add cover image if provided
+        if (formData.cover_image) {
+          formDataToSend.append('cover_image', formData.cover_image)
+        }
       }
       
       // Add tags as an array
@@ -223,9 +229,12 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
       title: '',
       description: '',
       image_file: null,
+      vimeo_url: '',
+      cover_image: null,
       tags: []
     })
     setPreview(null)
+    setCoverPreview(null)
     setSharedMetadata({ tags: [], description: '' })
   }
 
@@ -240,7 +249,12 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
           {!bulkMode && (
             <button
               type="button"
-              onClick={() => setUploadType(uploadType === 'image' ? 'video' : 'image')}
+              onClick={() => {
+                setUploadType(uploadType === 'image' ? 'video' : 'image')
+                setPreview(null)
+                setCoverPreview(null)
+                setFormData(prev => ({ ...prev, image_file: null, vimeo_url: '', cover_image: null }))
+              }}
               className="px-3 py-1 text-sm rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
             >
               {uploadType === 'image' ? '🎬 Add Video' : '🖼️ Upload Image'}
@@ -269,27 +283,88 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* File Upload Area or Vimeo URL Input */}
         {uploadType === 'video' && !bulkMode ? (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Vimeo Embed Code or URL
-            </label>
-            <textarea
-              value={formData.vimeo_url}
-              onChange={(e) => {
-                const value = e.target.value
-                // Extract URL from iframe embed code if pasted
-                const iframeMatch = value.match(/src=["']([^"']+)["']/)
-                const extractedUrl = iframeMatch ? iframeMatch[1] : value
-                setFormData(prev => ({ ...prev, vimeo_url: extractedUrl.trim() }))
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-              placeholder='<iframe src="https://player.vimeo.com/video/..." ...></iframe>'
-              rows="3"
-              required
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Paste the entire Vimeo iframe embed code or just the player URL
-            </p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Vimeo Embed Code or URL
+              </label>
+              <textarea
+                value={formData.vimeo_url}
+                onChange={(e) => {
+                  const value = e.target.value
+                  // Extract URL from iframe embed code if pasted
+                  const iframeMatch = value.match(/src=["']([^"']+)["']/)
+                  const extractedUrl = iframeMatch ? iframeMatch[1] : value
+                  setFormData(prev => ({ ...prev, vimeo_url: extractedUrl.trim() }))
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                placeholder='<iframe src="https://player.vimeo.com/video/..." ...></iframe>'
+                rows="3"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Paste the entire Vimeo iframe embed code or just the player URL
+              </p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cover Image (Optional)
+              </label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+                {coverPreview ? (
+                  <div className="space-y-2">
+                    <img 
+                      src={coverPreview} 
+                      alt="Cover preview" 
+                      className="max-h-32 mx-auto rounded"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCoverPreview(null)
+                        setFormData(prev => ({ ...prev, cover_image: null }))
+                      }}
+                      className="text-sm text-red-600 hover:text-red-800"
+                    >
+                      Remove Cover
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-gray-400 mb-2">
+                      <svg className="mx-auto h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0]
+                        if (file) {
+                          setFormData(prev => ({ ...prev, cover_image: file }))
+                          const reader = new FileReader()
+                          reader.onload = (e) => setCoverPreview(e.target.result)
+                          reader.readAsDataURL(file)
+                        }
+                      }}
+                      className="hidden"
+                      id="cover-image-upload"
+                    />
+                    <label
+                      htmlFor="cover-image-upload"
+                      className="cursor-pointer inline-block bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 transition-colors text-sm"
+                    >
+                      Choose Cover Image
+                    </label>
+                  </>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Upload a custom thumbnail for this video (optional - will auto-fetch from Vimeo if not provided)
+              </p>
+            </div>
           </div>
         ) : (
           <div>
