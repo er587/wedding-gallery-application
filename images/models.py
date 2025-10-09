@@ -65,6 +65,9 @@ class Image(models.Model):
     # Vimeo embed URL for videos (domain-level privacy links)
     vimeo_url = models.URLField(blank=True, null=True, help_text="Vimeo embed URL with domain-level privacy")
     
+    # Manual cover image for videos (takes priority over auto-fetched Vimeo thumbnail)
+    cover_image = models.ImageField(upload_to=get_image_upload_path, blank=True, null=True, help_text="Optional cover image for videos")
+    
     # Face detection coordinates for smart cropping (normalized 0-1)
     face_x = models.FloatField(null=True, blank=True, help_text="Face center X coordinate (0-1)")
     face_y = models.FloatField(null=True, blank=True, help_text="Face center Y coordinate (0-1)")
