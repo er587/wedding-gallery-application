@@ -271,18 +271,24 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
         {uploadType === 'video' && !bulkMode ? (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Vimeo Embed URL
+              Vimeo Embed Code or URL
             </label>
-            <input
-              type="url"
+            <textarea
               value={formData.vimeo_url}
-              onChange={(e) => setFormData(prev => ({ ...prev, vimeo_url: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://player.vimeo.com/video/..."
+              onChange={(e) => {
+                const value = e.target.value
+                // Extract URL from iframe embed code if pasted
+                const iframeMatch = value.match(/src=["']([^"']+)["']/)
+                const extractedUrl = iframeMatch ? iframeMatch[1] : value
+                setFormData(prev => ({ ...prev, vimeo_url: extractedUrl.trim() }))
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+              placeholder='<iframe src="https://player.vimeo.com/video/..." ...></iframe>'
+              rows="3"
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              Enter the Vimeo embed URL with domain-level privacy
+              Paste the entire Vimeo iframe embed code or just the player URL
             </p>
           </div>
         ) : (
