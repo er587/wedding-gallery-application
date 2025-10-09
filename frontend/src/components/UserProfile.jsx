@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { apiService } from '../services/api'
-import ImageUpload from './ImageUpload'
 
 export default function UserProfile({ user, onClose, onUserUpdate }) {
   // Guard clause - if no user, don't render
@@ -387,20 +386,6 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
 
           {activeTab === 'images' && (
             <div className="space-y-6">
-              {/* Image Upload Section */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Share New Image</h3>
-                <ImageUpload 
-                  user={user} 
-                  onImageUploaded={() => {
-                    setMessage('Image uploaded successfully!')
-                    // Refresh the images list
-                    fetchUserImages()
-                  }}
-                  onCancel={() => {}}
-                />
-              </div>
-              
               {/* User's Uploaded Images Section */}
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Your Shared Images</h3>
@@ -425,7 +410,7 @@ export default function UserProfile({ user, onClose, onUserUpdate }) {
                 ) : (
                   <div className="text-center py-12">
                     <div className="text-gray-500">No images shared yet</div>
-                    <p className="text-gray-400 text-sm mt-1">Upload your first wedding memory!</p>
+                    <p className="text-gray-400 text-sm mt-1">Upload images from the main gallery!</p>
                   </div>
                 )}
               </div>
