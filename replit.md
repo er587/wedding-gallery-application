@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**October 9, 2025 - Automatic Vimeo Video Thumbnails:**
+- **Real preview images** - Videos now display actual Vimeo thumbnails instead of purple play icon
+- **Auto-fetching** - Thumbnails automatically downloaded from Vimeo oEmbed API when video is uploaded
+- **Background processing** - Thumbnail fetch runs async to not block upload response
+- **Visual clarity** - Semi-transparent play button overlay shows which items are videos
+- **Better gallery** - Videos blend naturally with photos while remaining clearly identifiable
+
 **October 9, 2025 - Vimeo Iframe Embed Code Support:**
 - **Easier video uploads** - Users can now paste entire Vimeo iframe embed codes, not just URLs
 - **Auto-parsing** - System automatically extracts the player URL from pasted iframe code
