@@ -25,10 +25,12 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
   const [passwordLoading, setPasswordLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [uploadCount, setUploadCount] = useState(0)
 
   useEffect(() => {
     if (user?.id) {
       fetchUserImages()
+      fetchUploadCount()
     }
   }, [user?.id])
 
@@ -65,6 +67,16 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
       setUserImages([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchUploadCount = async () => {
+    try {
+      const response = await apiService.getUserUploadCount()
+      setUploadCount(response.data.count || 0)
+    } catch (error) {
+      console.error('Error fetching upload count:', error)
+      setUploadCount(0)
     }
   }
 
@@ -230,7 +242,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Images ({userImages.length})
+            Images ({uploadCount})
           </button>
         </div>
 
@@ -321,7 +333,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-500">Images Shared:</span>
-                    <span className="ml-2 text-sm text-gray-900">{userImages.length}</span>
+                    <span className="ml-2 text-sm text-gray-900">{uploadCount}</span>
                   </div>
                 </div>
               )}
@@ -390,7 +402,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-medium text-gray-900">
-                    Your Shared Images ({userImages.length})
+                    Your Shared Images ({uploadCount})
                   </h3>
                   {user.can_upload_images && onUpload && (
                     <button
