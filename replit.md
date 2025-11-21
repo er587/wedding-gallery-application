@@ -10,6 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+**November 21, 2025 - Interactive User Tour:**
+- **Guided onboarding** - New users get an interactive overlay tour on first login
+- **Key feature highlights** - Tour focuses on filters, image selection for download, and uploading
+- **Always accessible** - "Start Tour" button in Help modal allows replaying anytime
+- **Fully skippable** - Every step has close/skip buttons for user control
+- **Smart tracking** - localStorage prevents tour from auto-launching again after first view
+- **Smooth timing** - 1.5 second delay ensures UI is ready before tour starts
+- **Driver.js powered** - Clean, modern overlay with progress indicators and navigation
+
 **October 9, 2025 - Fixed Mobile Login Field Visibility:**
 - **Responsive header** - Header now uses `min-h-16` instead of fixed `h-16` on mobile to prevent clipping
 - **Vertical padding** - Added `py-3` padding on mobile for better spacing
