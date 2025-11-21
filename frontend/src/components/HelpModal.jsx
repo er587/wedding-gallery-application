@@ -1,6 +1,13 @@
 import { useEffect } from 'react'
+import { startUserTour } from './UserTour'
 
 export default function HelpModal({ isOpen, onClose }) {
+  const handleStartTour = () => {
+    onClose() // Close the help modal first
+    setTimeout(() => {
+      startUserTour() // Then start the tour
+    }, 300) // Small delay to let modal close animation complete
+  }
   useEffect(() => {
     const handleEscKey = (event) => {
       if (event.key === 'Escape') {
@@ -47,6 +54,24 @@ export default function HelpModal({ isOpen, onClose }) {
 
         {/* Content */}
         <div className="px-6 py-6 space-y-6">
+          {/* Interactive Tour Button */}
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">🎯 Interactive Tour</h3>
+                <p className="text-blue-50 text-sm">
+                  Take a guided tour of the key features: filters, image selection, and uploads.
+                </p>
+              </div>
+              <button
+                onClick={handleStartTour}
+                className="px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-semibold whitespace-nowrap ml-4"
+              >
+                Start Tour
+              </button>
+            </div>
+          </div>
+
           {/* Loading More Pictures */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
