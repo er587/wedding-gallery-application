@@ -89,7 +89,7 @@ function App() {
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center min-h-16 py-3 md:py-0 md:h-16">
                   {/* Responsive Logo */}
-                  <h1 className="font-bold text-gray-900">
+                  <h1 id="tour-welcome" className="font-bold text-gray-900">
                     <span className="md:hidden text-xl">WG</span>
                     <span className="hidden md:inline text-2xl">Wedding Gallery</span>
                   </h1>
@@ -142,6 +142,7 @@ function App() {
                           </button>
                           {user.can_upload_images && (
                             <button
+                              id="tour-upload-button"
                               onClick={() => setShowUpload(true)}
                               className="bg-blue-600 text-white px-3 lg:px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
                             >

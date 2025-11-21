@@ -489,7 +489,7 @@ export default function ImageGallery({ user, refresh }) {
       </div>
 
       {/* Search & Filter Toggle */}
-      <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+      <div id="tour-filters" className="bg-white rounded-lg shadow-sm border p-4 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
@@ -511,6 +511,7 @@ export default function ImageGallery({ user, refresh }) {
             {images.length > 0 && (
               <div className="flex items-center space-x-2">
                 <button
+                  id="tour-select-mode"
                   onClick={toggleSelectionMode}
                   className={`px-4 py-2 rounded-md transition-colors ${
                     selectionMode
