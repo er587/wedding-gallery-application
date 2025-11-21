@@ -12,6 +12,7 @@ import MobileMenu from './components/MobileMenu'
 import { ToastProvider } from './components/Toast'
 import { authService } from './services/auth'
 import { apiService } from './services/api'
+import { startUserTour, hasCompletedTour } from './components/UserTour'
 
 function App() {
   const [user, setUser] = useState(() => authService.getCurrentUser())
@@ -47,6 +48,13 @@ function App() {
       setShowWelcome(true)
       // Mark as seen when modal opens to prevent repeats on refresh
       localStorage.setItem(`hasSeenWelcome_${userKey}`, 'true')
+      
+      // Launch interactive tour after first login (delay to let UI render)
+      if (!hasCompletedTour()) {
+        setTimeout(() => {
+          startUserTour()
+        }, 1000)
+      }
     }
   }
 
