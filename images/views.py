@@ -27,7 +27,7 @@ def _is_postgres():
     """Check if the default database is PostgreSQL."""
     engine = settings.DATABASES.get('default', {}).get('ENGINE', '')
     return 'postgresql' in engine or 'postgis' in engine
-from .serializers import ImageSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer
+from .serializers import ImageSerializer, ImageListSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer
 from .storage import ReplitAppStorage, FileAccessControl
 
 
@@ -76,15 +76,9 @@ class ImageListCreateView(generics.ListCreateAPIView):
         return response
     
     def get_queryset(self):
-        # Optimize queries with select_related, prefetch_related, and annotations
+        # Optimize queries — no comment prefetch needed for list view (uses ImageListSerializer)
         queryset = Image.objects.select_related('uploader', 'uploader__profile').prefetch_related(
             'tags',
-            Prefetch(
-                'comments',
-                queryset=Comment.objects.select_related('author', 'author__profile').prefetch_related(
-                    Prefetch('replies', queryset=Comment.objects.select_related('author', 'author__profile'))
-                )
-            ),
         ).annotate(
             comment_count_val=Count('comments', distinct=True),
             like_count_val=Count('likes', distinct=True),
@@ -142,7 +136,7 @@ class ImageListCreateView(generics.ListCreateAPIView):
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return ImageCreateSerializer
-        return ImageSerializer
+        return ImageListSerializer  # No comments in list view — much lighter payload
     
     def create(self, request, *args, **kwargs):
         # Check if user is authenticated

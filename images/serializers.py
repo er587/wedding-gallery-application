@@ -50,40 +50,35 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 
-class ImageSerializer(serializers.ModelSerializer):
+class ImageListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for gallery list — no comments, smaller payload."""
     uploader = UserSerializer(read_only=True)
-    comments = CommentSerializer(many=True, read_only=True)
     comment_count = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
     user_has_liked = serializers.SerializerMethodField()
     image_file = serializers.SerializerMethodField()
     is_video = serializers.BooleanField(read_only=True)
-    
-    # Only return thumbnails actually used by the frontend (70% payload reduction)
     thumbnail_square_320 = serializers.SerializerMethodField()
     thumbnail_square_640 = serializers.SerializerMethodField()
     thumbnail_width_1440 = serializers.SerializerMethodField()
-    
     tags = TagSerializer(many=True, read_only=True)
     tag_names = serializers.ListField(child=serializers.CharField(), write_only=True, required=False)
-    
+
     class Meta:
         model = Image
         fields = ['id', 'title', 'description', 'image_file', 'vimeo_url', 'is_video',
                  'thumbnail_square_320', 'thumbnail_square_640', 'thumbnail_width_1440',
-                 'uploader', 'uploaded_at', 'updated_at', 
-                 'comments', 'comment_count', 'like_count', 'user_has_liked', 'tags', 'tag_names']
+                 'uploader', 'uploaded_at', 'updated_at',
+                 'comment_count', 'like_count', 'user_has_liked', 'tags', 'tag_names']
         read_only_fields = ['id', 'uploader', 'uploaded_at', 'updated_at']
-    
+
     def get_comment_count(self, obj):
-        # Use annotated value if available, otherwise fall back to query
         return getattr(obj, 'comment_count_val', obj.comments.count())
 
     def get_like_count(self, obj):
         return getattr(obj, 'like_count_val', obj.likes.count())
 
     def get_user_has_liked(self, obj):
-        # Use annotated value if available
         val = getattr(obj, 'user_has_liked_val', None)
         if val is not None:
             return val
@@ -91,88 +86,64 @@ class ImageSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.likes.filter(user=request.user).exists()
         return False
-    
+
     def get_image_file(self, obj):
         if obj.image_file:
-            # Return relative URL so it goes through Vite proxy
             return obj.image_file.url
         return None
-    
+
     def _get_thumbnail_with_face_data(self, obj, alias):
         """Helper method to get thumbnail URL with face detection data"""
-        # For videos: prioritize manual cover_image, then fall back to auto-fetched Vimeo thumbnail
         if obj.is_video:
-            # First try manual cover_image (user uploaded)
             if obj.cover_image:
                 try:
-                    from django.conf import settings
-                    
+                    from django.conf import settings as django_settings
                     thumbnailer = get_thumbnailer(obj.cover_image)
-                    alias_options = settings.THUMBNAIL_ALIASES.get('', {}).get(alias, {})
+                    alias_options = django_settings.THUMBNAIL_ALIASES.get('', {}).get(alias, {})
                     thumbnail = thumbnailer.get_thumbnail(alias_options)
                     return thumbnail.url
                 except Exception:
                     return obj.cover_image.url
-            
-            # Fall back to auto-fetched Vimeo thumbnail
             if obj.thumbnail:
                 try:
-                    from django.conf import settings
-                    
+                    from django.conf import settings as django_settings
                     thumbnailer = get_thumbnailer(obj.thumbnail)
-                    alias_options = settings.THUMBNAIL_ALIASES.get('', {}).get(alias, {})
+                    alias_options = django_settings.THUMBNAIL_ALIASES.get('', {}).get(alias, {})
                     thumbnail = thumbnailer.get_thumbnail(alias_options)
                     return thumbnail.url
                 except Exception:
                     return obj.thumbnail.url
-            
-        # For regular images, generate responsive thumbnails with face detection
         if obj.image_file:
             try:
-                from django.conf import settings
-                
+                from django.conf import settings as django_settings
                 thumbnailer = get_thumbnailer(obj.image_file)
-                
-                # Get alias options from settings
-                alias_options = settings.THUMBNAIL_ALIASES.get('', {}).get(alias, {})
-                
-                # Create a copy of options and merge face data if available
+                alias_options = django_settings.THUMBNAIL_ALIASES.get('', {}).get(alias, {})
                 options = alias_options.copy()
                 if obj.face_x is not None:
                     options.update({
-                        'face_x': obj.face_x,
-                        'face_y': obj.face_y,
-                        'face_width': obj.face_width,
-                        'face_height': obj.face_height,
+                        'face_x': obj.face_x, 'face_y': obj.face_y,
+                        'face_width': obj.face_width, 'face_height': obj.face_height,
                     })
-                
-                # Generate thumbnail with merged options
                 thumbnail = thumbnailer.get_thumbnail(options)
                 return thumbnail.url
             except Exception:
-                # Fallback to original image if thumbnail generation fails
                 return obj.image_file.url
         return None
-    
-    # Only the 3 thumbnail sizes actually used by the frontend
+
     def get_thumbnail_square_320(self, obj):
         return self._get_thumbnail_with_face_data(obj, 'square_320')
-    
+
     def get_thumbnail_square_640(self, obj):
         return self._get_thumbnail_with_face_data(obj, 'square_640')
-    
+
     def get_thumbnail_width_1440(self, obj):
         return self._get_thumbnail_with_face_data(obj, 'width_1440')
-    
+
     def update(self, instance, validated_data):
         tag_names = validated_data.pop('tag_names', None)
-        
-        # Update regular fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
-        
-        # Update tags if provided - only allow existing tags
         if tag_names is not None:
             instance.tags.clear()
             for tag_name in tag_names:
@@ -182,10 +153,16 @@ class ImageSerializer(serializers.ModelSerializer):
                         tag = Tag.objects.get(name=tag_name)
                         instance.tags.add(tag)
                     except Tag.DoesNotExist:
-                        # Skip non-existent tags silently
                         pass
-        
         return instance
+
+
+class ImageSerializer(ImageListSerializer):
+    """Full serializer for detail view — includes comments."""
+    comments = CommentSerializer(many=True, read_only=True)
+
+    class Meta(ImageListSerializer.Meta):
+        fields = ImageListSerializer.Meta.fields + ['comments']
 
 
 class ImageCreateSerializer(serializers.ModelSerializer):
