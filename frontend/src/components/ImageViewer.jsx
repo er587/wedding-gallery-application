@@ -4,15 +4,18 @@ import InlineEditableText from './InlineEditableText'
 import TagInput from './TagInput'
 import { apiService } from '../services/api'
 import { useToast } from './Toast'
+import useFocusTrap from '../hooks/useFocusTrap'
 
 export default function ImageViewer({ image, user, onClose, onImageDeleted, onTitleUpdated, images = [], currentIndex = 0, onNavigate }) {
   const toast = useToast()
+  const focusTrapRef = useFocusTrap()
   const [comments, setComments] = useState([])
   const [commentsMeta, setCommentsMeta] = useState({ count: 0, next: null })
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
   const [imageData, setImageData] = useState(image) // Local copy for like updates
   const [showMobileComments, setShowMobileComments] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false)
   const intervalRef = useRef(null)
   const hasInitialLoad = useRef(false)
 
@@ -53,6 +56,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
   // Update imageData when image prop changes (navigation)
   useEffect(() => {
     setImageData(image)
+    setImageLoaded(false) // Reset for blur-up placeholder
   }, [image])
 
   // Keyboard navigation
@@ -227,21 +231,34 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
   const handleLike = async () => {
     if (!user) return
 
+    // Optimistic update
+    setImageData(prev => ({
+      ...prev,
+      user_has_liked: !prev.user_has_liked,
+      like_count: prev.user_has_liked ? prev.like_count - 1 : prev.like_count + 1,
+    }))
+
     try {
       const response = await apiService.toggleLike(imageData.id)
-      
+      // Reconcile with server
       setImageData(prev => ({
         ...prev,
         like_count: response.data.like_count,
-        user_has_liked: response.data.liked
+        user_has_liked: response.data.liked,
       }))
     } catch (error) {
+      // Revert on failure
+      setImageData(prev => ({
+        ...prev,
+        user_has_liked: !prev.user_has_liked,
+        like_count: prev.user_has_liked ? prev.like_count - 1 : prev.like_count + 1,
+      }))
       console.error('Error toggling like:', error)
     }
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+    <div ref={focusTrapRef} role="dialog" aria-modal="true" aria-label="Image viewer" className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
       {/* Mobile-first responsive modal */}
       <div className="bg-white w-full h-full md:rounded-lg md:max-w-7xl md:w-full md:max-h-[95vh] md:m-4 overflow-hidden flex flex-col md:flex-row relative">
         {/* Dismiss button in top left */}
@@ -284,22 +301,35 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               ></iframe>
             </div>
           ) : (
-            <img
-              src={imageData.image_file}
-              srcSet={`
-                ${imageData.thumbnail_width_480 || imageData.thumbnail_large} 480w,
-                ${imageData.thumbnail_width_960 || imageData.image_file} 960w,
-                ${imageData.thumbnail_width_1440 || imageData.image_file} 1440w,
-                ${imageData.image_file} 2000w
-              `.trim()}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1440px"
-              alt={imageData.title}
-              className="max-w-full max-h-full object-contain w-full"
-              style={{ maxHeight: 'calc(100vh - 200px)' }}
-              loading="eager"
-              decoding="async"
-              fetchPriority="high"
-            />
+            <div className="relative max-w-full max-h-full w-full" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+              {/* Blurred thumbnail placeholder */}
+              {!imageLoaded && imageData.thumbnail_square_640 && (
+                <img
+                  src={imageData.thumbnail_square_640}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-contain blur-sm"
+                  aria-hidden="true"
+                />
+              )}
+              {/* Full resolution image */}
+              <img
+                src={imageData.image_file}
+                srcSet={`
+                  ${imageData.thumbnail_width_480 || imageData.thumbnail_large} 480w,
+                  ${imageData.thumbnail_width_960 || imageData.image_file} 960w,
+                  ${imageData.thumbnail_width_1440 || imageData.image_file} 1440w,
+                  ${imageData.image_file} 2000w
+                `.trim()}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1440px"
+                alt={imageData.title}
+                className={`max-w-full max-h-full object-contain w-full transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                style={{ maxHeight: 'calc(100vh - 200px)' }}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                onLoad={() => setImageLoaded(true)}
+              />
+            </div>
           )}
 
           {/* Next Arrow */}

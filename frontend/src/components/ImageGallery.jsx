@@ -172,22 +172,46 @@ export default function ImageGallery({ user, refresh }) {
   const handleLike = async (imageId) => {
     if (!user) return
 
+    // Optimistic update: toggle immediately before server responds
+    setImages(prevImages =>
+      prevImages.map(img =>
+        img.id === imageId
+          ? {
+              ...img,
+              user_has_liked: !img.user_has_liked,
+              like_count: img.user_has_liked ? img.like_count - 1 : img.like_count + 1,
+            }
+          : img
+      )
+    )
+
     try {
       const response = await apiService.toggleLike(imageId)
-      
-      // Update the image in the local state
-      setImages(prevImages => 
-        prevImages.map(img => 
-          img.id === imageId 
+      // Reconcile with server truth
+      setImages(prevImages =>
+        prevImages.map(img =>
+          img.id === imageId
             ? {
-                ...img, 
+                ...img,
                 like_count: response.data.like_count,
-                user_has_liked: response.data.liked
+                user_has_liked: response.data.liked,
               }
             : img
         )
       )
     } catch (error) {
+      // Revert optimistic update on failure
+      setImages(prevImages =>
+        prevImages.map(img =>
+          img.id === imageId
+            ? {
+                ...img,
+                user_has_liked: !img.user_has_liked,
+                like_count: img.user_has_liked ? img.like_count - 1 : img.like_count + 1,
+              }
+            : img
+        )
+      )
       console.error('Error toggling like:', error)
     }
   }

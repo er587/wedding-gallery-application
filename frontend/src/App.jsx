@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense, lazy } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import ImageGallery from './components/ImageGallery'
-import ImageUpload from './components/ImageUpload'
 import Auth from './components/Auth'
-import UserProfile from './components/UserProfile'
-import WelcomeModal from './components/WelcomeModal'
-import HelpModal from './components/HelpModal'
-import ResetPassword from './components/ResetPassword'
-import EmailVerification from './components/EmailVerification'
 import MobileMenu from './components/MobileMenu'
+import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider } from './components/Toast'
+
+// Lazy-loaded components (not needed on initial page load)
+const ImageUpload = lazy(() => import('./components/ImageUpload'))
+const UserProfile = lazy(() => import('./components/UserProfile'))
+const WelcomeModal = lazy(() => import('./components/WelcomeModal'))
+const HelpModal = lazy(() => import('./components/HelpModal'))
+const ResetPassword = lazy(() => import('./components/ResetPassword'))
+const EmailVerification = lazy(() => import('./components/EmailVerification'))
 import { authService } from './services/auth'
 import { apiService } from './services/api'
 import { startUserTour, hasCompletedTour } from './components/UserTour'
@@ -87,7 +90,9 @@ function App() {
   }
 
   return (
+    <ErrorBoundary>
     <ToastProvider>
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-gray-400">Loading...</div></div>}>
       <Routes>
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/verify-email/:token" element={<EmailVerification />} />
@@ -207,7 +212,9 @@ function App() {
           </div>
         } />
       </Routes>
+    </Suspense>
     </ToastProvider>
+    </ErrorBoundary>
   )
 }
 
