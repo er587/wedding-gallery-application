@@ -120,34 +120,21 @@ class Image(models.Model):
         return self.title
     
     def save(self, *args, **kwargs):
-        """Override save - background processing dispatched via Django-Q2 task queue."""
+        """Override save - background processing via daemon threads for instant execution."""
         is_new = self.pk is None
         super().save(*args, **kwargs)
 
-        try:
-            from django_q.tasks import async_task
+        # Fetch Vimeo thumbnail if this is a video and no thumbnail exists
+        if is_new and self.vimeo_url and not self.thumbnail:
+            threading.Thread(target=self._async_fetch_vimeo_thumbnail, daemon=True).start()
 
-            # Fetch Vimeo thumbnail if this is a video and no thumbnail exists
-            if is_new and self.vimeo_url and not self.thumbnail:
-                async_task('images.tasks.fetch_vimeo_thumbnail', self.pk)
+        # Move face detection to background thread to prevent blocking upload
+        if is_new and self.image_file and self.face_x is None:
+            threading.Thread(target=self._async_detect_and_store_face_coordinates, daemon=True).start()
 
-            # Detect faces for smart cropping
-            if is_new and self.image_file and self.face_x is None:
-                async_task('images.tasks.process_face_detection', self.pk)
-
-            # Generate legacy thumbnail if needed
-            if self.image_file and not self.thumbnail:
-                async_task('images.tasks.generate_thumbnail', self.pk)
-
-        except Exception as e:
-            # Fallback to daemon threads if Django-Q worker isn't running
-            logger.warning("Django-Q unavailable, falling back to threads: %s", e)
-            if is_new and self.vimeo_url and not self.thumbnail:
-                threading.Thread(target=self._async_fetch_vimeo_thumbnail, daemon=True).start()
-            if is_new and self.image_file and self.face_x is None:
-                threading.Thread(target=self._async_detect_and_store_face_coordinates, daemon=True).start()
-            if self.image_file and not self.thumbnail:
-                threading.Thread(target=self.create_thumbnail, daemon=True).start()
+        # Generate thumbnail if image_file exists but thumbnail doesn't
+        if self.image_file and not self.thumbnail:
+            threading.Thread(target=self.create_thumbnail, daemon=True).start()
     
     def _async_fetch_vimeo_thumbnail(self):
         """Async wrapper for Vimeo thumbnail fetching - runs in background thread"""
