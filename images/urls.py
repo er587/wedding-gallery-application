@@ -8,9 +8,11 @@ urlpatterns = [
     # Image endpoints
     path('api/images/', views.ImageListCreateView.as_view(), name='image-list-create'),
     path('api/images/<int:pk>/', views.ImageDetailView.as_view(), name='image-detail'),
+    path('api/images/download/', views.bulk_download, name='bulk-download'),
     path('api/images/<int:image_id>/comments/', views.CommentListCreateView.as_view(), name='comment-list-create'),
     path('api/comments/<int:comment_id>/reply/', views.create_reply, name='comment-reply'),
-    
+    path('api/comments/<int:comment_id>/report/', views.report_comment, name='comment-report'),
+
     # Tag endpoints
     path('api/tags/', views.TagListView.as_view(), name='tag-list'),
     

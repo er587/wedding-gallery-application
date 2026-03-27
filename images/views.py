@@ -262,20 +262,11 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
         return super().partial_update(request, *args, **kwargs)
     
     def perform_destroy(self, instance):
-        # Delete the physical files when deleting the database record
-        if instance.image_file:
-            try:
-                instance.image_file.delete(save=False)
-            except Exception as e:
-                logger.error("Error deleting image file: %s", e)
-
-        if instance.thumbnail:
-            try:
-                instance.thumbnail.delete(save=False)
-            except Exception as e:
-                logger.error("Error deleting thumbnail file: %s", e)
-                
-        super().perform_destroy(instance)
+        # Soft delete: mark as deleted instead of removing from database
+        instance.is_deleted = True
+        instance.deleted_at = timezone.now()
+        instance.deleted_by = self.request.user
+        instance.save(update_fields=['is_deleted', 'deleted_at', 'deleted_by'])
 
 
 class CommentListCreateView(generics.ListCreateAPIView):
@@ -313,6 +304,84 @@ def create_reply(request, comment_id):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Comment.DoesNotExist:
         return Response({'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+@ratelimit(key='user', rate='10/h', method='POST', block=True)
+def report_comment(request, comment_id):
+    """Report/flag a comment for moderation."""
+    try:
+        comment = Comment.objects.get(id=comment_id)
+
+        # Check if user already flagged this comment
+        if comment.flagged_by.filter(id=request.user.id).exists():
+            return Response(
+                {'error': 'You have already reported this comment'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        comment.flagged_by.add(request.user)
+        comment.flag_count = comment.flagged_by.count()
+        comment.is_flagged = True
+
+        # Auto-hide after 3 flags
+        if comment.flag_count >= 3:
+            comment.is_hidden = True
+
+        comment.save(update_fields=['flag_count', 'is_flagged', 'is_hidden'])
+
+        return Response({
+            'message': 'Comment reported successfully',
+            'hidden': comment.is_hidden
+        }, status=status.HTTP_200_OK)
+
+    except Comment.DoesNotExist:
+        return Response({'error': 'Comment not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+# Bulk download
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+@ratelimit(key='user', rate='5/h', method='POST', block=True)
+def bulk_download(request):
+    """Download multiple images as a ZIP file (max 100 images)."""
+    import zipfile
+    from django.http import StreamingHttpResponse
+
+    image_ids = request.data.get('image_ids', [])
+    if not image_ids:
+        return Response({'error': 'No images selected'}, status=status.HTTP_400_BAD_REQUEST)
+    if len(image_ids) > 100:
+        return Response({'error': 'Maximum 100 images per download'}, status=status.HTTP_400_BAD_REQUEST)
+
+    images = Image.objects.filter(id__in=image_ids, image_file__isnull=False)
+    if not images.exists():
+        return Response({'error': 'No downloadable images found'}, status=status.HTTP_404_NOT_FOUND)
+
+    def zip_generator():
+        """Stream ZIP file chunks to avoid loading all images into memory."""
+        import io
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for img in images:
+                try:
+                    filename = os.path.basename(img.image_file.name)
+                    zf.writestr(filename, img.image_file.read())
+                except Exception as e:
+                    logger.error("Error adding image %s to ZIP: %s", img.id, e)
+        buffer.seek(0)
+        return buffer.getvalue()
+
+    try:
+        zip_data = zip_generator()
+        response = HttpResponse(zip_data, content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename="wedding-photos.zip"'
+        response['Content-Length'] = len(zip_data)
+        return response
+    except Exception as e:
+        logger.error("Bulk download failed: %s", e)
+        return Response({'error': 'Download failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # Authentication Views

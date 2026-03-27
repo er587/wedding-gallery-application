@@ -417,41 +417,26 @@ export default function ImageGallery({ user, refresh }) {
 
     setDownloading(true)
     try {
-      // For multiple images, we'll download them one by one
-      // In a production app, you might want to create a zip file
-      const selectedImagesList = images.filter(img => selectedImages.has(img.id))
-      
-      for (let i = 0; i < selectedImagesList.length; i++) {
-        const image = selectedImagesList[i]
-        try {
-          const response = await fetch(image.image_file)
-          const blob = await response.blob()
-          const url = window.URL.createObjectURL(blob)
-          
-          const link = document.createElement('a')
-          link.href = url
-          link.download = `${image.title || `image-${image.id}`}.${blob.type.split('/')[1] || 'jpg'}`
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-          window.URL.revokeObjectURL(url)
-          
-          // Small delay between downloads to avoid overwhelming the browser
-          if (i < selectedImagesList.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 500))
-          }
-        } catch (error) {
-          console.error(`Error downloading image ${image.title}:`, error)
-        }
-      }
-      
+      // Download as single ZIP via backend
+      const imageIds = Array.from(selectedImages)
+      const response = await apiService.bulkDownload(imageIds)
+
+      // Trigger browser download from blob response
+      const url = window.URL.createObjectURL(response.data)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'wedding-photos.zip'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
       // Clear selection after download
       setSelectedImages(new Set())
       setSelectionMode(false)
-      
     } catch (error) {
       console.error('Error downloading images:', error)
-      toast.error('Failed to download some images. Please try again.')
+      toast.error('Failed to download images. Please try again.')
     } finally {
       setDownloading(false)
     }

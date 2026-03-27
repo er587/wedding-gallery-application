@@ -44,6 +44,20 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
     }
   }
 
+  const handleReport = async (commentId) => {
+    if (!confirm('Are you sure you want to report this comment?')) return
+    try {
+      const response = await apiService.reportComment(commentId)
+      toast.success(response.data.message || 'Comment reported')
+      if (response.data.hidden) {
+        onCommentAdded() // Refresh to show hidden state
+      }
+    } catch (error) {
+      const msg = error.response?.data?.error || 'Failed to report comment'
+      toast.error(msg)
+    }
+  }
+
   const formatDate = (dateString) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('en-US', {
@@ -84,13 +98,26 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
             <span className="text-xs text-gray-400">{formatDate(comment.created_at)}</span>
           </div>
           <p className="text-sm text-gray-700 leading-relaxed">{comment.content}</p>
-          {user && !isReply && (
-            <button
-              onClick={() => setReplyTo(comment.id)}
-              className="text-xs text-blue-600 hover:text-blue-800 mt-1"
-            >
-              Reply
-            </button>
+          {user && !comment.is_hidden && (
+            <div className="flex items-center space-x-3 mt-1">
+              {!isReply && (
+                <button
+                  onClick={() => setReplyTo(comment.id)}
+                  className="text-xs text-blue-600 hover:text-blue-800"
+                >
+                  Reply
+                </button>
+              )}
+              {comment.author?.id !== user.id && (
+                <button
+                  onClick={() => handleReport(comment.id)}
+                  className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                  title="Report this comment"
+                >
+                  Flag
+                </button>
+              )}
+            </div>
           )}
           
           {replyTo === comment.id && (

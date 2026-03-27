@@ -18,6 +18,8 @@ from django.dispatch import receiver
 from django.utils import timezone
 from PIL import Image as PILImage
 
+from .managers import ImageAllManager, ImageManager
+
 logger = logging.getLogger(__name__)
 
 
@@ -87,6 +89,21 @@ class Image(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Soft delete fields
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='deleted_images',
+    )
+
+    # Default manager filters out soft-deleted images; all_objects includes them
+    objects = ImageManager()
+    all_objects = ImageAllManager()
+
     class Meta:
         ordering = ['-uploaded_at']
         indexes = [
@@ -103,32 +120,34 @@ class Image(models.Model):
         return self.title
     
     def save(self, *args, **kwargs):
-        """Override save - face detection and Vimeo thumbnail fetching moved to async processing"""
+        """Override save - background processing dispatched via Django-Q2 task queue."""
         is_new = self.pk is None
         super().save(*args, **kwargs)
-        
-        # Fetch Vimeo thumbnail if this is a video and no thumbnail exists
-        if is_new and self.vimeo_url and not self.thumbnail:
-            threading.Thread(
-                target=self._async_fetch_vimeo_thumbnail,
-                daemon=True
-            ).start()
-        
-        # Move face detection to background thread to prevent blocking upload
-        if is_new and self.image_file and self.face_x is None:
-            threading.Thread(
-                target=self._async_detect_and_store_face_coordinates,
-                daemon=True
-            ).start()
-        
-        # Legacy: Generate thumbnail if image_file exists but thumbnail doesn't
-        # (will be deprecated once easy-thumbnails is fully integrated)
-        if self.image_file and not self.thumbnail:
-            # Also run thumbnail generation in background to prevent blocking
-            threading.Thread(
-                target=self.create_thumbnail,
-                daemon=True
-            ).start()
+
+        try:
+            from django_q.tasks import async_task
+
+            # Fetch Vimeo thumbnail if this is a video and no thumbnail exists
+            if is_new and self.vimeo_url and not self.thumbnail:
+                async_task('images.tasks.fetch_vimeo_thumbnail', self.pk)
+
+            # Detect faces for smart cropping
+            if is_new and self.image_file and self.face_x is None:
+                async_task('images.tasks.process_face_detection', self.pk)
+
+            # Generate legacy thumbnail if needed
+            if self.image_file and not self.thumbnail:
+                async_task('images.tasks.generate_thumbnail', self.pk)
+
+        except Exception as e:
+            # Fallback to daemon threads if Django-Q worker isn't running
+            logger.warning("Django-Q unavailable, falling back to threads: %s", e)
+            if is_new and self.vimeo_url and not self.thumbnail:
+                threading.Thread(target=self._async_fetch_vimeo_thumbnail, daemon=True).start()
+            if is_new and self.image_file and self.face_x is None:
+                threading.Thread(target=self._async_detect_and_store_face_coordinates, daemon=True).start()
+            if self.image_file and not self.thumbnail:
+                threading.Thread(target=self.create_thumbnail, daemon=True).start()
     
     def _async_fetch_vimeo_thumbnail(self):
         """Async wrapper for Vimeo thumbnail fetching - runs in background thread"""
@@ -428,6 +447,14 @@ class Comment(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    # Moderation fields
+    is_flagged = models.BooleanField(default=False)
+    flag_count = models.PositiveIntegerField(default=0)
+    flagged_by = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, blank=True, related_name='flagged_comments'
+    )
+    is_hidden = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['created_at']

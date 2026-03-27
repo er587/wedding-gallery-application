@@ -28,6 +28,7 @@ export const apiService = {
   }),
   updateImage: (id, data) => api.patch(`/api/images/${id}/`, data),
   deleteImage: (id) => api.delete(`/api/images/${id}/`),
+  bulkDownload: (imageIds) => api.post('/api/images/download/', { image_ids: imageIds }, { responseType: 'blob' }),
   getImageCount: () => api.get('/api/images/count/'),
   getUserUploadCount: () => api.get('/api/auth/upload-count/'),
 
@@ -35,6 +36,7 @@ export const apiService = {
   getComments: (imageId, page = 1) => api.get(`/api/images/${imageId}/comments/?page=${page}`),
   createComment: (imageId, data) => api.post(`/api/images/${imageId}/comments/`, data),
   createReply: (commentId, data) => api.post(`/api/comments/${commentId}/reply/`, data),
+  reportComment: (commentId) => api.post(`/api/comments/${commentId}/report/`),
 
   // Like functionality
   toggleLike: (imageId) => api.post(`/api/images/${imageId}/like/`),

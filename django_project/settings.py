@@ -104,6 +104,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'easy_thumbnails',
+    'django_q',
     'images',
 ]
 
@@ -183,6 +184,18 @@ else:
             }
         }
     }
+
+# Django-Q2 background task queue configuration
+# Uses the database as broker (no Redis/RabbitMQ required)
+# Run the worker with: python manage.py qcluster
+Q_CLUSTER = {
+    'name': 'wedding-gallery',
+    'workers': 2,
+    'timeout': 300,
+    'retry': 600,
+    'orm': 'default',
+    'catch_up': False,
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

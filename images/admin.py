@@ -20,8 +20,8 @@ class UserProfileInline(admin.StackedInline):
 
 class UserAdmin(BaseUserAdmin):
     inlines = (UserProfileInline,)
-    list_display = ['username', 'email', 'get_role', 'get_groups', 'is_staff', 'date_joined']
-    list_filter = ['is_staff', 'is_superuser', 'profile__role', 'groups']
+    list_display = ['username', 'email', 'get_role', 'get_groups', 'is_staff', 'date_joined', 'last_login', 'date_joined' ]
+    list_filter = ['is_staff', 'is_superuser', 'profile__role', 'groups', 'last_login']
     
     def get_role(self, obj):
         return obj.profile.get_role_display() if hasattr(obj, 'profile') else 'No Profile'
@@ -47,35 +47,74 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    list_display = ['title', 'uploader', 'get_uploader_role', 'tag_list', 'uploaded_at']
-    list_filter = ['uploaded_at', 'uploader__profile__role', 'tags']
+    list_display = ['title', 'uploader', 'get_uploader_role', 'tag_list', 'is_deleted', 'uploaded_at']
+    list_filter = ['is_deleted', 'uploaded_at', 'uploader__profile__role', 'tags']
     search_fields = ['title', 'description', 'uploader__username']
     filter_horizontal = ['tags']
-    readonly_fields = ['uploaded_at', 'updated_at']
-    
+    readonly_fields = ['uploaded_at', 'updated_at', 'deleted_at', 'deleted_by']
+    actions = ['restore_images', 'permanently_delete_images']
+
+    def get_queryset(self, request):
+        """Show all images including soft-deleted ones in admin."""
+        return Image.all_objects.all()
+
     def get_uploader_role(self, obj):
         return obj.uploader.profile.get_role_display() if hasattr(obj.uploader, 'profile') else 'No Profile'
     get_uploader_role.short_description = 'Uploader Role'
-    
+
     def tag_list(self, obj):
         return ', '.join([tag.name for tag in obj.tags.all()]) or 'No Tags'
     tag_list.short_description = 'Tags'
 
+    def restore_images(self, request, queryset):
+        count = queryset.filter(is_deleted=True).update(is_deleted=False, deleted_at=None, deleted_by=None)
+        self.message_user(request, f"Restored {count} image(s).")
+    restore_images.short_description = "Restore selected soft-deleted images"
+
+    def permanently_delete_images(self, request, queryset):
+        deleted = queryset.filter(is_deleted=True)
+        count = deleted.count()
+        for img in deleted:
+            if img.image_file:
+                try:
+                    img.image_file.delete(save=False)
+                except Exception:
+                    pass
+            if img.thumbnail:
+                try:
+                    img.thumbnail.delete(save=False)
+                except Exception:
+                    pass
+            img.delete()
+        self.message_user(request, f"Permanently deleted {count} image(s) and their files.")
+    permanently_delete_images.short_description = "Permanently delete selected images (irreversible)"
+
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ['content_preview', 'author', 'get_author_role', 'image', 'is_reply', 'created_at']
-    list_filter = ['created_at', 'author__profile__role']
+    list_display = ['content_preview', 'author', 'get_author_role', 'image', 'is_reply', 'is_flagged', 'flag_count', 'is_hidden', 'created_at']
+    list_filter = ['is_flagged', 'is_hidden', 'created_at', 'author__profile__role']
     search_fields = ['content', 'author__username', 'image__title']
-    readonly_fields = ['created_at', 'updated_at', 'is_reply']
-    
+    readonly_fields = ['created_at', 'updated_at', 'is_reply', 'flag_count', 'is_flagged']
+    actions = ['hide_comments', 'unhide_comments']
+
     def content_preview(self, obj):
         return obj.content[:50] + "..." if len(obj.content) > 50 else obj.content
     content_preview.short_description = 'Content'
-    
+
     def get_author_role(self, obj):
         return obj.author.profile.get_role_display() if hasattr(obj.author, 'profile') else 'No Profile'
     get_author_role.short_description = 'Author Role'
+
+    def hide_comments(self, request, queryset):
+        count = queryset.update(is_hidden=True)
+        self.message_user(request, f"Hidden {count} comment(s).")
+    hide_comments.short_description = "Hide selected comments"
+
+    def unhide_comments(self, request, queryset):
+        count = queryset.update(is_hidden=False)
+        self.message_user(request, f"Unhidden {count} comment(s).")
+    unhide_comments.short_description = "Unhide selected comments"
 
 
 @admin.register(Tag)

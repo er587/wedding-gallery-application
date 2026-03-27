@@ -21,12 +21,21 @@ class UserSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     replies = serializers.SerializerMethodField()
-    
+    is_hidden = serializers.BooleanField(read_only=True)
+
     class Meta:
         model = Comment
-        fields = ['id', 'content', 'author', 'parent', 'created_at', 'updated_at', 'replies']
-        read_only_fields = ['id', 'author', 'created_at', 'updated_at']
-    
+        fields = ['id', 'content', 'author', 'parent', 'created_at', 'updated_at', 'replies', 'is_hidden']
+        read_only_fields = ['id', 'author', 'created_at', 'updated_at', 'is_hidden']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Mask content of hidden (moderated) comments
+        if instance.is_hidden:
+            data['content'] = '[This comment has been hidden by moderators]'
+            data['author'] = None
+        return data
+
     def get_replies(self, obj):
         # Use .all() directly — hits prefetch cache, avoids extra EXISTS query
         replies = obj.replies.all()
