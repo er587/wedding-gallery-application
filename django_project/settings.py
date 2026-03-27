@@ -100,6 +100,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'rest_framework',
     'corsheaders',
     'easy_thumbnails',
@@ -337,6 +338,11 @@ THUMBNAIL_ALIASES = {
         },
     },
 }
+
+# Serve thumbnails as WebP for 25-35% smaller file sizes (Pillow 10+ supports natively)
+THUMBNAIL_DEFAULT_OPTIONS = {'subsampling': 2}
+THUMBNAIL_PRESERVE_EXTENSIONS = False
+THUMBNAIL_EXTENSION = 'webp'
 
 THUMBNAIL_PROCESSORS = [
     'easy_thumbnails.processors.colorspace',

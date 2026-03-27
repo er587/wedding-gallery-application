@@ -86,7 +86,7 @@ class Image(models.Model):
     tags = models.ManyToManyField('Tag', blank=True, related_name='images')
     uploaded_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['-uploaded_at']
         indexes = [
@@ -243,13 +243,13 @@ class Image(models.Model):
             
             # Save to BytesIO
             thumb_io = BytesIO()
-            pil_image.save(thumb_io, format='JPEG', quality=85, optimize=True)
+            pil_image.save(thumb_io, format='WEBP', quality=80)
             thumb_io.seek(0)
             
             # Generate thumbnail filename
             original_name = os.path.basename(self.image_file.name)
             name, ext = os.path.splitext(original_name)
-            thumbnail_name = f'{name}_thumb.jpg'
+            thumbnail_name = f'{name}_thumb.webp'
             
             # Save thumbnail
             self.thumbnail.save(
@@ -339,7 +339,7 @@ class Image(models.Model):
                 return
             
             # Save thumbnail to model
-            thumbnail_name = f"vimeo_{video_id}_thumb.jpg"
+            thumbnail_name = f"vimeo_{video_id}_thumb.webp"
             self.thumbnail.save(
                 thumbnail_name,
                 ContentFile(thumb_response.content),
@@ -391,7 +391,7 @@ class Image(models.Model):
                 # Generate thumbnail filename
                 original_name = os.path.basename(self.image_file.name)
                 name, ext = os.path.splitext(original_name)
-                thumbnail_name = f'{name}_thumb.jpg'
+                thumbnail_name = f'{name}_thumb.webp'
                 
                 # Save thumbnail
                 self.thumbnail.save(

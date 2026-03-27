@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.db.models import Q, Prefetch
+from django.db.models import Count, Exists, OuterRef, Q, Prefetch
 from django.core.cache import cache
 from django.http import JsonResponse, HttpResponse, Http404
 from django.conf import settings
@@ -19,7 +19,14 @@ import os
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
+
 from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken
+
+
+def _is_postgres():
+    """Check if the default database is PostgreSQL."""
+    engine = settings.DATABASES.get('default', {}).get('ENGINE', '')
+    return 'postgresql' in engine or 'postgis' in engine
 from .serializers import ImageSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer
 from .storage import ReplitAppStorage, FileAccessControl
 
@@ -69,28 +76,53 @@ class ImageListCreateView(generics.ListCreateAPIView):
         return response
     
     def get_queryset(self):
-        # Optimize queries with select_related and prefetch_related to reduce database hits
+        # Optimize queries with select_related, prefetch_related, and annotations
         queryset = Image.objects.select_related('uploader', 'uploader__profile').prefetch_related(
             'tags',
-            'likes',
             Prefetch(
                 'comments',
                 queryset=Comment.objects.select_related('author', 'author__profile').prefetch_related(
                     Prefetch('replies', queryset=Comment.objects.select_related('author', 'author__profile'))
                 )
             ),
+        ).annotate(
+            comment_count_val=Count('comments', distinct=True),
+            like_count_val=Count('likes', distinct=True),
         )
+
+        # Annotate whether the current user has liked each image
+        request = self.request
+        if request.user.is_authenticated:
+            queryset = queryset.annotate(
+                user_has_liked_val=Exists(
+                    Like.objects.filter(user=request.user, image=OuterRef('pk'))
+                )
+            )
         
         search = self.request.query_params.get('search', None)
         tags = self.request.query_params.get('tags', None)
         media_type = self.request.query_params.get('media_type', None)
         
         if search:
-            queryset = queryset.filter(
-                Q(title__icontains=search) | 
-                Q(description__icontains=search) |
-                Q(uploader__username__icontains=search)
-            )
+            if _is_postgres():
+                # PostgreSQL full-text search with ranking
+                from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+                vector = SearchVector('title', weight='A') + SearchVector('description', weight='B')
+                query = SearchQuery(search, search_type='websearch')
+                queryset = queryset.annotate(
+                    search=vector,
+                    rank=SearchRank(vector, query),
+                ).filter(
+                    Q(search=query) |
+                    Q(uploader__username__icontains=search)
+                ).order_by('-rank', '-uploaded_at')
+            else:
+                # SQLite fallback: simple substring matching
+                queryset = queryset.filter(
+                    Q(title__icontains=search) |
+                    Q(description__icontains=search) |
+                    Q(uploader__username__icontains=search)
+                )
         
         if tags:
             tag_list = [tag.strip() for tag in str(tags).split(',') if tag.strip()]
@@ -144,19 +176,29 @@ class ImageListCreateView(generics.ListCreateAPIView):
 
 
 class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
-    # Optimize queries with select_related and prefetch_related
-    queryset = Image.objects.select_related('uploader', 'uploader__profile').prefetch_related(
-        'tags',
-        'likes',
-        Prefetch(
-            'comments',
-            queryset=Comment.objects.select_related('author', 'author__profile').prefetch_related(
-                Prefetch('replies', queryset=Comment.objects.select_related('author', 'author__profile'))
-            )
-        ),
-    )
     serializer_class = ImageSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = Image.objects.select_related('uploader', 'uploader__profile').prefetch_related(
+            'tags',
+            Prefetch(
+                'comments',
+                queryset=Comment.objects.select_related('author', 'author__profile').prefetch_related(
+                    Prefetch('replies', queryset=Comment.objects.select_related('author', 'author__profile'))
+                )
+            ),
+        ).annotate(
+            comment_count_val=Count('comments', distinct=True),
+            like_count_val=Count('likes', distinct=True),
+        )
+        if self.request.user.is_authenticated:
+            queryset = queryset.annotate(
+                user_has_liked_val=Exists(
+                    Like.objects.filter(user=self.request.user, image=OuterRef('pk'))
+                )
+            )
+        return queryset
     
     def destroy(self, request, *args, **kwargs):
         user = request.user

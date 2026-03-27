@@ -67,12 +67,17 @@ class ImageSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uploader', 'uploaded_at', 'updated_at']
     
     def get_comment_count(self, obj):
-        return obj.comments.count()
-    
+        # Use annotated value if available, otherwise fall back to query
+        return getattr(obj, 'comment_count_val', obj.comments.count())
+
     def get_like_count(self, obj):
-        return obj.likes.count()
-    
+        return getattr(obj, 'like_count_val', obj.likes.count())
+
     def get_user_has_liked(self, obj):
+        # Use annotated value if available
+        val = getattr(obj, 'user_has_liked_val', None)
+        if val is not None:
+            return val
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return obj.likes.filter(user=request.user).exists()
