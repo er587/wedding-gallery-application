@@ -30,6 +30,12 @@ class ImagePagination(PageNumberPagination):
     max_page_size = 50
 
 
+class CommentPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
 class TagListView(generics.ListAPIView):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
@@ -233,6 +239,7 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
 class CommentListCreateView(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = CommentPagination
     
     def get_queryset(self):
         image_id = self.kwargs.get('image_id')

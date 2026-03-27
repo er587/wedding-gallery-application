@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { apiService } from '../services/api'
 import { useToast } from './Toast'
 
-export default function CommentSystem({ imageId, comments, user, loading, onCommentAdded }) {
+export default function CommentSystem({ imageId, comments, commentsMeta, user, loading, onCommentAdded, onLoadMore }) {
   const toast = useToast()
   const [newComment, setNewComment] = useState('')
   const [replyTo, setReplyTo] = useState(null)
@@ -178,6 +178,18 @@ export default function CommentSystem({ imageId, comments, user, loading, onComm
           </div>
         )}
       </div>
+
+      {/* Load More */}
+      {commentsMeta?.next && (
+        <div className="text-center pt-2">
+          <button
+            onClick={onLoadMore}
+            className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+          >
+            Load more comments ({comments.length} of {commentsMeta.count})
+          </button>
+        </div>
+      )}
     </div>
   )
 }

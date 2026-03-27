@@ -32,7 +32,7 @@ export const apiService = {
   getUserUploadCount: () => api.get('/api/auth/upload-count/'),
 
   // Comments
-  getComments: (imageId) => api.get(`/api/images/${imageId}/comments/`),
+  getComments: (imageId, page = 1) => api.get(`/api/images/${imageId}/comments/?page=${page}`),
   createComment: (imageId, data) => api.post(`/api/images/${imageId}/comments/`, data),
   createReply: (commentId, data) => api.post(`/api/comments/${commentId}/reply/`, data),
 

@@ -8,6 +8,7 @@ import { useToast } from './Toast'
 export default function ImageViewer({ image, user, onClose, onImageDeleted, onTitleUpdated, images = [], currentIndex = 0, onNavigate }) {
   const toast = useToast()
   const [comments, setComments] = useState([])
+  const [commentsMeta, setCommentsMeta] = useState({ count: 0, next: null })
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
   const [imageData, setImageData] = useState(image) // Local copy for like updates
@@ -84,15 +85,42 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
       if (!hasInitialLoad.current && !silent) {
         setLoading(true)
       }
-      
+
       const response = await apiService.getComments(imageData.id)
-      setComments(response.data)
+      // Handle paginated response: {results, count, next, previous}
+      const data = response.data
+      if (data.results) {
+        setComments(data.results)
+        setCommentsMeta({ count: data.count, next: data.next })
+      } else {
+        // Fallback for non-paginated response
+        setComments(Array.isArray(data) ? data : [])
+        setCommentsMeta({ count: 0, next: null })
+      }
       hasInitialLoad.current = true
     } catch (error) {
       console.error('Error fetching comments:', error)
       setComments([])
+      setCommentsMeta({ count: 0, next: null })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadMoreComments = async () => {
+    if (!commentsMeta.next) return
+    try {
+      // Extract page number from the next URL
+      const url = new URL(commentsMeta.next, window.location.origin)
+      const page = url.searchParams.get('page') || 2
+      const response = await apiService.getComments(imageData.id, page)
+      const data = response.data
+      if (data.results) {
+        setComments(prev => [...prev, ...data.results])
+        setCommentsMeta({ count: data.count, next: data.next })
+      }
+    } catch (error) {
+      console.error('Error loading more comments:', error)
     }
   }
 
@@ -424,9 +452,11 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                 <CommentSystem
                   imageId={image.id}
                   comments={comments}
+                  commentsMeta={commentsMeta}
                   user={user}
                   loading={loading}
                   onCommentAdded={fetchComments}
+                  onLoadMore={loadMoreComments}
                 />
               </div>
             </div>
