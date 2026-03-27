@@ -206,3 +206,7 @@ cython_debug/
 /result-*
 
 .replit
+
+# Local Replit artifacts
+.config/
+.local/

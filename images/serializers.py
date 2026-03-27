@@ -28,8 +28,10 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'author', 'created_at', 'updated_at']
     
     def get_replies(self, obj):
-        if obj.replies.exists():
-            return CommentSerializer(obj.replies.all(), many=True).data
+        # Use .all() directly — hits prefetch cache, avoids extra EXISTS query
+        replies = obj.replies.all()
+        if replies:
+            return CommentSerializer(replies, many=True).data
         return []
 
 

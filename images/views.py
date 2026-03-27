@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.core.cache import cache
 from django.http import JsonResponse, HttpResponse, Http404
 from django.conf import settings
@@ -64,10 +64,15 @@ class ImageListCreateView(generics.ListCreateAPIView):
     
     def get_queryset(self):
         # Optimize queries with select_related and prefetch_related to reduce database hits
-        queryset = Image.objects.select_related('uploader').prefetch_related(
-            'tags', 
-            'comments',
-            'likes'
+        queryset = Image.objects.select_related('uploader', 'uploader__profile').prefetch_related(
+            'tags',
+            'likes',
+            Prefetch(
+                'comments',
+                queryset=Comment.objects.select_related('author', 'author__profile').prefetch_related(
+                    Prefetch('replies', queryset=Comment.objects.select_related('author', 'author__profile'))
+                )
+            ),
         )
         
         search = self.request.query_params.get('search', None)
@@ -134,10 +139,15 @@ class ImageListCreateView(generics.ListCreateAPIView):
 
 class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
     # Optimize queries with select_related and prefetch_related
-    queryset = Image.objects.select_related('uploader').prefetch_related(
-        'tags', 
-        'comments', 
-        'likes'
+    queryset = Image.objects.select_related('uploader', 'uploader__profile').prefetch_related(
+        'tags',
+        'likes',
+        Prefetch(
+            'comments',
+            queryset=Comment.objects.select_related('author', 'author__profile').prefetch_related(
+                Prefetch('replies', queryset=Comment.objects.select_related('author', 'author__profile'))
+            )
+        ),
     )
     serializer_class = ImageSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -209,13 +219,13 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
             try:
                 instance.image_file.delete(save=False)
             except Exception as e:
-                print(f"Error deleting image file: {e}")
-                
+                logger.error("Error deleting image file: %s", e)
+
         if instance.thumbnail:
             try:
                 instance.thumbnail.delete(save=False)
             except Exception as e:
-                print(f"Error deleting thumbnail file: {e}")
+                logger.error("Error deleting thumbnail file: %s", e)
                 
         super().perform_destroy(instance)
 
@@ -226,7 +236,11 @@ class CommentListCreateView(generics.ListCreateAPIView):
     
     def get_queryset(self):
         image_id = self.kwargs.get('image_id')
-        return Comment.objects.filter(image_id=image_id, parent=None)
+        return Comment.objects.filter(
+            image_id=image_id, parent=None
+        ).select_related('author', 'author__profile').prefetch_related(
+            Prefetch('replies', queryset=Comment.objects.select_related('author', 'author__profile'))
+        )
     
     def perform_create(self, serializer):
         image_id = self.kwargs.get('image_id')

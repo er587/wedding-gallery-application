@@ -1,20 +1,24 @@
-from django.contrib.auth.models import User
-from django.contrib.auth.hashers import make_password, check_password
-from django.db import models
-from django.conf import settings
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from datetime import datetime, timedelta
-from django.utils import timezone
-from PIL import Image as PILImage
-from io import BytesIO
-from django.core.files.base import ContentFile
+import logging
 import os
+import re
 import secrets
 import string
 import threading
+from datetime import datetime, timedelta
+from io import BytesIO
+
 import requests
-import re
+from django.conf import settings
+from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
+from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.utils import timezone
+from PIL import Image as PILImage
+
+logger = logging.getLogger(__name__)
 
 
 class UserProfile(models.Model):
@@ -131,14 +135,14 @@ class Image(models.Model):
         try:
             self.fetch_vimeo_thumbnail()
         except Exception as e:
-            print(f"Error fetching Vimeo thumbnail for image {self.id}: {e}")
+            logger.error("Error fetching Vimeo thumbnail for image %s: %s", self.id, e)
     
     def _async_detect_and_store_face_coordinates(self):
         """Async wrapper for face detection - runs in background thread"""
         try:
             self.detect_and_store_face_coordinates()
         except Exception as e:
-            print(f"Error in async face detection for image {self.id}: {e}")
+            logger.error("Error in async face detection for image %s: %s", self.id, e)
     
     def detect_and_store_face_coordinates(self):
         """Detect faces and store normalized coordinates for smart cropping"""
@@ -177,7 +181,7 @@ class Image(models.Model):
             # OpenCV not available - skip face detection
             pass
         except Exception as e:
-            print(f"Error detecting face for image {self.id}: {e}")
+            logger.error("Error detecting face for image %s: %s", self.id, e)
     
     def create_thumbnail(self):
         """Create a smart thumbnail version of the image with face detection"""
@@ -259,10 +263,10 @@ class Image(models.Model):
             
         except ImportError:
             # OpenCV not available - fallback to basic thumbnail
-            print(f"OpenCV not available, using basic thumbnail for image {self.id}")
+            logger.warning("OpenCV not available, using basic thumbnail for image %s", self.id)
             return self._create_basic_thumbnail()
         except Exception as e:
-            print(f"Error creating smart thumbnail for image {self.id}: {e}")
+            logger.error("Error creating smart thumbnail for image %s: %s", self.id, e)
             # Try fallback to basic thumbnail
             return self._create_basic_thumbnail()
     
@@ -299,7 +303,7 @@ class Image(models.Model):
             # Extract video ID from Vimeo player URL
             video_id = self._extract_vimeo_id(self.vimeo_url)
             if not video_id:
-                print(f"Could not extract video ID from URL: {self.vimeo_url}")
+                logger.warning("Could not extract video ID from URL: %s", self.vimeo_url)
                 return
             
             # Get domain for Referer header (needed for domain-restricted videos)
@@ -318,20 +322,20 @@ class Image(models.Model):
             response = requests.get(oembed_url, headers=headers, timeout=10)
             
             if response.status_code != 200:
-                print(f"Vimeo oEmbed API returned status {response.status_code} for video {video_id}")
+                logger.warning("Vimeo oEmbed API returned status %s for video %s", response.status_code, video_id)
                 return
             
             data = response.json()
             thumbnail_url = data.get('thumbnail_url')
             
             if not thumbnail_url:
-                print(f"No thumbnail URL in Vimeo response for video {video_id}")
+                logger.warning("No thumbnail URL in Vimeo response for video %s", video_id)
                 return
             
             # Download the thumbnail image
             thumb_response = requests.get(thumbnail_url, timeout=10)
             if thumb_response.status_code != 200:
-                print(f"Failed to download thumbnail from {thumbnail_url}")
+                logger.warning("Failed to download thumbnail from %s", thumbnail_url)
                 return
             
             # Save thumbnail to model
@@ -344,12 +348,12 @@ class Image(models.Model):
             
             # Update the model
             super().save(update_fields=['thumbnail'])
-            print(f"Successfully fetched Vimeo thumbnail for video {video_id}")
+            logger.info("Successfully fetched Vimeo thumbnail for video %s", video_id)
             
         except requests.RequestException as e:
-            print(f"Error fetching Vimeo thumbnail: {e}")
+            logger.error("Error fetching Vimeo thumbnail: %s", e)
         except Exception as e:
-            print(f"Unexpected error fetching Vimeo thumbnail: {e}")
+            logger.error("Unexpected error fetching Vimeo thumbnail: %s", e)
     
     def _extract_vimeo_id(self, url):
         """Extract Vimeo video ID from player URL"""
@@ -400,7 +404,7 @@ class Image(models.Model):
                 super().save(update_fields=['thumbnail'])
                 
         except Exception as e:
-            print(f"Error creating basic thumbnail for image {self.id}: {e}")
+            logger.error("Error creating basic thumbnail for image %s: %s", self.id, e)
 
 
 class Comment(models.Model):
