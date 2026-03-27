@@ -85,7 +85,11 @@ class Image(models.Model):
     
     class Meta:
         ordering = ['-uploaded_at']
-    
+        indexes = [
+            models.Index(fields=['-uploaded_at']),
+            models.Index(fields=['uploader']),
+        ]
+
     @property
     def is_video(self):
         """Check if this entry is a video (has vimeo_url)"""
@@ -401,7 +405,7 @@ class Image(models.Model):
 
 class Comment(models.Model):
     image = models.ForeignKey(
-        Image, 
+        Image,
         on_delete=models.CASCADE,
         related_name='comments'
     )
@@ -420,9 +424,12 @@ class Comment(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['image', 'created_at']),
+        ]
         
     def __str__(self):
         return f'Comment by {self.author.username} on {self.image.title}'
@@ -530,41 +537,47 @@ class EmailVerificationToken(models.Model):
         on_delete=models.CASCADE,
         related_name='email_verification_tokens'
     )
+    token_prefix = models.CharField(max_length=16, db_index=True, default='')
     token_hash = models.CharField(max_length=128, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     is_used = models.BooleanField(default=False)
-    
+
     class Meta:
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return f"Email verification for {self.user.email}"
-    
+
     @classmethod
     def generate_token(cls, user):
         """Generate a unique verification token for a user and return raw token"""
         raw_token = secrets.token_urlsafe(48)
         token_hash = make_password(raw_token)
         expires_at = timezone.now() + timedelta(hours=24)
-        
+
         token_obj = cls.objects.create(
             user=user,
+            token_prefix=raw_token[:16],
             token_hash=token_hash,
             expires_at=expires_at
         )
-        
+
         token_obj.raw_token = raw_token
         return token_obj
-    
+
     @classmethod
     def verify_token(cls, raw_token):
-        """Verify a token and return the token object if valid"""
-        for token_obj in cls.objects.filter(is_used=False, expires_at__gt=timezone.now()):
+        """Verify a token and return the token object if valid.
+        Uses token_prefix for O(1) DB lookup instead of scanning all tokens."""
+        prefix = raw_token[:16]
+        for token_obj in cls.objects.filter(
+            token_prefix=prefix, is_used=False, expires_at__gt=timezone.now()
+        ):
             if check_password(raw_token, token_obj.token_hash):
                 return token_obj
         return None
-    
+
     def is_valid(self):
         """Check if token is still valid"""
         return not self.is_used and timezone.now() < self.expires_at
@@ -577,43 +590,49 @@ class PasswordResetToken(models.Model):
         on_delete=models.CASCADE,
         related_name='password_reset_tokens'
     )
+    token_prefix = models.CharField(max_length=16, db_index=True, default='')
     token_hash = models.CharField(max_length=128, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     is_used = models.BooleanField(default=False)
-    
+
     class Meta:
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return f"Password reset for {self.user.email}"
-    
+
     @classmethod
     def generate_token(cls, user):
         """Generate a unique password reset token for a user and return raw token"""
         raw_token = secrets.token_urlsafe(48)
         token_hash = make_password(raw_token)
         expires_at = timezone.now() + timedelta(hours=1)
-        
+
         cls.objects.filter(user=user, is_used=False).update(is_used=True)
-        
+
         token_obj = cls.objects.create(
             user=user,
+            token_prefix=raw_token[:16],
             token_hash=token_hash,
             expires_at=expires_at
         )
-        
+
         token_obj.raw_token = raw_token
         return token_obj
-    
+
     @classmethod
     def verify_token(cls, raw_token):
-        """Verify a token and return the token object if valid"""
-        for token_obj in cls.objects.filter(is_used=False, expires_at__gt=timezone.now()):
+        """Verify a token and return the token object if valid.
+        Uses token_prefix for O(1) DB lookup instead of scanning all tokens."""
+        prefix = raw_token[:16]
+        for token_obj in cls.objects.filter(
+            token_prefix=prefix, is_used=False, expires_at__gt=timezone.now()
+        ):
             if check_password(raw_token, token_obj.token_hash):
                 return token_obj
         return None
-    
+
     def is_valid(self):
         """Check if token is still valid"""
         return not self.is_used and timezone.now() < self.expires_at

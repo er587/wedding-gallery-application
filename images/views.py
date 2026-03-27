@@ -5,17 +5,20 @@ from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.cache import cache_page
-from django.utils.decorators import method_decorator
 from django.core.cache import cache
 from django.http import JsonResponse, HttpResponse, Http404
 from django.conf import settings
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django_ratelimit.decorators import ratelimit
 import json
+import logging
 import uuid
 import requests
 import os
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken
 from .serializers import ImageSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer
 from .storage import ReplitAppStorage, FileAccessControl
@@ -33,14 +36,31 @@ class TagListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
 
+IMAGE_CACHE_VERSION_KEY = 'image_list_version'
+
+
+def invalidate_image_cache():
+    """Increment cache version to invalidate image list caches without clearing the entire cache"""
+    try:
+        cache.incr(IMAGE_CACHE_VERSION_KEY)
+    except ValueError:
+        cache.set(IMAGE_CACHE_VERSION_KEY, 1)
+
+
 class ImageListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = ImagePagination
-    
-    # Cache the list view for 2 minutes to reduce database load
-    @method_decorator(cache_page(120))
+
     def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+        """Cache list responses using a versioned key so only image caches are invalidated"""
+        version = cache.get(IMAGE_CACHE_VERSION_KEY, 0)
+        cache_key = f'image_list_v{version}_{request.get_full_path()}'
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+        response = super().list(request, *args, **kwargs)
+        cache.set(cache_key, response.data, 120)
+        return response
     
     def get_queryset(self):
         # Optimize queries with select_related and prefetch_related to reduce database hits
@@ -109,7 +129,7 @@ class ImageListCreateView(generics.ListCreateAPIView):
         # Save the image with the authenticated user as uploader
         serializer.save(uploader=self.request.user)
         # Invalidate cache when new image is created
-        cache.clear()
+        invalidate_image_cache()
 
 
 class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -134,7 +154,7 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
             )
         
         # Invalidate cache when image is deleted
-        cache.clear()
+        invalidate_image_cache()
         return super().destroy(request, *args, **kwargs)
     
     def update(self, request, *args, **kwargs):
@@ -246,6 +266,7 @@ def get_csrf_token(request):
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
+@ratelimit(key='ip', rate='5/m', method='POST', block=True)
 def login_view(request):
     """Handle user login"""
     try:
@@ -312,6 +333,7 @@ def login_view(request):
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
+@ratelimit(key='ip', rate='3/m', method='POST', block=True)
 def register_view(request):
     """Handle user registration with invitation code"""
     try:
@@ -391,8 +413,7 @@ You can manage this user in the admin panel at {settings.FRONTEND_URL}/admin/
             )
         except Exception as email_error:
             # Log the error but don't fail the registration
-            import logging
-            logger = logging.getLogger(__name__)
+
             logger.error(f'Failed to send admin notification email: {str(email_error)}')
         
         # Automatically log in the user after registration
@@ -420,8 +441,7 @@ You can manage this user in the admin panel at {settings.FRONTEND_URL}/admin/
         
     except Exception as e:
         # Log the actual error for debugging but don't expose it
-        import logging
-        logger = logging.getLogger(__name__)
+
         logger.error(f'Registration failed for email {email}: {str(e)}')
         
         return Response({
@@ -597,8 +617,7 @@ def update_profile(request):
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
+
         logger.error(f'Profile update failed for user {request.user.id}: {str(e)}')
         
         return Response({
@@ -628,10 +647,12 @@ def change_password(request):
                 'error': 'Current password is incorrect'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Validate new password length (basic validation)
-        if len(new_password) < 8:
+        # Validate new password using Django's password validators
+        try:
+            validate_password(new_password, user=user)
+        except DjangoValidationError as e:
             return Response({
-                'error': 'New password must be at least 8 characters long'
+                'error': e.messages[0] if e.messages else 'Password does not meet requirements'
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Update password
@@ -643,8 +664,7 @@ def change_password(request):
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
+
         logger.error(f'Password change failed for user {request.user.id}: {str(e)}')
         
         return Response({
@@ -689,8 +709,7 @@ def get_upload_url(request):
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
+
         logger.error(f'Failed to get upload URL for user {request.user.pk}: {str(e)}')
         
         return Response({
@@ -751,8 +770,7 @@ def set_file_acl(request):
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
+
         logger.error(f'Failed to set ACL for user {request.user.pk}: {str(e)}')
         
         return Response({
@@ -817,8 +835,7 @@ def serve_protected_file(request, file_path):
     except Http404:
         raise
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
+
         logger.error(f'Failed to serve file {file_path}: {str(e)}')
         raise Http404("File not found")
 
@@ -845,8 +862,7 @@ def list_user_files(request):
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
+
         logger.error(f'Failed to list files for user {request.user.pk}: {str(e)}')
         
         return Response({
@@ -902,13 +918,13 @@ Wedding Gallery Team
                 'message': 'Verification email sent successfully'
             }, status=status.HTTP_200_OK)
         except Exception as email_error:
+            logger.error(f'Failed to send verification email: {email_error}')
             return Response({
-                'error': f'Failed to send email: {str(email_error)}'
+                'error': 'Failed to send email. Please try again later.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
+
         logger.error(f'Failed to send verification email: {str(e)}')
         return Response({
             'error': 'Failed to send verification email'
@@ -917,6 +933,7 @@ Wedding Gallery Team
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
+@ratelimit(key='ip', rate='5/m', method='POST', block=True)
 def verify_email(request):
     """Verify email using token"""
     try:
@@ -927,16 +944,10 @@ def verify_email(request):
                 'error': 'Token is required'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        try:
-            token_obj = EmailVerificationToken.objects.get(token=token)
-        except EmailVerificationToken.DoesNotExist:
+        token_obj = EmailVerificationToken.verify_token(token)
+        if not token_obj:
             return Response({
-                'error': 'Invalid verification token'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        if not token_obj.is_valid():
-            return Response({
-                'error': 'Verification token has expired or been used'
+                'error': 'Invalid or expired verification token'
             }, status=status.HTTP_400_BAD_REQUEST)
         
         token_obj.is_used = True
@@ -947,8 +958,7 @@ def verify_email(request):
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
+
         logger.error(f'Email verification failed: {str(e)}')
         return Response({
             'error': 'Email verification failed'
@@ -957,6 +967,7 @@ def verify_email(request):
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
+@ratelimit(key='ip', rate='3/m', method='POST', block=True)
 def request_password_reset(request):
     """Request password reset - sends email with reset link"""
     try:
@@ -1005,8 +1016,7 @@ Wedding Gallery Team
                 fail_silently=False,
             )
         except Exception as email_error:
-            import logging
-            logger = logging.getLogger(__name__)
+
             logger.error(f'Failed to send password reset email: {str(email_error)}')
         
         return Response({
@@ -1014,8 +1024,7 @@ Wedding Gallery Team
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
+
         logger.error(f'Password reset request failed: {str(e)}')
         return Response({
             'error': 'Failed to process password reset request'
@@ -1024,6 +1033,7 @@ Wedding Gallery Team
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
+@ratelimit(key='ip', rate='5/m', method='POST', block=True)
 def reset_password(request):
     """Reset password using token"""
     try:
@@ -1047,9 +1057,18 @@ def reset_password(request):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         user = token_obj.user
+
+        # Validate new password using Django's password validators
+        try:
+            validate_password(new_password, user=user)
+        except DjangoValidationError as e:
+            return Response({
+                'error': e.messages[0] if e.messages else 'Password does not meet requirements'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         user.set_password(new_password)
         user.save()
-        
+
         token_obj.is_used = True
         token_obj.save()
         
@@ -1058,8 +1077,7 @@ def reset_password(request):
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
+
         logger.error(f'Password reset failed: {str(e)}')
         return Response({
             'error': 'Password reset failed'
@@ -1086,4 +1104,13 @@ def serve_frontend(request, *args, **kwargs):
                 content_type="text/html"
             )
     except Exception as e:
-        return HttpResponse(f"Error serving frontend: {str(e)}", status=500)
+        logger.error(f'Error serving frontend: {e}')
+        return HttpResponse("Server error", status=500)
+
+
+def ratelimited_view(request, exception):
+    """Handler for rate-limited requests"""
+    return JsonResponse(
+        {'error': 'Too many requests. Please try again later.'},
+        status=429
+    )

@@ -163,16 +163,25 @@ else:
     }
 
 # Cache configuration for performance optimization
-# Using LocMemCache for simplicity (no table setup required)
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000,
+# Use Redis in production (multi-process safe), fall back to LocMemCache for development
+REDIS_URL = os.environ.get('REDIS_URL')
+if REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
         }
     }
-}
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000,
+            }
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -234,8 +243,17 @@ REST_FRAMEWORK = {
     ],
 }
 
+# Rate limiting settings
+RATELIMIT_VIEW = 'images.views.ratelimited_view'
+
 # CORS settings - SECURE DEFAULT FOR PRODUCTION
 CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS') if 'CORS_ALLOW_ALL_ORIGINS' in os.environ else DEBUG
+
+# Safety: never allow all origins in production even if misconfigured
+if not DEBUG and CORS_ALLOW_ALL_ORIGINS:
+    import warnings
+    warnings.warn("CORS_ALLOW_ALL_ORIGINS=True with DEBUG=False is insecure. Overriding to False.")
+    CORS_ALLOW_ALL_ORIGINS = False
 
 # Configure CORS allowed origins - restrict localhost to DEBUG environments
 development_cors_origins = [

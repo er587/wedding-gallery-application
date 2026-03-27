@@ -1,3 +1,5 @@
+import os
+
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from easy_thumbnails.files import get_thumbnailer
@@ -171,15 +173,38 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class ImageCreateSerializer(serializers.ModelSerializer):
+    ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff'}
+    MAX_FILE_SIZE = 26 * 1024 * 1024  # 26MB
+
     tag_names = serializers.ListField(child=serializers.CharField(), required=False, allow_empty=True)
     image_file = serializers.ImageField(required=False, allow_null=True)
     vimeo_url = serializers.URLField(required=False, allow_blank=True, allow_null=True)
     cover_image = serializers.ImageField(required=False, allow_null=True)
-    
+
     class Meta:
         model = Image
         fields = ['title', 'description', 'image_file', 'vimeo_url', 'cover_image', 'tag_names']
-    
+
+    def _validate_image(self, value):
+        """Validate image file extension and size"""
+        if value is None:
+            return value
+        ext = os.path.splitext(value.name)[1].lower().lstrip('.')
+        if ext not in self.ALLOWED_IMAGE_EXTENSIONS:
+            raise serializers.ValidationError(
+                f"File type '.{ext}' is not allowed. "
+                f"Allowed types: {', '.join(sorted(self.ALLOWED_IMAGE_EXTENSIONS))}"
+            )
+        if value.size > self.MAX_FILE_SIZE:
+            raise serializers.ValidationError("File size exceeds 26MB limit.")
+        return value
+
+    def validate_image_file(self, value):
+        return self._validate_image(value)
+
+    def validate_cover_image(self, value):
+        return self._validate_image(value)
+
     def validate(self, data):
         """Ensure either image_file or vimeo_url is provided"""
         if not data.get('image_file') and not data.get('vimeo_url'):
