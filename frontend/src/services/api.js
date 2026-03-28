@@ -77,12 +77,24 @@ export const apiService = {
 
 // Request interceptor for CSRF tokens and auth
 api.interceptors.request.use(async (config) => {
-  // Get CSRF token from cookie
-  const csrfToken = getCookie('csrftoken')
+  // For non-safe methods, ensure CSRF cookie exists before sending
+  const needsCsrf = ['post', 'put', 'patch', 'delete'].includes(config.method)
+  let csrfToken = getCookie('csrftoken')
+
+  if (needsCsrf && !csrfToken && !config.url?.includes('/api/auth/csrf/')) {
+    // CSRF cookie missing — fetch one before proceeding
+    try {
+      await axios.get('/api/auth/csrf/', { withCredentials: true })
+      csrfToken = getCookie('csrftoken')
+    } catch (e) {
+      console.warn('Failed to refresh CSRF token:', e)
+    }
+  }
+
   if (csrfToken) {
     config.headers['X-CSRFToken'] = csrfToken
   }
-  
+
   const token = localStorage.getItem('authToken')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
