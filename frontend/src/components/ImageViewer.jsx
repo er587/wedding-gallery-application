@@ -18,6 +18,10 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
   const [imageLoaded, setImageLoaded] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [slideshowProgress, setSlideshowProgress] = useState(0)
+  const [zoomLevel, setZoomLevel] = useState(1)
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
+  const isPanningRef = useRef(false)
+  const panStartRef = useRef({ x: 0, y: 0 })
   const intervalRef = useRef(null)
   const hasInitialLoad = useRef(false)
   const touchStartRef = useRef({ x: 0, y: 0 })
@@ -65,6 +69,8 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
   useEffect(() => {
     setImageData(image)
     setImageLoaded(false) // Reset for blur-up placeholder
+    setZoomLevel(1)
+    setPanOffset({ x: 0, y: 0 })
   }, [image])
 
   // Keyboard navigation
@@ -316,6 +322,25 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
     }
   }
 
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/image/${imageData.id}`
+    navigator.clipboard.writeText(url).then(() => {
+      toast.success('Link copied!')
+    }).catch(() => {
+      toast.error('Failed to copy link')
+    })
+  }
+
+  // Sync browser URL to show shareable link (without navigation)
+  useEffect(() => {
+    if (imageData?.id) {
+      window.history.replaceState(null, '', `/image/${imageData.id}`)
+    }
+    return () => {
+      window.history.replaceState(null, '', '/')
+    }
+  }, [imageData?.id])
+
   const handleLike = async () => {
     if (!user) return
 
@@ -419,7 +444,34 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               ></iframe>
             </div>
           ) : (
-            <div className="relative max-w-full max-h-full w-full" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+            <div
+              className="relative max-w-full max-h-full w-full overflow-hidden"
+              style={{ maxHeight: 'calc(100vh - 200px)' }}
+              onDoubleClick={() => {
+                if (zoomLevel === 1) {
+                  setZoomLevel(2)
+                } else {
+                  setZoomLevel(1)
+                  setPanOffset({ x: 0, y: 0 })
+                }
+              }}
+              onMouseDown={(e) => {
+                if (zoomLevel > 1) {
+                  isPanningRef.current = true
+                  panStartRef.current = { x: e.clientX - panOffset.x, y: e.clientY - panOffset.y }
+                }
+              }}
+              onMouseMove={(e) => {
+                if (isPanningRef.current && zoomLevel > 1) {
+                  setPanOffset({
+                    x: e.clientX - panStartRef.current.x,
+                    y: e.clientY - panStartRef.current.y,
+                  })
+                }
+              }}
+              onMouseUp={() => { isPanningRef.current = false }}
+              onMouseLeave={() => { isPanningRef.current = false }}
+            >
               {/* Blurred thumbnail placeholder */}
               {!imageLoaded && imageData.thumbnail_square_640 && (
                 <img
@@ -429,7 +481,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                   aria-hidden="true"
                 />
               )}
-              {/* Full resolution image */}
+              {/* Full resolution image with zoom + pan */}
               <img
                 src={imageData.image_file}
                 srcSet={`
@@ -440,12 +492,18 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                 `.trim()}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1440px"
                 alt={imageData.title}
-                className={`max-w-full max-h-full object-contain w-full transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-                style={{ maxHeight: 'calc(100vh - 200px)' }}
+                className={`max-w-full max-h-full object-contain w-full transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'} ${zoomLevel === 1 ? 'cursor-zoom-in' : 'cursor-grab'}`}
+                style={{
+                  maxHeight: 'calc(100vh - 200px)',
+                  transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
+                  transformOrigin: 'center center',
+                  transition: isPanningRef.current ? 'none' : 'transform 0.3s ease',
+                }}
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
                 onLoad={() => setImageLoaded(true)}
+                draggable={false}
               />
             </div>
           )}
@@ -510,6 +568,15 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </button>
+              <button
+                onClick={handleCopyLink}
+                className="text-white hover:text-blue-400 text-sm px-2 py-1 rounded transition-colors flex items-center gap-1"
+                title="Copy link"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
               </button>
               {canDeleteImage() && (

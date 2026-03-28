@@ -2,6 +2,20 @@ import { useState } from 'react'
 import { authService } from '../services/auth'
 import { useToast } from './Toast'
 
+function getPasswordStrength(password) {
+  if (!password) return { score: 0, label: '', color: '' }
+  const hasLower = /[a-z]/.test(password)
+  const hasUpper = /[A-Z]/.test(password)
+  const hasNumber = /[0-9]/.test(password)
+  const hasSpecial = /[^a-zA-Z0-9]/.test(password)
+  const checks = [hasLower, hasUpper, hasNumber, hasSpecial].filter(Boolean).length
+
+  if (password.length < 8) return { score: 1, label: 'Weak', color: 'bg-red-500' }
+  if (password.length >= 10 && checks >= 3) return { score: 4, label: 'Strong', color: 'bg-green-500' }
+  if (password.length >= 8 && checks >= 2) return { score: 3, label: 'Good', color: 'bg-yellow-500' }
+  return { score: 2, label: 'Fair', color: 'bg-orange-500' }
+}
+
 export default function Auth({ onLogin }) {
   const toast = useToast()
   const [showSignupModal, setShowSignupModal] = useState(false)
@@ -223,7 +237,24 @@ export default function Auth({ onLogin }) {
                   )}
                 </button>
               </div>
-              
+
+              {/* Password strength meter */}
+              {signupData.password && (() => {
+                const strength = getPasswordStrength(signupData.password)
+                return (
+                  <div className="space-y-1">
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4].map(i => (
+                        <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= strength.score ? strength.color : 'bg-gray-200'}`} />
+                      ))}
+                    </div>
+                    <p className={`text-xs ${strength.score <= 1 ? 'text-red-600' : strength.score <= 2 ? 'text-orange-600' : strength.score <= 3 ? 'text-yellow-600' : 'text-green-600'}`}>
+                      {strength.label}
+                    </p>
+                  </div>
+                )
+              })()}
+
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}

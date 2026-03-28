@@ -26,6 +26,12 @@ export const apiService = {
   createImage: (formData) => api.post('/api/images/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
+  createImageWithProgress: (formData, onProgress) => api.post('/api/images/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (e) => {
+      if (e.total) onProgress(Math.round((e.loaded * 100) / e.total))
+    },
+  }),
   updateImage: (id, data) => api.patch(`/api/images/${id}/`, data),
   deleteImage: (id) => api.delete(`/api/images/${id}/`),
   bulkDownload: (imageIds) => api.post('/api/images/download/', { image_ids: imageIds }, { responseType: 'blob' }),

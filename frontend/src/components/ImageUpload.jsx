@@ -16,6 +16,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
   const [preview, setPreview] = useState(null)
   const [coverPreview, setCoverPreview] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadType, setUploadType] = useState('image') // 'image' or 'video'
   
   // Bulk upload states
@@ -115,6 +116,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
 
   const handleSingleUpload = async () => {
     setUploading(true)
+    setUploadProgress(0)
     try {
       const formDataToSend = new FormData()
       formDataToSend.append('title', formData.title)
@@ -138,7 +140,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
         })
       }
       
-      await apiService.createImage(formDataToSend)
+      await apiService.createImageWithProgress(formDataToSend, setUploadProgress)
       onImageUploaded()
     } catch (error) {
       console.error('Upload error:', error)
@@ -176,10 +178,14 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
           })
         }
         
-        await apiService.createImage(formDataToSend)
-        
+        await apiService.createImageWithProgress(formDataToSend, (pct) => {
+          setSelectedFiles(prev =>
+            prev.map(f => f.id === fileObj.id ? { ...f, progress: pct } : f)
+          )
+        })
+
         // Update status to success
-        setSelectedFiles(prev => 
+        setSelectedFiles(prev =>
           prev.map(f => f.id === fileObj.id ? { ...f, status: 'success', progress: 100 } : f)
         )
       } catch (error) {
@@ -474,9 +480,9 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                       )}
                       {fileObj.status === 'uploading' && (
                         <>
-                          <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">Uploading...</span>
+                          <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">{fileObj.progress || 0}%</span>
                           <div className="flex-grow h-2 bg-gray-200 rounded">
-                            <div className="h-2 bg-blue-600 rounded animate-pulse" style={{ width: '50%' }}></div>
+                            <div className="h-2 bg-blue-600 rounded transition-all duration-300" style={{ width: `${fileObj.progress || 0}%` }}></div>
                           </div>
                         </>
                       )}
@@ -585,7 +591,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             {uploading 
-              ? (bulkMode ? `Uploading... (${selectedFiles.filter(f => f.status === 'success').length}/${selectedFiles.length})` : 'Uploading...')
+              ? (bulkMode ? `Uploading... (${selectedFiles.filter(f => f.status === 'success').length}/${selectedFiles.length})` : `Uploading... ${uploadProgress}%`)
               : (bulkMode ? `Upload ${selectedFiles.length} Images` : (uploadType === 'video' ? 'Add Video' : 'Upload Image'))
             }
           </button>

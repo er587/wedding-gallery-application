@@ -13,6 +13,8 @@ export default function ImageGallery({ user, refresh }) {
   const [selectedTags, setSelectedTags] = useState('')
   const [mediaType, setMediaType] = useState('') // '', 'video', or 'image'
   const [searchText, setSearchText] = useState('')
+  const [viewMode, setViewMode] = useState('all') // 'all' or 'favorites'
+  const [lastVisitTime] = useState(() => localStorage.getItem('lastGalleryVisit'))
   const [selectionMode, setSelectionMode] = useState(false)
   
   const [selectedImages, setSelectedImages] = useState(new Set())
@@ -66,8 +68,16 @@ export default function ImageGallery({ user, refresh }) {
       if (mediaType) params.media_type = mediaType
       if (searchText) params.search = searchText
       
-      const response = await apiService.getImages(params)
-      
+      // Fetch from favorites endpoint or main gallery
+      const response = viewMode === 'favorites' && user
+        ? await apiService.getLikedImages(currentPage)
+        : await apiService.getImages(params)
+
+      // Save last visit time for "NEW" badge (only on first load of all-images mode)
+      if (isInitialLoad && viewMode === 'all') {
+        localStorage.setItem('lastGalleryVisit', new Date().toISOString())
+      }
+
       // Check if this response is stale (newer request started)
       if (thisFetchId !== currentFetchIdRef.current) {
         return // Discard stale response
@@ -306,7 +316,7 @@ export default function ImageGallery({ user, refresh }) {
       setImages([])
       setLoading(false)
     }
-  }, [refresh, user, selectedTags, mediaType, searchText])
+  }, [refresh, user, selectedTags, mediaType, searchText, viewMode])
 
   // Track scroll position for back-to-top button
   useEffect(() => {
@@ -502,7 +512,24 @@ export default function ImageGallery({ user, refresh }) {
       {/* Search & Filter Toggle */}
       <div id="tour-filters" className="bg-white rounded-lg shadow-sm border p-4 mb-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 md:space-x-4 flex-wrap gap-y-2">
+            {user && (
+              <button
+                onClick={() => setViewMode(viewMode === 'all' ? 'favorites' : 'all')}
+                className={`px-3 py-2 rounded-md transition-colors text-sm ${
+                  viewMode === 'favorites'
+                    ? 'bg-red-500 text-white hover:bg-red-600'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <span className="flex items-center space-x-1">
+                  <svg className="w-4 h-4" fill={viewMode === 'favorites' ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  <span className="hidden md:inline">My Favorites</span>
+                </span>
+              </button>
+            )}
             <button
               onClick={() => setShowSearchBar(!showSearchBar)}
               className={`px-4 py-2 rounded-md transition-colors ${
@@ -597,7 +624,32 @@ export default function ImageGallery({ user, refresh }) {
       {/* Image Grid */}
       {images.length > 0 && (
         <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-6">
-          {images.map((image, index) => (
+          {images.map((image, index) => {
+            // Date group header — show when date changes between images (only in unfiltered all-images mode)
+            const showDateHeader = viewMode === 'all' && !selectedTags && !mediaType && !searchText && (() => {
+              if (index === 0) return true
+              const prevDate = new Date(images[index - 1].uploaded_at).toLocaleDateString()
+              const thisDate = new Date(image.uploaded_at).toLocaleDateString()
+              return prevDate !== thisDate
+            })()
+
+            const dateLabel = showDateHeader ? (() => {
+              const d = new Date(image.uploaded_at)
+              const now = new Date()
+              const diff = Math.floor((now - d) / 86400000)
+              if (diff === 0) return 'Today'
+              if (diff === 1) return 'Yesterday'
+              if (diff < 7) return 'This Week'
+              return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+            })() : null
+
+            return (<>
+            {dateLabel && (
+              <h3 key={`date-${image.id}`} className="break-inside-avoid mb-4 text-lg font-semibold text-gray-700 [column-span:_all]">
+                {dateLabel}
+              </h3>
+            )}
+            <div
             <div
               key={image.id}
               className={`break-inside-avoid mb-6 bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all relative ${
@@ -659,6 +711,13 @@ export default function ImageGallery({ user, refresh }) {
                   </div>
                 )}
                 
+                {/* NEW badge for recently uploaded images */}
+                {lastVisitTime && user && !selectionMode && new Date(image.uploaded_at) > new Date(lastVisitTime) && (
+                  <div className="absolute top-2 right-2 z-10">
+                    <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow">NEW</span>
+                  </div>
+                )}
+
                 {/* Selection checkbox - only show in selection mode */}
                 {selectionMode && (
                   <div className="absolute top-2 left-2">
@@ -770,7 +829,7 @@ export default function ImageGallery({ user, refresh }) {
               </div>
             </div>
           </div>
-        ))}
+        </>)})}
         </div>
       )}
 
@@ -785,9 +844,19 @@ export default function ImageGallery({ user, refresh }) {
 
       {images.length === 0 && !loading && (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">📸</div>
-          <h2 className="text-2xl font-semibold text-gray-700 mb-2">No memories shared yet</h2>
-          <p className="text-gray-400 mt-2">Be the first to share a memory!</p>
+          {viewMode === 'favorites' ? (
+            <>
+              <div className="text-6xl mb-4">❤️</div>
+              <h2 className="text-2xl font-semibold text-gray-700 mb-2">No favorites yet</h2>
+              <p className="text-gray-400 mt-2">Tap the heart on images you love!</p>
+            </>
+          ) : (
+            <>
+              <div className="text-6xl mb-4">📸</div>
+              <h2 className="text-2xl font-semibold text-gray-700 mb-2">No memories shared yet</h2>
+              <p className="text-gray-400 mt-2">Be the first to share a memory!</p>
+            </>
+          )}
         </div>
       )}
 

@@ -13,6 +13,7 @@ const WelcomeModal = lazy(() => import('./components/WelcomeModal'))
 const HelpModal = lazy(() => import('./components/HelpModal'))
 const ResetPassword = lazy(() => import('./components/ResetPassword'))
 const EmailVerification = lazy(() => import('./components/EmailVerification'))
+const ImagePage = lazy(() => import('./components/ImagePage'))
 import { authService } from './services/auth'
 import { apiService } from './services/api'
 import { startUserTour, hasCompletedTour } from './components/UserTour'
@@ -95,6 +96,7 @@ function App() {
     <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-gray-400">Loading...</div></div>}>
       <Routes>
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/image/:id" element={<ImagePage />} />
         <Route path="/verify-email/:token" element={<EmailVerification />} />
         <Route path="/" element={
           <div className="min-h-screen bg-gray-50">
