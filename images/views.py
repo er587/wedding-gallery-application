@@ -174,6 +174,11 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
+        # For write operations, use a simple queryset to avoid annotation conflicts
+        if self.request.method in ('PUT', 'PATCH', 'DELETE'):
+            return Image.objects.select_related('uploader', 'uploader__profile')
+
+        # For reads, use optimized queryset with annotations
         queryset = Image.objects.select_related('uploader', 'uploader__profile').prefetch_related(
             'tags',
             Prefetch(
