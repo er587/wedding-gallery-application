@@ -123,9 +123,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Only force-redirect if the user WAS logged in (session expired).
+      // Without this check, unauthenticated page loads cause an infinite reload loop.
+      const wasAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
       localStorage.removeItem('authToken')
       localStorage.removeItem('user')
-      window.location.href = '/'
+      localStorage.removeItem('isAuthenticated')
+      if (wasAuthenticated) {
+        window.location.href = '/'
+      }
     }
     return Promise.reject(error)
   }
