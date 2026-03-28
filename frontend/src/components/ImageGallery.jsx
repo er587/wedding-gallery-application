@@ -684,7 +684,6 @@ export default function ImageGallery({ user, refresh }) {
               </h3>
             )}
             <div
-            <div
               key={image.id}
               className={`break-inside-avoid mb-6 bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all relative ${
                 selectionMode && selectedImages.has(image.id) ? 'ring-4 ring-blue-500' : ''
