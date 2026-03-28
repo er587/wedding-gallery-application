@@ -3,7 +3,7 @@ import os
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from easy_thumbnails.files import get_thumbnailer
-from .models import Image, Comment, Tag, Like
+from .models import Image, Comment, Tag, Like, GuestBookEntry
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -221,3 +221,11 @@ class ImageCreateSerializer(serializers.ModelSerializer):
                     pass
         
         return image
+
+class GuestBookEntrySerializer(serializers.ModelSerializer):
+    author = UserSerializer(read_only=True)
+
+    class Meta:
+        model = GuestBookEntry
+        fields = ['id', 'author', 'message', 'created_at']
+        read_only_fields = ['id', 'author', 'created_at']

@@ -14,6 +14,8 @@ const HelpModal = lazy(() => import('./components/HelpModal'))
 const ResetPassword = lazy(() => import('./components/ResetPassword'))
 const EmailVerification = lazy(() => import('./components/EmailVerification'))
 const ImagePage = lazy(() => import('./components/ImagePage'))
+const CelebrationOverlay = lazy(() => import('./components/CelebrationOverlay'))
+const GuestBook = lazy(() => import('./components/GuestBook'))
 import { authService } from './services/auth'
 import { apiService } from './services/api'
 import { startUserTour, hasCompletedTour } from './components/UserTour'
@@ -24,6 +26,7 @@ function App() {
   const [showProfile, setShowProfile] = useState(false)
   const [showWelcome, setShowWelcome] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  const [showGuestBook, setShowGuestBook] = useState(false)
   const [refreshGallery, setRefreshGallery] = useState(0)
 
   useEffect(() => {
@@ -85,9 +88,30 @@ function App() {
     setShowWelcome(false)
   }
 
-  const handleImageUploaded = () => {
+  const [celebration, setCelebration] = useState(null)
+
+  const MILESTONES = {
+    1: { emoji: '🦄', message: 'Your First Memory!' },
+    10: { emoji: '🎉', message: '10 Memories!' },
+    25: { emoji: '💐', message: '25 Memories!' },
+    50: { emoji: '✨', message: '50 Memories!' },
+    100: { emoji: '🥂', message: '100 Memories!' },
+  }
+
+  const handleImageUploaded = async () => {
     setShowUpload(false)
     setRefreshGallery(prev => prev + 1)
+
+    // Check for upload milestones
+    try {
+      const response = await apiService.getUserUploadCount()
+      const count = response.data.count
+      if (MILESTONES[count]) {
+        setCelebration(MILESTONES[count])
+      }
+    } catch (e) {
+      // Silently skip milestone check on error
+    }
   }
 
   return (
@@ -123,6 +147,12 @@ function App() {
                         
                         {/* Desktop Navigation */}
                         <div className="hidden md:flex items-center space-x-4">
+                          <button
+                            onClick={() => setShowGuestBook(true)}
+                            className="text-gray-600 hover:text-gray-900 transition-colors text-sm"
+                          >
+                            Guest Book
+                          </button>
                           <button
                             onClick={() => setShowHelp(true)}
                             className="text-gray-600 hover:text-gray-900 transition-colors text-sm"
@@ -211,6 +241,21 @@ function App() {
               isOpen={showHelp}
               onClose={() => setShowHelp(false)}
             />
+
+            {showGuestBook && user && (
+              <GuestBook
+                user={user}
+                onClose={() => setShowGuestBook(false)}
+              />
+            )}
+
+            {celebration && (
+              <CelebrationOverlay
+                emoji={celebration.emoji}
+                message={celebration.message}
+                onClose={() => setCelebration(null)}
+              />
+            )}
           </div>
         } />
       </Routes>

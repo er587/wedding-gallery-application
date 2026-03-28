@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect
 from django.urls import path
 from django.contrib import messages
 import csv
-from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken
+from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken, GuestBookEntry, MemorableDate
 
 
 # Customize User admin to show groups and roles
@@ -310,3 +310,22 @@ class PasswordResetTokenAdmin(admin.ModelAdmin):
     def token_hash_preview(self, obj):
         return f"{obj.token_hash[:30]}..." if len(obj.token_hash) > 30 else obj.token_hash
     token_hash_preview.short_description = 'Token Hash'
+
+@admin.register(GuestBookEntry)
+class GuestBookEntryAdmin(admin.ModelAdmin):
+    list_display = ['author', 'message_preview', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['author__username', 'author__email', 'message']
+    readonly_fields = ['created_at']
+    ordering = ['-created_at']
+
+    def message_preview(self, obj):
+        return obj.message[:80] + '...' if len(obj.message) > 80 else obj.message
+    message_preview.short_description = 'Message'
+
+
+@admin.register(MemorableDate)
+class MemorableDateAdmin(admin.ModelAdmin):
+    list_display = ['date_type', 'date', 'label', 'created_by']
+    list_filter = ['date_type']
+    search_fields = ['label']

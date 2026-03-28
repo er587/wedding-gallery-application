@@ -15,6 +15,10 @@ urlpatterns = [
 
     # Tag endpoints
     path('api/tags/', views.TagListView.as_view(), name='tag-list'),
+
+    # Guest Book endpoints
+    path('api/guestbook/', views.GuestBookListCreateView.as_view(), name='guestbook-list-create'),
+    path('api/guestbook/<int:pk>/', views.delete_guestbook_entry, name='guestbook-delete'),
     
     # Like endpoints
     path('api/images/<int:image_id>/like/', views.toggle_like, name='toggle-like'),

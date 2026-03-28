@@ -38,6 +38,11 @@ export const apiService = {
   getImageCount: () => api.get('/api/images/count/'),
   getUserUploadCount: () => api.get('/api/auth/upload-count/'),
 
+  // Guest Book
+  getGuestBook: (page = 1) => api.get(`/api/guestbook/?page=${page}`),
+  createGuestBookEntry: (data) => api.post('/api/guestbook/', data),
+  deleteGuestBookEntry: (id) => api.delete(`/api/guestbook/${id}/`),
+
   // Comments
   getComments: (imageId, page = 1) => api.get(`/api/images/${imageId}/comments/?page=${page}`),
   createComment: (imageId, data) => api.post(`/api/images/${imageId}/comments/`, data),

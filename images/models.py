@@ -667,3 +667,44 @@ class PasswordResetToken(models.Model):
     def is_valid(self):
         """Check if token is still valid"""
         return not self.is_used and timezone.now() < self.expires_at
+
+class GuestBookEntry(models.Model):
+    """Digital guest book — text messages from wedding guests."""
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='guestbook_entries',
+    )
+    message = models.TextField(max_length=2000)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'Guest book entries'
+
+    def __str__(self):
+        return f"Guest book entry by {self.author.username}"
+
+
+class MemorableDate(models.Model):
+    """Admin-managed dates for anniversary email reminders."""
+    DATE_TYPES = [
+        ('wedding', 'Wedding Day'),
+        ('proposal', 'Proposal'),
+        ('honeymoon', 'Honeymoon'),
+        ('custom', 'Custom'),
+    ]
+    date_type = models.CharField(max_length=20, choices=DATE_TYPES)
+    date = models.DateField()
+    label = models.CharField(max_length=100, blank=True, help_text="Custom label (for 'custom' type)")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        ordering = ['date']
+
+    def __str__(self):
+        display = self.label if self.date_type == 'custom' and self.label else self.get_date_type_display()
+        return f"{display} — {self.date}"

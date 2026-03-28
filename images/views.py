@@ -20,14 +20,14 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
-from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken
+from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken, GuestBookEntry
 
 
 def _is_postgres():
     """Check if the default database is PostgreSQL."""
     engine = settings.DATABASES.get('default', {}).get('ENGINE', '')
     return 'postgresql' in engine or 'postgis' in engine
-from .serializers import ImageSerializer, ImageListSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer
+from .serializers import ImageSerializer, ImageListSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer, GuestBookEntrySerializer
 from .storage import ReplitAppStorage, FileAccessControl
 
 
@@ -376,6 +376,37 @@ def bulk_download(request):
     except Exception as e:
         logger.error("Bulk download failed: %s", e)
         return Response({'error': 'Download failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Guest Book Views
+class GuestBookPagination(PageNumberPagination):
+    page_size = 20
+
+
+class GuestBookListCreateView(generics.ListCreateAPIView):
+    serializer_class = GuestBookEntrySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = GuestBookPagination
+
+    def get_queryset(self):
+        return GuestBookEntry.objects.select_related('author', 'author__profile').all()
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+
+@api_view(['DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def delete_guestbook_entry(request, pk):
+    """Delete a guest book entry (author only)."""
+    try:
+        entry = GuestBookEntry.objects.get(pk=pk)
+        if entry.author != request.user:
+            return Response({'error': 'You can only delete your own entries'}, status=status.HTTP_403_FORBIDDEN)
+        entry.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except GuestBookEntry.DoesNotExist:
+        return Response({'error': 'Entry not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 # Authentication Views
