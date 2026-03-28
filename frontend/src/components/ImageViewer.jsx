@@ -298,7 +298,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
       // Update the local state
       setImageData(prev => ({ ...prev, tags: newTags }))
     } catch (error) {
-      console.error('Error updating image tags:', error)
+      console.error('Error updating image tags:', error?.response?.status, error?.response?.data || error)
       toast.error('Failed to update tags. Please try again.')
     }
   }

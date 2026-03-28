@@ -218,49 +218,47 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
         invalidate_image_cache()
         return super().destroy(request, *args, **kwargs)
     
+    def _check_update_permission(self, request):
+        """Check if user has permission to update this image."""
+        user = request.user
+        image = self.get_object()
+
+        if not hasattr(user, 'profile'):
+            from .models import UserProfile
+            UserProfile.objects.create(user=user)
+
+        # Allow tag updates for all full users
+        is_tag_only_update = 'tag_names' in request.data and len(request.data) == 1
+        if is_tag_only_update and user.profile.role == 'full':
+            return None  # Allowed
+
+        # For other updates, only allow image owner
+        if image.uploader != user:
+            return Response(
+                {"error": "You can only update images you uploaded yourself."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return None  # Allowed
+
     def update(self, request, *args, **kwargs):
-        user = request.user
-        image = self.get_object()
-        
-        # Check if user has profile
-        if not hasattr(user, 'profile'):
-            from .models import UserProfile
-            UserProfile.objects.create(user=user)
-        
-        # Allow tag updates for all full users
-        is_tag_only_update = 'tag_names' in request.data and len(request.data) == 1
-        if is_tag_only_update and user.profile.role == 'full':
+        denied = self._check_update_permission(request)
+        if denied:
+            return denied
+        try:
             return super().update(request, *args, **kwargs)
-        
-        # For other updates, only allow image owner
-        if image.uploader != user:
-            return Response(
-                {"error": "You can only update images you uploaded yourself."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        return super().update(request, *args, **kwargs)
-    
+        except Exception as e:
+            logger.error("Image update failed for image %s: %s", kwargs.get('pk'), e, exc_info=True)
+            return Response({"error": "Update failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     def partial_update(self, request, *args, **kwargs):
-        user = request.user
-        image = self.get_object()
-        
-        # Check if user has profile
-        if not hasattr(user, 'profile'):
-            from .models import UserProfile
-            UserProfile.objects.create(user=user)
-        
-        # Allow tag updates for all full users
-        is_tag_only_update = 'tag_names' in request.data and len(request.data) == 1
-        if is_tag_only_update and user.profile.role == 'full':
+        denied = self._check_update_permission(request)
+        if denied:
+            return denied
+        try:
             return super().partial_update(request, *args, **kwargs)
-        
-        # For other updates, only allow image owner
-        if image.uploader != user:
-            return Response(
-                {"error": "You can only update images you uploaded yourself."},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        except Exception as e:
+            logger.error("Image partial update failed for image %s: %s", kwargs.get('pk'), e, exc_info=True)
+            return Response({"error": "Update failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         return super().partial_update(request, *args, **kwargs)
     
