@@ -119,9 +119,13 @@ class ImageListCreateView(generics.ListCreateAPIView):
                 )
         
         if tags:
-            tag_list = [tag.strip() for tag in str(tags).split(',') if tag.strip()]
-            for tag in tag_list:
-                queryset = queryset.filter(tags__name__icontains=tag)
+            tag_list = [tag.strip().lower() for tag in str(tags).split(',') if tag.strip()]
+            # Filter images that have ALL selected tags (AND logic)
+            # Use subquery to avoid multiple JOINs that break Count annotations
+            for tag_name in tag_list:
+                queryset = queryset.filter(
+                    pk__in=Image.objects.filter(tags__name__iexact=tag_name).values('pk')
+                )
         
         if media_type:
             if media_type.lower() == 'video':
