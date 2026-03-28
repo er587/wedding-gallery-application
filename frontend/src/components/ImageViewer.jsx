@@ -16,8 +16,16 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
   const [imageData, setImageData] = useState(image) // Local copy for like updates
   const [showMobileComments, setShowMobileComments] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [slideshowProgress, setSlideshowProgress] = useState(0)
   const intervalRef = useRef(null)
   const hasInitialLoad = useRef(false)
+  const touchStartRef = useRef({ x: 0, y: 0 })
+  const touchDeltaRef = useRef({ x: 0, y: 0 })
+  const isSwipingRef = useRef(false)
+  const slideshowTimeoutRef = useRef(null)
+  const slideshowTimerRef = useRef(null)
+  const SLIDESHOW_DELAY = 5000
 
   // Navigation helpers
   const hasPrevious = currentIndex > 0
@@ -69,9 +77,11 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
 
       if (e.key === 'ArrowLeft') {
         e.preventDefault()
+        setIsPlaying(false)
         handlePrevious()
       } else if (e.key === 'ArrowRight') {
         e.preventDefault()
+        setIsPlaying(false)
         handleNext()
       } else if (e.key === 'Escape') {
         e.preventDefault()
@@ -82,6 +92,84 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [hasPrevious, hasNext, onClose])
+
+  // Swipe navigation for mobile
+  useEffect(() => {
+    const container = focusTrapRef.current
+    if (!container) return
+
+    const handleTouchStart = (e) => {
+      const touch = e.touches[0]
+      touchStartRef.current = { x: touch.clientX, y: touch.clientY }
+      touchDeltaRef.current = { x: 0, y: 0 }
+      isSwipingRef.current = false
+    }
+
+    const handleTouchMove = (e) => {
+      const touch = e.touches[0]
+      touchDeltaRef.current = {
+        x: touch.clientX - touchStartRef.current.x,
+        y: touch.clientY - touchStartRef.current.y,
+      }
+      if (Math.abs(touchDeltaRef.current.x) > Math.abs(touchDeltaRef.current.y) && Math.abs(touchDeltaRef.current.x) > 10) {
+        isSwipingRef.current = true
+        e.preventDefault()
+      }
+    }
+
+    const handleTouchEnd = () => {
+      if (isSwipingRef.current && Math.abs(touchDeltaRef.current.x) > 50) {
+        setIsPlaying(false)
+        if (touchDeltaRef.current.x < 0) {
+          handleNext()
+        } else {
+          handlePrevious()
+        }
+      }
+      isSwipingRef.current = false
+    }
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true })
+    container.addEventListener('touchmove', handleTouchMove, { passive: false })
+    container.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart)
+      container.removeEventListener('touchmove', handleTouchMove)
+      container.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [hasPrevious, hasNext])
+
+  // Slideshow auto-play
+  useEffect(() => {
+    if (isPlaying && hasNext) {
+      const startTime = Date.now()
+      slideshowTimerRef.current = setInterval(() => {
+        const elapsed = Date.now() - startTime
+        setSlideshowProgress(Math.min((elapsed / SLIDESHOW_DELAY) * 100, 100))
+      }, 50)
+      slideshowTimeoutRef.current = setTimeout(() => {
+        handleNext()
+        setSlideshowProgress(0)
+      }, SLIDESHOW_DELAY)
+    } else if (isPlaying && !hasNext) {
+      setIsPlaying(false)
+      setSlideshowProgress(0)
+    }
+
+    return () => {
+      clearTimeout(slideshowTimeoutRef.current)
+      clearInterval(slideshowTimerRef.current)
+    }
+  }, [isPlaying, currentIndex, hasNext])
+
+  // Cleanup slideshow on unmount
+  useEffect(() => {
+    return () => {
+      clearTimeout(slideshowTimeoutRef.current)
+      clearInterval(slideshowTimerRef.current)
+    }
+  }, [])
 
   const fetchComments = async (silent = false) => {
     try {
@@ -275,10 +363,40 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
         
         {/* Image Section - Full height on mobile, flexible on desktop */}
         <div className="flex-1 bg-black flex items-center justify-center min-h-0 order-1 md:order-1 relative">
+          {/* Slideshow progress bar */}
+          {isPlaying && (
+            <div className="absolute top-0 left-0 right-0 z-30 h-1 bg-white/20">
+              <div
+                className="h-full bg-white/80"
+                style={{ width: `${slideshowProgress}%`, transition: 'none' }}
+              />
+            </div>
+          )}
+
+          {/* Slideshow play/pause button */}
+          {images.length > 1 && !imageData.is_video && (
+            <button
+              onClick={() => setIsPlaying(prev => !prev)}
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-all"
+              title={isPlaying ? 'Pause slideshow' : 'Play slideshow'}
+            >
+              {isPlaying ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="4" width="4" height="16" />
+                  <rect x="14" y="4" width="4" height="16" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              )}
+            </button>
+          )}
+
           {/* Previous Arrow */}
           {hasPrevious && (
             <button
-              onClick={handlePrevious}
+              onClick={() => { setIsPlaying(false); handlePrevious() }}
               className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-white transition-all shadow-lg hover:scale-110"
               title="Previous image (←)"
             >
@@ -335,7 +453,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
           {/* Next Arrow */}
           {hasNext && (
             <button
-              onClick={handleNext}
+              onClick={() => { setIsPlaying(false); handleNext() }}
               className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-white transition-all shadow-lg hover:scale-110"
               title="Next image (→)"
             >

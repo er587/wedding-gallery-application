@@ -79,7 +79,11 @@ class Image(models.Model):
     face_y = models.FloatField(null=True, blank=True, help_text="Face center Y coordinate (0-1)")
     face_width = models.FloatField(null=True, blank=True, help_text="Face width (0-1)")
     face_height = models.FloatField(null=True, blank=True, help_text="Face height (0-1)")
-    
+
+    # Original image dimensions for masonry layout
+    image_width = models.PositiveIntegerField(null=True, blank=True, help_text="Original image width in pixels")
+    image_height = models.PositiveIntegerField(null=True, blank=True, help_text="Original image height in pixels")
+
     uploader = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE,
@@ -120,9 +124,18 @@ class Image(models.Model):
         return self.title
     
     def save(self, *args, **kwargs):
-        """Override save - background processing via daemon threads for instant execution."""
+        """Override save - extract dimensions and dispatch background processing."""
         is_new = self.pk is None
         super().save(*args, **kwargs)
+
+        # Extract image dimensions for masonry layout (fast — reads header only)
+        if is_new and self.image_file and self.image_width is None:
+            try:
+                with PILImage.open(self.image_file.path) as img:
+                    self.image_width, self.image_height = img.size
+                super(Image, self).save(update_fields=['image_width', 'image_height'])
+            except Exception as e:
+                logger.error("Error reading dimensions for image %s: %s", self.id, e)
 
         # Fetch Vimeo thumbnail if this is a video and no thumbnail exists
         if is_new and self.vimeo_url and not self.thumbnail:

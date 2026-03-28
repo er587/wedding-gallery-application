@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { apiService } from '../services/api'
 
-export default function SearchBar({ onTagFilter, currentTags, onMediaTypeFilter, currentMediaType }) {
+export default function SearchBar({ onTagFilter, currentTags, onMediaTypeFilter, currentMediaType, onSearchFilter, currentSearch }) {
   const [availableTags, setAvailableTags] = useState([])
   const [selectedTags, setSelectedTags] = useState([])
   const [mediaType, setMediaType] = useState('')
+  const [searchText, setSearchText] = useState(currentSearch || '')
+  const searchTimeoutRef = useRef(null)
 
   // Fetch available tags from the database
   useEffect(() => {
@@ -17,6 +19,13 @@ export default function SearchBar({ onTagFilter, currentTags, onMediaTypeFilter,
       }
     }
     fetchTags()
+  }, [])
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+    }
   }, [])
 
   // Parse current tags from parent component
@@ -34,13 +43,19 @@ export default function SearchBar({ onTagFilter, currentTags, onMediaTypeFilter,
     setMediaType(currentMediaType || '')
   }, [currentMediaType])
 
+  const handleSearchChange = (value) => {
+    setSearchText(value)
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+    searchTimeoutRef.current = setTimeout(() => {
+      if (onSearchFilter) onSearchFilter(value)
+    }, 300)
+  }
+
   const handleTagClick = (tagName) => {
     let newSelectedTags
     if (selectedTags.includes(tagName)) {
-      // Remove tag if already selected
       newSelectedTags = selectedTags.filter(t => t !== tagName)
     } else {
-      // Add tag if not selected
       newSelectedTags = [...selectedTags, tagName]
     }
     setSelectedTags(newSelectedTags)
@@ -58,16 +73,44 @@ export default function SearchBar({ onTagFilter, currentTags, onMediaTypeFilter,
   const handleClearFilters = () => {
     setSelectedTags([])
     setMediaType('')
+    setSearchText('')
     onTagFilter('')
-    if (onMediaTypeFilter) {
-      onMediaTypeFilter('')
-    }
+    if (onMediaTypeFilter) onMediaTypeFilter('')
+    if (onSearchFilter) onSearchFilter('')
   }
+
+  const hasActiveFilters = selectedTags.length > 0 || mediaType || searchText
 
   return (
     <div className="bg-white rounded-lg shadow-sm border p-6 transform transition-all duration-200 ease-in-out">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
-      
+
+      {/* Text Search */}
+      <div className="mb-4">
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={searchText}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Search by title, description, or uploader..."
+            className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+          {searchText && (
+            <button
+              onClick={() => handleSearchChange('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Media Type Filter */}
       <div className="mb-4">
         <h4 className="text-sm font-medium text-gray-700 mb-2">Media Type</h4>
@@ -139,13 +182,13 @@ export default function SearchBar({ onTagFilter, currentTags, onMediaTypeFilter,
           </button>
         ))}
       </div>
-      
+
       {availableTags.length === 0 && (
         <p className="text-sm text-gray-500">No tags available</p>
       )}
 
       {/* Clear filters button */}
-      {(selectedTags.length > 0 || mediaType) && (
+      {hasActiveFilters && (
         <div className="mt-4 text-center">
           <button
             onClick={handleClearFilters}

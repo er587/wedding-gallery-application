@@ -12,6 +12,7 @@ export default function ImageGallery({ user, refresh }) {
   const [loading, setLoading] = useState(true)
   const [selectedTags, setSelectedTags] = useState('')
   const [mediaType, setMediaType] = useState('') // '', 'video', or 'image'
+  const [searchText, setSearchText] = useState('')
   const [selectionMode, setSelectionMode] = useState(false)
   
   const [selectedImages, setSelectedImages] = useState(new Set())
@@ -56,13 +57,14 @@ export default function ImageGallery({ user, refresh }) {
       
       // When filtering by tags or media type, fetch ALL matching images
       // Otherwise use normal pagination for better performance
-      const isFiltering = selectedTags || mediaType
+      const isFiltering = selectedTags || mediaType || searchText
       const params = {
         page: currentPage,
         page_size: isFiltering ? 1000 : pagination.pageSize
       }
       if (selectedTags) params.tags = selectedTags
       if (mediaType) params.media_type = mediaType
+      if (searchText) params.search = searchText
       
       const response = await apiService.getImages(params)
       
@@ -304,7 +306,7 @@ export default function ImageGallery({ user, refresh }) {
       setImages([])
       setLoading(false)
     }
-  }, [refresh, user, selectedTags, mediaType])
+  }, [refresh, user, selectedTags, mediaType, searchText])
 
   // Track scroll position for back-to-top button
   useEffect(() => {
@@ -581,27 +583,32 @@ export default function ImageGallery({ user, refresh }) {
       {/* Tag Filter Bar */}
       {showSearchBar && (
         <div className="mb-6">
-          <SearchBar 
+          <SearchBar
             onTagFilter={handleTagFilter}
             currentTags={selectedTags}
             onMediaTypeFilter={handleMediaTypeFilter}
             currentMediaType={mediaType}
+            onSearchFilter={setSearchText}
+            currentSearch={searchText}
           />
         </div>
       )}
       
       {/* Image Grid */}
       {images.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-6">
           {images.map((image, index) => (
             <div
               key={image.id}
-              className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all relative ${
+              className={`break-inside-avoid mb-6 bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all relative ${
                 selectionMode && selectedImages.has(image.id) ? 'ring-4 ring-blue-500' : ''
               }`}
             >
-              <div 
-                className="aspect-square relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 cursor-pointer"
+              <div
+                className="relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 cursor-pointer"
+                style={{ aspectRatio: image.image_width && image.image_height
+                  ? `${image.image_width}/${image.image_height}`
+                  : image.is_video ? '16/9' : '1/1' }}
                 onClick={(e) => {
                   if (selectionMode) {
                     e.stopPropagation()
