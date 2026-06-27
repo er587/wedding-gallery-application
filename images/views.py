@@ -20,14 +20,14 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
-from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken, GuestBookEntry
+from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken, GuestBookEntry, SiteConfiguration
 
 
 def _is_postgres():
     """Check if the default database is PostgreSQL."""
     engine = settings.DATABASES.get('default', {}).get('ENGINE', '')
     return 'postgresql' in engine or 'postgis' in engine
-from .serializers import ImageSerializer, ImageListSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer, GuestBookEntrySerializer
+from .serializers import ImageSerializer, ImageListSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer, GuestBookEntrySerializer, SiteConfigurationSerializer
 from .storage import ReplitAppStorage, FileAccessControl
 
 
@@ -724,6 +724,15 @@ def get_image_count(request):
     """Get total count of all images in the database"""
     count = Image.objects.count()
     return Response({'count': count}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def site_config(request):
+    """Public wedding display content (couple, date, venue, masthead/footer copy)."""
+    config = SiteConfiguration.get_solo()
+    serializer = SiteConfigurationSerializer(config, context={'request': request})
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])

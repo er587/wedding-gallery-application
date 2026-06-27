@@ -708,3 +708,66 @@ class MemorableDate(models.Model):
     def __str__(self):
         display = self.label if self.date_type == 'custom' and self.label else self.get_date_type_display()
         return f"{display} — {self.date}"
+
+
+class SiteConfiguration(models.Model):
+    """Singleton holding all wedding-/deployment-specific display content.
+
+    Everything that personalizes the site (couple names, date, venue, the
+    masthead/footer copy, and the featured-photo caption) lives here in the
+    database rather than hardcoded in source — so the codebase can be shipped
+    as open source with no personal information baked in, and each couple fills
+    in their own details through the Django admin.
+    """
+    partner_one_name = models.CharField(max_length=80, blank=True, default='')
+    partner_two_name = models.CharField(max_length=80, blank=True, default='')
+    wedding_date = models.DateField(null=True, blank=True)
+    venue_name = models.CharField(max_length=160, blank=True, default='')
+    venue_url = models.URLField(blank=True, default='')
+    location = models.CharField(
+        max_length=160, blank=True, default='',
+        help_text='City, State/Region — shown next to the date in the masthead.',
+    )
+    intro_text = models.TextField(
+        blank=True, default='',
+        help_text='Italic subtitle under the names on the gallery masthead.',
+    )
+    featured_image = models.ForeignKey(
+        'Image', null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
+        help_text='Large hero photo at the top of the gallery. '
+                  'Leave empty to use the most-liked photo automatically.',
+    )
+    featured_title = models.CharField(
+        max_length=120, blank=True, default='',
+        help_text='Caption shown over the featured photo. Leave blank for no text overlay.',
+    )
+    featured_subtitle = models.CharField(max_length=160, blank=True, default='')
+    site_domain = models.CharField(
+        max_length=120, blank=True, default='',
+        help_text='Shown in the footer, e.g. "yourwedding.com".',
+    )
+    footer_message = models.CharField(
+        max_length=200, blank=True, default='With love, from our day to yours.',
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Site configuration'
+        verbose_name_plural = 'Site configuration'
+
+    def __str__(self):
+        return self.couple_display or 'Site configuration'
+
+    def save(self, *args, **kwargs):
+        # Enforce a single row — this is a site-wide singleton.
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @property
+    def couple_display(self):
+        return ' & '.join(n for n in [self.partner_one_name, self.partner_two_name] if n)
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

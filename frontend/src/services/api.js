@@ -56,6 +56,9 @@ export const apiService = {
   // Tags
   getTags: () => api.get('/api/tags/'),
 
+  // Site configuration (wedding display content set in the Django admin)
+  getSiteConfig: () => api.get('/api/site-config/'),
+
   // Authentication
   getCsrfToken: () => api.get('/api/auth/csrf/'),
   login: (credentials) => api.post('/api/auth/login/', credentials),

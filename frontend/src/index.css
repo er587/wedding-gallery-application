@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Wedding Gallery editorial redesign — base canvas */
+html,
+body {
+  margin: 0;
+  background: #f7f3ec;
+  color: #2c271f;
+  font-family: 'Jost', ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}

@@ -28,6 +28,7 @@ function App() {
   const [showHelp, setShowHelp] = useState(false)
   const [showGuestBook, setShowGuestBook] = useState(false)
   const [refreshGallery, setRefreshGallery] = useState(0)
+  const [siteConfig, setSiteConfig] = useState(null)
 
   useEffect(() => {
     // Initialize app: get CSRF token for future requests
@@ -40,9 +41,27 @@ function App() {
         // Continue anyway - the user can still try to login/use the app
       }
     }
-    
+
+    // Load wedding display content (couple, date, venue, masthead/footer copy)
+    const loadSiteConfig = async () => {
+      try {
+        const { data } = await apiService.getSiteConfig()
+        setSiteConfig(data)
+      } catch (error) {
+        console.error('Failed to load site configuration:', error)
+      }
+    }
+
     initializeApp()
+    loadSiteConfig()
   }, [])
+
+  // Reflect the couple's names in the browser tab once config loads.
+  useEffect(() => {
+    if (siteConfig?.couple_display) {
+      document.title = siteConfig.couple_display
+    }
+  }, [siteConfig])
 
   const handleLogin = (userData) => {
     setUser(userData)
@@ -123,97 +142,99 @@ function App() {
         <Route path="/image/:id" element={<ImagePage />} />
         <Route path="/verify-email/:token" element={<EmailVerification />} />
         <Route path="/" element={
-          <div className="min-h-screen bg-gray-50">
-            <header className="bg-white shadow-sm border-b">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center min-h-16 py-3 md:py-0 md:h-16">
-                  {/* Responsive Logo */}
-                  <h1 id="tour-welcome" className="font-bold text-gray-900">
-                    <span className="md:hidden text-xl">WG</span>
-                    <span className="hidden md:inline text-2xl">Wedding Gallery</span>
-                  </h1>
-                  
-                  <div className="flex items-center space-x-2 md:space-x-4">
-                    {user ? (
-                      <>
-                        {/* Mobile Menu */}
-                        <MobileMenu
-                          user={user}
-                          onUpload={() => setShowUpload(true)}
-                          onProfile={() => setShowProfile(true)}
-                          onHelp={() => setShowHelp(true)}
-                          onLogout={handleLogout}
-                        />
-                        
-                        {/* Desktop Navigation */}
-                        <div className="hidden md:flex items-center space-x-4">
-                          <button
-                            onClick={() => setShowGuestBook(true)}
-                            className="text-gray-600 hover:text-gray-900 transition-colors text-sm"
-                          >
-                            Guest Book
-                          </button>
-                          <button
-                            onClick={() => setShowHelp(true)}
-                            className="text-gray-600 hover:text-gray-900 transition-colors text-sm"
-                          >
-                            Help
-                          </button>
-                          <button
-                            onClick={() => setShowProfile(true)}
-                            className="flex items-center space-x-2 lg:space-x-3 text-gray-700 hover:text-gray-900 transition-colors p-2 rounded-lg hover:bg-gray-50"
-                          >
-                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                              {(() => {
-                                if (user?.first_name && user?.last_name) {
-                                  return `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase()
-                                } else if (user?.first_name) {
-                                  return user.first_name.charAt(0).toUpperCase()
-                                } else if (user?.username) {
-                                  return user.username.charAt(0).toUpperCase()
-                                } else {
-                                  return '?'
-                                }
-                              })()}
-                            </div>
-                            <div className="hidden lg:flex flex-col items-start">
-                              <span className="text-sm font-medium">
-                                {user?.first_name && user?.last_name 
-                                  ? `${user.first_name} ${user.last_name}`
-                                  : user?.first_name || user?.username || 'User'
-                                }
-                              </span>
-                            </div>
-                          </button>
-                          {user.can_upload_images && (
-                            <button
-                              id="tour-upload-button"
-                              onClick={() => setShowUpload(true)}
-                              className="bg-blue-600 text-white px-3 lg:px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
-                            >
-                              <span className="hidden lg:inline">Upload Image</span>
-                              <span className="lg:hidden">Upload</span>
-                            </button>
-                          )}
-                          <button
-                            onClick={handleLogout}
-                            className="text-gray-600 hover:text-gray-900 transition-colors text-sm"
-                          >
-                            Logout
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <Auth onLogin={handleLogin} />
-                    )}
-                  </div>
+          <div className="min-h-screen bg-cream text-ink font-sans flex flex-col">
+            {/* Utility bar */}
+            <header className="sticky top-0 z-20 bg-cream/[.92] supports-[backdrop-filter]:backdrop-blur-md supports-[backdrop-filter]:backdrop-saturate-150 border-b border-sand-line">
+              <div className="max-w-shell mx-auto flex items-center justify-between px-6 md:px-12 py-[18px]">
+                {/* Monogram */}
+                <div id="tour-welcome" className="text-[12px] font-medium leading-none uppercase tracking-[0.26em] text-sand-soft">
+                  {siteConfig?.couple_display || 'Our Wedding'}
                 </div>
+
+                {user ? (
+                  <>
+                    {/* Mobile Menu */}
+                    <div className="md:hidden">
+                      <MobileMenu
+                        user={user}
+                        onUpload={() => setShowUpload(true)}
+                        onProfile={() => setShowProfile(true)}
+                        onHelp={() => setShowHelp(true)}
+                        onLogout={handleLogout}
+                      />
+                    </div>
+
+                    {/* Desktop utility nav */}
+                    <div className="hidden md:flex items-center gap-[30px] text-[13px] text-sand-soft">
+                      <button
+                        onClick={() => setShowGuestBook(true)}
+                        className="hover:text-ink transition-colors"
+                      >
+                        Guest Book
+                      </button>
+                      <button
+                        onClick={() => setShowHelp(true)}
+                        className="hover:text-ink transition-colors"
+                      >
+                        Help
+                      </button>
+                      <button
+                        onClick={() => setShowProfile(true)}
+                        className="flex items-center gap-[9px] hover:text-ink transition-colors"
+                      >
+                        <span className="w-7 h-7 rounded-full bg-terracotta text-white flex items-center justify-center text-[11px] tracking-[0.04em]">
+                          {(() => {
+                            if (user?.first_name && user?.last_name) {
+                              return `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase()
+                            } else if (user?.first_name) {
+                              return user.first_name.charAt(0).toUpperCase()
+                            } else if (user?.username) {
+                              return user.username.charAt(0).toUpperCase()
+                            } else {
+                              return '?'
+                            }
+                          })()}
+                        </span>
+                        <span>
+                          {user?.first_name || user?.username || 'User'}
+                        </span>
+                      </button>
+                      <button
+                        onClick={handleLogout}
+                        className="text-sand-faint hover:text-ink transition-colors"
+                      >
+                        Log out
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <Auth onLogin={handleLogin} />
+                )}
               </div>
             </header>
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <ImageGallery user={user} refresh={refreshGallery} />
+            <main className="flex-1">
+              <ImageGallery
+                user={user}
+                refresh={refreshGallery}
+                onUpload={() => setShowUpload(true)}
+                config={siteConfig}
+              />
             </main>
+
+            {/* Footer */}
+            <footer className="border-t border-sand-line px-12 py-[46px] text-center">
+              {siteConfig?.site_domain && (
+                <div className="text-[12px] font-medium leading-none uppercase tracking-[0.3em] text-sand-faint">
+                  {siteConfig.site_domain}
+                </div>
+              )}
+              {siteConfig?.footer_message && (
+                <div className="font-serif italic text-[16px] text-sand-mute mt-3">
+                  {siteConfig.footer_message}
+                </div>
+              )}
+            </footer>
 
             {showUpload && user && user.can_upload_images && (
               <ImageUpload 
