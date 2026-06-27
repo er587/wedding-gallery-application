@@ -3,7 +3,7 @@ import os
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from easy_thumbnails.files import get_thumbnailer
-from .models import Image, Comment, Tag, Like, GuestBookEntry
+from .models import Image, Comment, Tag, Like, GuestBookEntry, SiteConfiguration
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -229,3 +229,27 @@ class GuestBookEntrySerializer(serializers.ModelSerializer):
         model = GuestBookEntry
         fields = ['id', 'author', 'message', 'created_at']
         read_only_fields = ['id', 'author', 'created_at']
+
+
+class FeaturedImageSerializer(ImageListSerializer):
+    """Minimal image payload for the masthead hero — reuses thumbnail logic."""
+    class Meta(ImageListSerializer.Meta):
+        fields = ['id', 'title', 'is_video', 'image_file',
+                  'thumbnail_square_640', 'thumbnail_width_1440',
+                  'image_width', 'image_height']
+        read_only_fields = fields
+
+
+class SiteConfigurationSerializer(serializers.ModelSerializer):
+    """Public, read-only view of the wedding's display content."""
+    couple_display = serializers.CharField(read_only=True)
+    featured_image = FeaturedImageSerializer(read_only=True)
+
+    class Meta:
+        model = SiteConfiguration
+        fields = [
+            'partner_one_name', 'partner_two_name', 'couple_display',
+            'wedding_date', 'venue_name', 'venue_url', 'location', 'intro_text',
+            'featured_image', 'featured_title', 'featured_subtitle',
+            'site_domain', 'footer_message',
+        ]

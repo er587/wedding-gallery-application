@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect
 from django.urls import path
 from django.contrib import messages
 import csv
-from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken, GuestBookEntry, MemorableDate
+from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken, GuestBookEntry, MemorableDate, SiteConfiguration
 
 
 # Customize User admin to show groups and roles
@@ -329,3 +329,39 @@ class MemorableDateAdmin(admin.ModelAdmin):
     list_display = ['date_type', 'date', 'label', 'created_by']
     list_filter = ['date_type']
     search_fields = ['label']
+
+
+@admin.register(SiteConfiguration)
+class SiteConfigurationAdmin(admin.ModelAdmin):
+    """Single editable row of site-wide wedding details."""
+    raw_id_fields = ['featured_image']
+    readonly_fields = ['updated_at']
+    fieldsets = (
+        ('The couple', {
+            'fields': ('partner_one_name', 'partner_two_name'),
+        }),
+        ('The day', {
+            'fields': ('wedding_date', 'venue_name', 'venue_url', 'location'),
+        }),
+        ('Gallery copy', {
+            'fields': ('intro_text', 'featured_image', 'featured_title', 'featured_subtitle'),
+        }),
+        ('Footer', {
+            'fields': ('site_domain', 'footer_message'),
+        }),
+        (None, {'fields': ('updated_at',)}),
+    )
+
+    def has_add_permission(self, request):
+        # Singleton — only allow creating the row if none exists yet.
+        return not SiteConfiguration.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        # Jump straight to the single config row instead of the list page.
+        from django.shortcuts import redirect
+        from django.urls import reverse
+        obj = SiteConfiguration.get_solo()
+        return redirect(reverse('admin:images_siteconfiguration_change', args=[obj.pk]))

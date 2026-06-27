@@ -40,14 +40,9 @@ DEBUG = env('DEBUG')
 # ALLOWED_HOSTS - Use environment variable for production domains
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
-# Add production domains
-production_domains = [
-    'reneeanderic.wedding',
-    'wedding-website-replit2779.replit.app',
-]
-for domain in production_domains:
-    if domain not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(domain)
+# Production domains come from the ALLOWED_HOSTS environment variable
+# (comma-separated). Kept out of source so the project ships free of any
+# deployment-specific hostnames.
 
 # Add Replit dev URL if running in Replit environment
 replit_dev_domain = os.environ.get('REPLIT_DEV_DOMAIN')
@@ -67,18 +62,11 @@ development_csrf_origins = [
     'http://127.0.0.1:8000',
 ] if DEBUG else []
 
-# Get production CSRF origins from environment
+# Production CSRF origins come from the CSRF_TRUSTED_ORIGINS environment
+# variable (comma-separated, full scheme+host). Not hardcoded so the repo
+# stays deployment-agnostic.
 csrf_origins_env = env.list('CSRF_TRUSTED_ORIGINS') if 'CSRF_TRUSTED_ORIGINS' in os.environ else []
 CSRF_TRUSTED_ORIGINS = development_csrf_origins + csrf_origins_env
-
-# Add production domains to CSRF trusted origins
-production_csrf_origins = [
-    'https://reneeanderic.wedding',
-    'https://wedding-website-replit2779.replit.app',
-]
-for origin in production_csrf_origins:
-    if origin not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append(origin)
 
 # Add Replit dev URLs to CSRF trusted origins
 if replit_dev_domain:
@@ -275,16 +263,11 @@ development_cors_origins = [
     'http://127.0.0.1:5000',
 ] if DEBUG else []
 
-# Get production CORS origins from environment
+# Production CORS origins come from the CORS_ALLOWED_ORIGINS environment
+# variable (comma-separated). Kept out of source for OSS portability.
 cors_origins_env = env.list('CORS_ALLOWED_ORIGINS') if 'CORS_ALLOWED_ORIGINS' in os.environ else []
 
-# Add production domains to CORS
-production_cors_origins = [
-    'https://reneeanderic.wedding',
-    'https://wedding-website-replit2779.replit.app',
-]
-
-CORS_ALLOWED_ORIGINS = development_cors_origins + cors_origins_env + production_cors_origins
+CORS_ALLOWED_ORIGINS = development_cors_origins + cors_origins_env
 
 CORS_ALLOW_CREDENTIALS = env.bool('CORS_ALLOW_CREDENTIALS') if 'CORS_ALLOW_CREDENTIALS' in os.environ else True
 
