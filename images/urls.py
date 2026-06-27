@@ -30,6 +30,13 @@ urlpatterns = [
 
     # Site configuration (public wedding display content)
     path('api/site-config/', views.site_config, name='site-config'),
+
+    # Image labeling agent API (agent key or staff session)
+    path('api/labeling/queue/', views.labeling_queue, name='labeling-queue'),
+    path('api/images/<int:image_id>/label-suggestions/', views.create_label_suggestion, name='label-suggestion-create'),
+    path('api/label-suggestions/', views.list_label_suggestions, name='label-suggestion-list'),
+    path('api/label-suggestions/<int:pk>/approve/', views.approve_label_suggestion, name='label-suggestion-approve'),
+    path('api/label-suggestions/<int:pk>/reject/', views.reject_label_suggestion, name='label-suggestion-reject'),
     
     # Authentication endpoints
     path('api/auth/csrf/', views.get_csrf_token, name='csrf-token'),

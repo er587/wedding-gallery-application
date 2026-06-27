@@ -5,8 +5,10 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import path
 from django.contrib import messages
+from django.contrib.auth.hashers import make_password
 import csv
-from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken, GuestBookEntry, MemorableDate, SiteConfiguration
+import secrets
+from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken, GuestBookEntry, MemorableDate, SiteConfiguration, ImageLabelSuggestion, AgentApiKey
 
 
 # Customize User admin to show groups and roles
@@ -365,3 +367,65 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
         from django.urls import reverse
         obj = SiteConfiguration.get_solo()
         return redirect(reverse('admin:images_siteconfiguration_change', args=[obj.pk]))
+
+
+@admin.register(ImageLabelSuggestion)
+class ImageLabelSuggestionAdmin(admin.ModelAdmin):
+    """Review queue for agent-suggested labels; approve to apply to the image."""
+    list_display = ['id', 'image', 'suggested_title', 'source', 'confidence', 'status', 'created_at', 'reviewed_by']
+    list_filter = ['status', 'source', 'created_at']
+    search_fields = ['suggested_title', 'image__title', 'rationale']
+    raw_id_fields = ['image']
+    readonly_fields = ['created_at', 'reviewed_by', 'reviewed_at']
+    actions = ['approve_selected', 'reject_selected']
+
+    def approve_selected(self, request, queryset):
+        count = 0
+        for suggestion in queryset.filter(status__in=['pending', 'approved']):
+            suggestion.apply(reviewer=request.user)
+            count += 1
+        self.message_user(request, f"Approved and applied {count} suggestion(s).")
+    approve_selected.short_description = "Approve & apply selected suggestions"
+
+    def reject_selected(self, request, queryset):
+        count = 0
+        for suggestion in queryset.filter(status='pending'):
+            suggestion.reject(reviewer=request.user)
+            count += 1
+        self.message_user(request, f"Rejected {count} suggestion(s).")
+    reject_selected.short_description = "Reject selected suggestions"
+
+
+@admin.register(AgentApiKey)
+class AgentApiKeyAdmin(admin.ModelAdmin):
+    """Issue/rotate scoped API keys for labeling agents. Raw key shown once."""
+    list_display = ['name', 'key_prefix', 'is_active', 'created_at', 'last_used_at', 'created_by']
+    list_filter = ['is_active', 'created_at']
+    search_fields = ['name', 'key_prefix']
+
+    def get_fields(self, request, obj=None):
+        if obj is None:
+            return ['name', 'is_active']
+        return ['name', 'is_active', 'key_prefix', 'created_at', 'last_used_at', 'created_by']
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj is None:
+            return []
+        return ['key_prefix', 'created_at', 'last_used_at', 'created_by']
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            # Mint a fresh key on creation; show the raw value exactly once.
+            prefix = secrets.token_hex(4)
+            raw = f"{prefix}.{secrets.token_urlsafe(32)}"
+            obj.key_prefix = prefix
+            obj.key_hash = make_password(raw)
+            obj.created_by = request.user
+            super().save_model(request, obj, form, change)
+            self.message_user(
+                request,
+                f"API key for “{obj.name}”: {raw}  —  copy it now; it will not be shown again.",
+                level=messages.WARNING,
+            )
+        else:
+            super().save_model(request, obj, form, change)

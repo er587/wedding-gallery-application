@@ -3,7 +3,7 @@ import os
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from easy_thumbnails.files import get_thumbnailer
-from .models import Image, Comment, Tag, Like, GuestBookEntry, SiteConfiguration
+from .models import Image, Comment, Tag, Like, GuestBookEntry, SiteConfiguration, ImageLabelSuggestion
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -253,3 +253,56 @@ class SiteConfigurationSerializer(serializers.ModelSerializer):
             'featured_image', 'featured_title', 'featured_subtitle',
             'site_domain', 'footer_message',
         ]
+
+
+class LabelingImageSerializer(ImageListSerializer):
+    """Image payload for the agent labeling queue — viewable URLs + current label."""
+    class Meta(ImageListSerializer.Meta):
+        fields = ['id', 'title', 'description', 'tags', 'is_video', 'image_file',
+                  'thumbnail_square_640', 'thumbnail_width_1440',
+                  'image_width', 'image_height', 'uploaded_at']
+        read_only_fields = fields
+
+
+class LabelSuggestionInputSerializer(serializers.Serializer):
+    """Validates a suggestion submitted by an agent for one image."""
+    suggested_title = serializers.CharField(max_length=255, required=False, allow_blank=True, default='')
+    suggested_description = serializers.CharField(required=False, allow_blank=True, default='', trim_whitespace=False)
+    suggested_tags = serializers.ListField(
+        child=serializers.CharField(max_length=50), required=False, default=list,
+        max_length=ImageLabelSuggestion.MAX_TAGS,
+    )
+    confidence = serializers.FloatField(required=False, allow_null=True, min_value=0, max_value=1)
+    rationale = serializers.CharField(required=False, allow_blank=True, default='')
+    source = serializers.CharField(max_length=64, required=False, allow_blank=True, default='')
+
+    def validate_suggested_tags(self, value):
+        cleaned, seen = [], set()
+        for raw in value:
+            name = raw.strip().lower()
+            if name and name not in seen:
+                seen.add(name)
+                cleaned.append(name)
+        return cleaned
+
+    def validate(self, attrs):
+        if not (attrs.get('suggested_title') or attrs.get('suggested_description') or attrs.get('suggested_tags')):
+            raise serializers.ValidationError(
+                'Provide at least one of suggested_title, suggested_description, or suggested_tags.'
+            )
+        return attrs
+
+
+class ImageLabelSuggestionSerializer(serializers.ModelSerializer):
+    """Read serializer for reviewing suggestions."""
+    image_title = serializers.CharField(source='image.title', read_only=True)
+    reviewed_by = serializers.CharField(source='reviewed_by.username', read_only=True, default=None)
+
+    class Meta:
+        model = ImageLabelSuggestion
+        fields = [
+            'id', 'image', 'image_title', 'suggested_title', 'suggested_description',
+            'suggested_tags', 'source', 'confidence', 'rationale', 'status',
+            'created_at', 'reviewed_by', 'reviewed_at',
+        ]
+        read_only_fields = fields
