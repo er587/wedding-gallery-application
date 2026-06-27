@@ -30,6 +30,7 @@ def _is_postgres():
 from .serializers import ImageSerializer, ImageListSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer, GuestBookEntrySerializer, SiteConfigurationSerializer, LabelingImageSerializer, LabelSuggestionInputSerializer, ImageLabelSuggestionSerializer
 from .storage import ReplitAppStorage, FileAccessControl
 from .permissions import IsLabelingAgentOrStaff
+from .labeling import generate_label_suggestion, LabelingNotConfigured
 
 
 class ImagePagination(PageNumberPagination):
@@ -878,6 +879,65 @@ def reject_label_suggestion(request, pk):
         return Response({'error': 'Suggestion not found'}, status=status.HTTP_404_NOT_FOUND)
     suggestion.reject(reviewer=request.user)
     return Response(ImageLabelSuggestionSerializer(suggestion).data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsLabelingAgentOrStaff])
+def suggest_labels(request, image_id):
+    """Server-side: ask Claude to caption one image now (synchronous).
+
+    Creates a pending suggestion the same as the agent path. Returns 503 if the
+    Anthropic API key / SDK isn't configured on the server.
+    """
+    try:
+        Image.objects.get(pk=image_id)
+    except Image.DoesNotExist:
+        return Response({'error': 'Image not found'}, status=status.HTTP_404_NOT_FOUND)
+    try:
+        suggestion = generate_label_suggestion(image_id, model=request.data.get('model'))
+    except LabelingNotConfigured as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    return Response(ImageLabelSuggestionSerializer(suggestion).data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes([IsLabelingAgentOrStaff])
+def generate_labels_bulk(request, *args, **kwargs):
+    """Server-side: enqueue Claude label generation for the labeling queue.
+
+    Uses the django-q task queue (a qcluster worker must be running). Returns the
+    number of images enqueued. Honors the same ?needs_label / ?limit filters as
+    the queue endpoint.
+    """
+    if not os.environ.get('ANTHROPIC_API_KEY'):
+        return Response({'error': 'ANTHROPIC_API_KEY is not set.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    try:
+        from django_q.tasks import async_task
+    except ImportError:
+        return Response({'error': 'django-q is not installed.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    try:
+        limit = min(int(request.GET.get('limit', 25)), 200)
+    except (TypeError, ValueError):
+        limit = 25
+    needs_label = request.GET.get('needs_label', 'true').lower() != 'false'
+    model = request.data.get('model') or None
+
+    already = ImageLabelSuggestion.objects.filter(
+        status__in=['pending', 'approved', 'applied']
+    ).values_list('image_id', flat=True)
+    qs = Image.objects.exclude(id__in=already).order_by('id')
+    if needs_label:
+        qs = qs.filter(Q(title='') | Q(title__isnull=True) | Q(title__iregex=_PLACEHOLDER_TITLE_RE))
+
+    image_ids = list(qs.values_list('id', flat=True)[:limit])
+    for image_id in image_ids:
+        async_task('images.labeling.generate_label_suggestion', image_id, model)
+
+    return Response(
+        {'enqueued': len(image_ids), 'image_ids': image_ids},
+        status=status.HTTP_202_ACCEPTED,
+    )
 
 
 @api_view(['PUT'])
