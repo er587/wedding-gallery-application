@@ -1,6 +1,191 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { apiService } from '../services/api'
+
+// Turn the per-batch `detail[]` rows into one-line log entries (shape varies by task).
+function formatDetail(d) {
+  if (d.error) return `#${d.image} — error: ${d.error}`
+  if (d.matches) return `#${d.image} → ${d.matches.join(', ') || 'no match'}`
+  if (d.title) return `#${d.image} → “${d.title}”${d.tags?.length ? ' [' + d.tags.join(', ') + ']' : ''}`
+  if (d.tags) return `#${d.image} → ${d.tags.join(', ')}${d.distance != null ? ' (dist ' + d.distance + ')' : ''}`
+  return `#${d.image}`
+}
+
+// Drop blanks and coerce types so we never POST e.g. max_tags="".
+function cleanOpts(opts, fields) {
+  const out = {}
+  for (const f of fields) {
+    const v = opts[f.key]
+    if (f.type === 'checkbox') out[f.key] = !!v
+    else if (v === '' || v == null) continue
+    else if (f.type === 'number') out[f.key] = Number(v)
+    else out[f.key] = v
+  }
+  return out
+}
+
+// One self-contained runner card: options form + client-driven loop + progress.
+function TaskRunner({ title, blurb, runFn, fields, defaultOpts, total, disabled, disabledNote, onDone }) {
+  const [opts, setOpts] = useState(defaultOpts)
+  const [running, setRunning] = useState(false)
+  const [progress, setProgress] = useState({ scanned: 0, created: 0 })
+  const [log, setLog] = useState([])
+  const [error, setError] = useState(null)
+  const [finished, setFinished] = useState(false)
+  const stopRef = useRef(false)
+
+  const setOpt = (k, v) => setOpts((o) => ({ ...o, [k]: v }))
+
+  const run = async () => {
+    setRunning(true); setError(null); setFinished(false); setLog([])
+    setProgress({ scanned: 0, created: 0 })
+    stopRef.current = false
+    const payload = cleanOpts(opts, fields)
+    let after = 0, scanned = 0, created = 0
+    try {
+      for (let guard = 0; guard < 100000; guard++) {
+        if (stopRef.current) break
+        const { data } = await runFn(after, payload)
+        after = data.next_after_id ?? after
+        scanned += data.scanned || 0
+        created += data.created || 0
+        setProgress({ scanned, created })
+        if (data.detail?.length) {
+          setLog((prev) => [...data.detail.map(formatDetail), ...prev].slice(0, 60))
+        }
+        if (data.done || (data.scanned || 0) === 0) break
+      }
+      setFinished(true)
+      onDone?.()
+    } catch (e) {
+      setError(e?.response?.data?.error || 'Run failed — please retry.')
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  const pct = total ? Math.min(100, Math.round((progress.scanned / total) * 100)) : null
+
+  return (
+    <div className="border border-sand-line rounded-lg bg-white/60 p-5">
+      <div className="flex items-baseline justify-between">
+        <h3 className="font-serif text-[18px] text-ink">{title}</h3>
+        {total != null && <span className="text-[12px] text-sand-faint">{total} to do</span>}
+      </div>
+      <p className="mt-1 text-[13px] text-sand-soft">{blurb}</p>
+
+      {disabled ? (
+        <p className="mt-3 text-[12px] text-terracotta">{disabledNote}</p>
+      ) : (
+        <>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {fields.map((f) => (
+              <label key={f.key} className="text-[12px] text-sand-soft flex items-center gap-2">
+                {f.type === 'checkbox' ? (
+                  <>
+                    <input type="checkbox" checked={!!opts[f.key]} disabled={running}
+                      onChange={(e) => setOpt(f.key, e.target.checked)} />
+                    {f.label}
+                  </>
+                ) : (
+                  <>
+                    <span>{f.label}</span>
+                    <input
+                      type={f.type} step={f.step} placeholder={f.placeholder} disabled={running}
+                      value={opts[f.key]}
+                      onChange={(e) => setOpt(f.key, e.target.value)}
+                      className="w-24 rounded border border-sand-line bg-white px-2 py-1 text-ink"
+                    />
+                  </>
+                )}
+              </label>
+            ))}
+          </div>
+
+          <div className="mt-4 flex items-center gap-3">
+            {!running ? (
+              <button onClick={run}
+                className="rounded-full bg-terracotta px-5 py-1.5 text-[13px] text-white hover:opacity-90 transition">
+                {finished ? 'Run again' : 'Run'}
+              </button>
+            ) : (
+              <button onClick={() => { stopRef.current = true }}
+                className="rounded-full border border-sand-line px-5 py-1.5 text-[13px] text-sand-soft hover:text-ink transition">
+                Stop
+              </button>
+            )}
+            <span className="text-[12px] text-sand-faint">
+              {running ? 'Running…' : finished ? 'Done' : 'Idle'} · scanned {progress.scanned} · created {progress.created}
+            </span>
+          </div>
+
+          {(running || finished) && (
+            <div className="mt-3 h-1.5 w-full rounded-full bg-sand-line/50 overflow-hidden">
+              <div className={`h-full bg-terracotta transition-all ${pct == null && running ? 'animate-pulse w-1/3' : ''}`}
+                style={pct == null ? undefined : { width: `${pct}%` }} />
+            </div>
+          )}
+
+          {error && <p className="mt-2 text-[12px] text-terracotta">{error}</p>}
+
+          {log.length > 0 && (
+            <pre className="mt-3 max-h-40 overflow-auto rounded bg-ink/5 p-3 text-[11px] leading-relaxed text-sand-soft whitespace-pre-wrap">
+              {log.join('\n')}
+            </pre>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+function RunTab({ stats, onDone }) {
+  const noKey = stats && !stats.anthropic_configured
+  const runners = [
+    {
+      key: 'captions', title: 'Generate captions',
+      blurb: 'Write a title & description for photos that still need one.',
+      runFn: apiService.runGenerateBatch, total: stats?.caption_queue,
+      disabled: noKey, disabledNote: 'Needs ANTHROPIC_API_KEY on the server.',
+      defaultOpts: { model: '', max_tags: '', existing_tags_only: false },
+      fields: [
+        { key: 'model', label: 'Model', type: 'text', placeholder: '(server default)' },
+        { key: 'max_tags', label: 'Max tags', type: 'number' },
+        { key: 'existing_tags_only', label: 'Existing tags only', type: 'checkbox' },
+      ],
+    },
+    {
+      key: 'match', title: 'Match people',
+      blurb: 'Find your tagged people in untagged photos and suggest their names.',
+      runFn: apiService.runMatchPeople, total: stats?.match_candidates,
+      disabled: noKey, disabledNote: 'Needs ANTHROPIC_API_KEY on the server.',
+      defaultOpts: { model: '', min_confidence: 0.6, refs_per_person: 2 },
+      fields: [
+        { key: 'model', label: 'Model', type: 'text', placeholder: '(server default)' },
+        { key: 'min_confidence', label: 'Min conf', type: 'number', step: 0.05 },
+        { key: 'refs_per_person', label: 'Refs/person', type: 'number' },
+      ],
+    },
+    {
+      key: 'propagate', title: 'Propagate to duplicates',
+      blurb: 'Copy tags from a tagged photo to its near-identical shots (no API cost).',
+      runFn: apiService.runPropagate, total: stats?.propagate_candidates,
+      disabled: false,
+      defaultOpts: { max_distance: 8 },
+      fields: [{ key: 'max_distance', label: 'Max distance', type: 'number' }],
+    },
+  ]
+
+  return (
+    <div className="grid gap-4">
+      <p className="text-[12px] text-sand-faint">
+        Runs happen in your browser in small batches — keep this tab open. Results land in the Review tab as
+        pending suggestions to approve.
+      </p>
+      {runners.map((r) => <TaskRunner key={r.key} {...r} onDone={onDone} />)}
+    </div>
+  )
+}
 
 // Small labelled stat used in the dashboard header.
 function Stat({ label, value }) {
@@ -205,7 +390,7 @@ export default function LabelingDashboard() {
           {tab === 'review' ? (
             <ReviewTab onChange={loadStats} />
           ) : (
-            <p className="py-16 text-center text-sand-faint">Task runners are coming in the next update.</p>
+            <RunTab stats={stats} onDone={loadStats} />
           )}
         </div>
       </main>
