@@ -52,7 +52,7 @@ class TagListView(generics.ListAPIView):
     # Suggested tags first so autocomplete offers the curated ones up top.
     queryset = Tag.objects.all().order_by('-suggested', 'name')
     serializer_class = TagSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
 
 IMAGE_CACHE_VERSION_KEY = 'image_list_version'
@@ -67,7 +67,7 @@ def invalidate_image_cache():
 
 
 class ImageListCreateView(generics.ListCreateAPIView):
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
     pagination_class = ImagePagination
 
     def list(self, request, *args, **kwargs):
@@ -181,7 +181,7 @@ class ImageListCreateView(generics.ListCreateAPIView):
 
 class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ImageSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         # For write operations, use a simple queryset to avoid annotation conflicts
@@ -278,7 +278,7 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class CommentListCreateView(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
     pagination_class = CommentPagination
     
     def get_queryset(self):
@@ -726,7 +726,7 @@ def user_liked_images(request):
 
 
 @api_view(['GET'])
-@permission_classes([permissions.AllowAny])
+@permission_classes([permissions.IsAuthenticated])
 def get_image_count(request):
     """Get total count of all images in the database"""
     count = Image.objects.count()
@@ -739,16 +739,18 @@ def site_config(request):
     """Public wedding display content (couple, date, venue, masthead/footer copy)."""
     config = SiteConfiguration.get_solo()
     data = SiteConfigurationSerializer(config, context={'request': request}).data
-    # Only randomize for authenticated users. This endpoint is public, and a
-    # per-request random photo would let an anonymous caller enumerate the whole
-    # gallery (incl. AI captions with guest names) by polling. Anonymous callers
-    # get only the admin-curated featured image (the intentionally-public hero),
-    # which is all the frontend shows logged-out visitors anyway.
-    if config.randomize_featured and request.user.is_authenticated:
-        # Pick a fresh opening frame each visit. Prefer a landscape photo for the
-        # wide hero; fall back to any non-video image.
+    # This endpoint is public (landing page needs the couple/venue text), but the
+    # gallery itself is private. Never expose a gallery photo to anonymous callers
+    # — they'd otherwise get a featured photo's URL/caption (which can contain
+    # guest names), and a per-request random one would let them enumerate the
+    # whole gallery by polling. Logged-out visitors don't render featured_image
+    # anyway (they see the static hero), so this has no UX impact.
+    if not request.user.is_authenticated:
+        data['featured_image'] = None
+    elif config.randomize_featured:
+        # Authenticated: pick a fresh opening frame each visit. Prefer a landscape
+        # photo for the wide hero; fall back to any non-video image.
         from .serializers import FeaturedImageSerializer
-        # Photos only (exclude videos via empty vimeo_url) and not soft-deleted.
         base = Image.objects.filter(is_deleted=False).filter(
             Q(vimeo_url='') | Q(vimeo_url__isnull=True))
         pick = base.filter(image_width__gte=F('image_height')).order_by('?').first() \
