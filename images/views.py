@@ -739,7 +739,12 @@ def site_config(request):
     """Public wedding display content (couple, date, venue, masthead/footer copy)."""
     config = SiteConfiguration.get_solo()
     data = SiteConfigurationSerializer(config, context={'request': request}).data
-    if config.randomize_featured:
+    # Only randomize for authenticated users. This endpoint is public, and a
+    # per-request random photo would let an anonymous caller enumerate the whole
+    # gallery (incl. AI captions with guest names) by polling. Anonymous callers
+    # get only the admin-curated featured image (the intentionally-public hero),
+    # which is all the frontend shows logged-out visitors anyway.
+    if config.randomize_featured and request.user.is_authenticated:
         # Pick a fresh opening frame each visit. Prefer a landscape photo for the
         # wide hero; fall back to any non-video image.
         from .serializers import FeaturedImageSerializer
