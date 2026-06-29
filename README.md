@@ -48,7 +48,7 @@ A beautiful, secure wedding gallery application for sharing precious memories wi
 ### One-Minute Demo
 ```bash
 # Clone and set up (5 commands)
-git clone https://github.com/YOUR_USERNAME/wedding-gallery.git
+git clone https://github.com/er587/wedding-gallery-application.git
 cd wedding-gallery
 pip install -r requirements.txt
 python manage.py migrate && cd frontend && npm install && cd ..
@@ -262,14 +262,8 @@ See our **[Deployment Guide](docs/DEPLOYMENT.md)** for detailed instructions.
 
 ### Automated Tests
 ```bash
-# Backend API tests
+# Backend test suite
 python manage.py test
-
-# Integration tests  
-python images/integration_tests.py
-
-# Manual verification
-python test_manual_verification.py
 ```
 
 ### Test Coverage
@@ -309,17 +303,11 @@ Report security issues privately via our **[Security Policy](SECURITY.md)**.
 
 ## 📚 Documentation
 
-### User Guides
 - **[Complete Setup Guide](SETUP.md)** - Detailed installation instructions
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment
-- **[API Documentation](docs/API.md)** - Backend API reference
-- **[Customization Guide](docs/CUSTOMIZATION.md)** - Theming and branding
-
-### Development Docs  
-- **[Architecture Overview](docs/ARCHITECTURE.md)** - System design
-- **[Database Schema](docs/DATABASE.md)** - Data models and relationships
 - **[Frontend Components](docs/FRONTEND.md)** - React component guide
-- **[Testing Guide](docs/TESTING.md)** - Test coverage and best practices
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
+- **[Security Policy](SECURITY.md)** - Reporting vulnerabilities
 
 ## 🚀 Roadmap
 
@@ -379,6 +367,6 @@ You're free to use, modify, and distribute this software for personal and commer
 
 **Made with ❤️ for unforgettable wedding memories**
 
-[⭐ Star this repo](https://github.com/YOUR_USERNAME/wedding-gallery) • [🚀 Deploy now](docs/DEPLOYMENT.md) • [💬 Join community](https://github.com/YOUR_USERNAME/wedding-gallery/discussions)
+[⭐ Star this repo](https://github.com/er587/wedding-gallery-application) • [🚀 Deploy now](docs/DEPLOYMENT.md) • [💬 Discussions](https://github.com/er587/wedding-gallery-application/discussions)
 
 </div>
