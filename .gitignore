@@ -84,6 +84,10 @@ staticfiles/
 *.tiff
 # Exclude from any subdirectory
 
+# ...but DO track bundled source assets used by the frontend build
+!frontend/src/assets/
+!frontend/src/assets/**
+
 **/media/
 **/uploads/
 **/staticfiles/
