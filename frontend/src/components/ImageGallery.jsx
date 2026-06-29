@@ -4,6 +4,7 @@ import SearchBar from './SearchBar'
 import InlineEditableText from './InlineEditableText'
 import { apiService } from '../services/api'
 import { useToast } from './Toast'
+import weddingHero from '../assets/wedding-hero.webp'
 
 // Format an ISO date (YYYY-MM-DD) as "August 22, 2025" without timezone drift.
 function formatWeddingDate(dateStr) {
@@ -517,25 +518,14 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
 
   // Show login prompt for logged-out users
   if (!user) {
-    // Check if wedding-hero.png exists in root, otherwise use /assets/ (for production)
-    const heroImageSrc = import.meta.env.PROD ? '/assets/wedding-hero.png' : '/wedding-hero.png'
-
     return (
       <div className="pb-24">
         <Masthead config={config} />
         <div className="mb-10 mt-2 flex justify-center px-4">
           <img
-            src={heroImageSrc}
+            src={weddingHero}
             alt="Wedding couple silhouette at sunset"
             className="w-full max-w-xs md:max-w-sm object-cover shadow-2xl"
-            onError={(e) => {
-              // Fallback: if image fails to load, try the alternative path
-              if (e.target.src.includes('/assets/')) {
-                e.target.src = '/wedding-hero.png'
-              } else {
-                e.target.src = '/assets/wedding-hero.png'
-              }
-            }}
           />
         </div>
         <div className="border border-sand-edge bg-white/40 p-6 max-w-md mx-auto text-center">
