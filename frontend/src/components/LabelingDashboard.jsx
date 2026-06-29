@@ -331,6 +331,106 @@ function ReviewTab({ onChange }) {
   )
 }
 
+function PromptEditor({ label, hint, value, onChange, defaultText }) {
+  const usingDefault = !value?.trim()
+  return (
+    <div className="border border-sand-line rounded-lg bg-white/60 p-5">
+      <div className="flex items-baseline justify-between">
+        <h3 className="font-serif text-[18px] text-ink">{label}</h3>
+        <span className={`text-[11px] uppercase tracking-[0.18em] ${usingDefault ? 'text-sand-faint' : 'text-terracotta'}`}>
+          {usingDefault ? 'Built-in default' : 'Custom'}
+        </span>
+      </div>
+      <p className="mt-1 text-[12px] text-sand-faint">{hint}</p>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={10}
+        placeholder="Leave blank to use the built-in default…"
+        className="mt-3 w-full rounded border border-sand-line bg-white px-3 py-2 text-[13px] text-ink font-mono leading-relaxed"
+      />
+      <div className="mt-2 flex gap-3 text-[12px]">
+        <button onClick={() => onChange(defaultText)} className="text-sand-soft hover:text-ink transition">
+          Load default into editor
+        </button>
+        {!usingDefault && (
+          <button onClick={() => onChange('')} className="text-sand-faint hover:text-terracotta transition">
+            Clear (use default)
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PromptsTab() {
+  const [data, setData] = useState(null)
+  const [caption, setCaption] = useState('')
+  const [match, setMatch] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState(null)
+
+  const load = useCallback(async () => {
+    try {
+      const { data } = await apiService.getLabelingPrompts()
+      setData(data)
+      setCaption(data.caption_prompt || '')
+      setMatch(data.match_prompt || '')
+    } catch (e) {
+      setError('Could not load prompts.')
+    }
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  const save = async () => {
+    setSaving(true); setError(null); setSaved(false)
+    try {
+      const { data: d } = await apiService.updateLabelingPrompts({ caption_prompt: caption, match_prompt: match })
+      setData(d); setCaption(d.caption_prompt || ''); setMatch(d.match_prompt || '')
+      setSaved(true); setTimeout(() => setSaved(false), 2500)
+    } catch (e) {
+      setError('Save failed — please retry.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!data) return <p className="text-sand-faint py-12 text-center">Loading prompts…</p>
+
+  const dirty = caption !== (data.caption_prompt || '') || match !== (data.match_prompt || '')
+
+  return (
+    <div className="grid gap-4">
+      <p className="text-[12px] text-sand-faint">
+        Edit the instructions the AI follows. Leave a box blank to use the built-in default. Changes apply to the
+        next run — no redeploy needed.
+      </p>
+      <PromptEditor
+        label="Caption prompt"
+        hint="Controls tone and rules for Generate captions."
+        value={caption} onChange={setCaption} defaultText={data.caption_default}
+      />
+      <PromptEditor
+        label="People-matching prompt"
+        hint="Controls how Match people decides who appears in a photo."
+        value={match} onChange={setMatch} defaultText={data.match_default}
+      />
+      <div className="flex items-center gap-3">
+        <button
+          onClick={save} disabled={saving || !dirty}
+          className="rounded-full bg-terracotta px-5 py-1.5 text-[13px] text-white disabled:opacity-50 hover:opacity-90 transition"
+        >
+          {saving ? 'Saving…' : 'Save prompts'}
+        </button>
+        {saved && <span className="text-[12px] text-sand-soft">Saved ✓</span>}
+        {dirty && !saving && <span className="text-[12px] text-sand-faint">Unsaved changes</span>}
+        {error && <span className="text-[12px] text-terracotta">{error}</span>}
+      </div>
+    </div>
+  )
+}
+
 export default function LabelingDashboard() {
   const [tab, setTab] = useState('review')
   const [stats, setStats] = useState(null)
@@ -373,7 +473,7 @@ export default function LabelingDashboard() {
 
         {/* Tabs */}
         <div className="mt-8 flex gap-6 border-b border-sand-line">
-          {[['review', 'Review'], ['run', 'Run tasks']].map(([key, label]) => (
+          {[['review', 'Review'], ['run', 'Run tasks'], ['prompts', 'Prompts']].map(([key, label]) => (
             <button
               key={key}
               onClick={() => setTab(key)}
@@ -387,11 +487,9 @@ export default function LabelingDashboard() {
         </div>
 
         <div className="mt-6">
-          {tab === 'review' ? (
-            <ReviewTab onChange={loadStats} />
-          ) : (
-            <RunTab stats={stats} onDone={loadStats} />
-          )}
+          {tab === 'review' && <ReviewTab onChange={loadStats} />}
+          {tab === 'run' && <RunTab stats={stats} onDone={loadStats} />}
+          {tab === 'prompts' && <PromptsTab />}
         </div>
       </main>
     </div>
