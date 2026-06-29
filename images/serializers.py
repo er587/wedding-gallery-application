@@ -14,8 +14,8 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'can_upload_images', 'can_delete_images', 'can_comment']
-        read_only_fields = ['id']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'role', 'can_upload_images', 'can_delete_images', 'can_comment']
+        read_only_fields = ['id', 'is_staff']
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -146,15 +146,20 @@ class ImageListSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         if tag_names is not None:
+            # Staff may create brand-new tags inline; everyone else can only
+            # apply tags that already exist (unknown names are ignored).
+            request = self.context.get('request')
+            can_create = bool(request and request.user and request.user.is_staff)
             instance.tags.clear()
             for tag_name in tag_names:
-                tag_name = tag_name.strip().lower()
-                if tag_name:
-                    try:
-                        tag = Tag.objects.get(name=tag_name)
-                        instance.tags.add(tag)
-                    except Tag.DoesNotExist:
-                        pass
+                tag_name = tag_name.strip().lower()[:50]
+                if not tag_name:
+                    continue
+                tag = Tag.objects.filter(name=tag_name).first()
+                if tag is None and can_create:
+                    tag = Tag.objects.create(name=tag_name)
+                if tag is not None:
+                    instance.tags.add(tag)
         return instance
 
 

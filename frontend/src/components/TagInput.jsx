@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { apiService } from '../services/api'
 
-export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
+export default function TagInput({ tags = [], onTagsChange, canEdit = false, canCreate = false }) {
   const [allTags, setAllTags] = useState([])
   const [inputValue, setInputValue] = useState('')
   const [suggestions, setSuggestions] = useState([])
@@ -67,6 +67,9 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
       const existingTag = allTags.find(t => t.name.toLowerCase() === trimmedTag)
       if (existingTag) {
         onTagsChange([...tags, existingTag])
+      } else if (canCreate) {
+        // Staff can create a brand-new tag inline; the backend persists it on save.
+        onTagsChange([...tags, { name: trimmedTag }])
       }
     }
     setInputValue('')
@@ -82,6 +85,8 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
         const exactMatch = allTags.find(t => t.name.toLowerCase() === inputValue.trim().toLowerCase())
         if (exactMatch) {
           addTag(exactMatch.name)
+        } else if (canCreate && inputValue.trim()) {
+          addTag(inputValue)
         }
       }
       return
@@ -108,6 +113,8 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
           const exactMatch = allTags.find(t => t.name.toLowerCase() === inputValue.trim().toLowerCase())
           if (exactMatch) {
             addTag(exactMatch.name)
+          } else if (canCreate && inputValue.trim()) {
+            addTag(inputValue)
           }
         }
         break
@@ -161,9 +168,15 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false }) {
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             onFocus={() => inputValue.trim() && setShowSuggestions(true)}
-            placeholder="Select from existing tags..."
+            placeholder={canCreate ? 'Type to add a new tag, or pick one…' : 'Select from existing tags…'}
             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
+          {canCreate && inputValue.trim() &&
+            !allTags.some(t => t.name.toLowerCase() === inputValue.trim().toLowerCase()) && (
+              <div className="mt-1 text-xs text-gray-500">
+                Press Enter to create “{inputValue.trim().toLowerCase()}”
+              </div>
+            )}
 
           {showSuggestions && suggestions.length > 0 && (
             <div
