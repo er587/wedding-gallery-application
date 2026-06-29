@@ -1,29 +1,30 @@
 # Wedding Gallery - Python Dependencies
-# Production and development requirements
+# Pinned to the versions proven on production (Django 5.2 LTS, Python 3.13),
+# with security-driven bumps where prod was behind. Keep this file in sync
+# with the deployed venv.
 
 # ============================================================================
 # DJANGO CORE
 # ============================================================================
-Django==5.0.2
-djangorestframework==3.14.0
+Django==5.2.8                 # 5.2 LTS — security-supported; matches production
+djangorestframework==3.17.1
 django-cors-headers==4.3.1
 
 # ============================================================================
 # IMAGE PROCESSING & THUMBNAILS
 # ============================================================================
-Pillow>=10.4.0
+Pillow>=11.3.0                # security floor; production runs 12.x
 opencv-python-headless>=4.10.0
 easy-thumbnails==2.10.1
 
 # ============================================================================
 # DATABASE
 # ============================================================================
-# PostgreSQL support for production
 psycopg2-binary==2.9.10
 dj-database-url==2.1.0
 
 # ============================================================================
-# CLOUD STORAGE (Google Cloud Storage via Replit integration)
+# CLOUD STORAGE
 # ============================================================================
 google-cloud-storage==2.14.0
 django-storages==1.14.2
@@ -44,15 +45,19 @@ django-q2==1.7.2
 anthropic>=0.40.0
 
 # ============================================================================
+# HTTP CLIENT
+# ============================================================================
+requests>=2.32.4              # SECURITY: CVE-2024-35195 (fixed in 2.32.0)
+
+# ============================================================================
 # DEVELOPMENT & TESTING
 # ============================================================================
 pytest==7.4.4
 pytest-django==4.7.0
-requests==2.31.0
 
 # ============================================================================
 # DEPLOYMENT & PRODUCTION
 # ============================================================================
-gunicorn==21.2.0
+gunicorn==22.0.0              # CVE-2024-1135 fixed in 22.0; matches production
 whitenoise==6.6.0
 django-environ==0.11.2
