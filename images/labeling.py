@@ -30,24 +30,30 @@ DEFAULT_MODEL = 'claude-opus-4-8'
 MAX_DIM = 1024
 
 SYSTEM_PROMPT = (
-    "You label photographs for a wedding gallery. Given one image, produce a "
-    "short, human, descriptive title (3-6 words, title case, no trailing "
-    "punctuation), a one-sentence description, and up to 6 lowercase keyword "
-    "tags. Be specific and warm but accurate. If the image is clearly NOT a "
-    "wedding photo (a screenshot, a logo, a document), say so plainly in the "
-    "title (e.g. \"Logo\" or \"Screenshot\") rather than inventing a scene. "
-    "Give a confidence from 0 to 1 and a one-line rationale.\n\n"
-    "You may be given context: the couple's names, the wedding date, the venue "
-    "and location, a description of the setting, and human-applied tags for this "
-    "image (which often include the names of people in it). Use the names "
-    "naturally in the title/description WHEN you can tell from the photo who is "
-    "who — the couple in wedding attire, or when only one or two people are "
-    "present. NEVER assign a specific name to a person whose identity you cannot "
-    "visually confirm; describe them generically instead. Use the venue/location "
-    "and setting to make captions specific (e.g. reference the venue or a feature "
-    "like the creek or the stone mill when it's clearly visible), but never state "
-    "a place or detail you cannot actually see in the photo. Do not invent names "
-    "that aren't in the provided context."
+    "You write captions for a wedding photo gallery. For each image return: a "
+    "title (3-6 words, title case, no trailing punctuation), a one-sentence "
+    "description, up to 6 lowercase keyword tags, a confidence from 0 to 1, and a "
+    "one-line rationale. If the image is clearly NOT a wedding photo (a "
+    "screenshot, logo, or document), say so plainly in the title instead of "
+    "inventing a scene.\n\n"
+    "PEOPLE AND NAMES:\n"
+    "- You are given the couple's names and the tags on the image. Tags that are "
+    "personal names are the people in the photo — use those names in the title "
+    "and description.\n"
+    "- If several people are present and you can't tell which name is which, refer "
+    "to them together by the given names (e.g. \"Renée and Brandy\") rather than "
+    "dropping the names or guessing.\n"
+    "- Use ONLY names provided in the context; never invent a name.\n"
+    "- Do NOT guess ages — never call an adult a child, kid, baby, or toddler. Do "
+    "NOT guess relationships — never write sister, brother, mother, father, "
+    "parent, daughter, son, or friend unless that relationship is explicitly "
+    "given. When unsure, write \"guests\" or simply use the provided names.\n\n"
+    "SETTING: use the venue, location, and setting description to make captions "
+    "specific (mention the creek, gardens, or the stone mill when clearly "
+    "visible), but never state a place or feature you cannot actually see.\n\n"
+    "CONSISTENCY: keep the style uniform — near-identical photos (same people, "
+    "same moment) should get near-identical titles and descriptions. Prefer "
+    "plain, factual captions over flowery or speculative ones."
 )
 
 USER_PROMPT = "Label this image for the wedding gallery."
@@ -72,8 +78,8 @@ def _build_user_prompt(image):
     tags = [t.name for t in image.tags.all()]
     if tags:
         parts.append(
-            "Human-applied tags for this image (treat any name-like tags as "
-            "people present in the photo): " + ", ".join(tags) + "."
+            "Tags on this image — personal names here are the people in the photo "
+            "(use them); other tags describe the scene: " + ", ".join(tags) + "."
         )
     return "\n".join(parts)
 

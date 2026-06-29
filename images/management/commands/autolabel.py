@@ -36,19 +36,33 @@ class Command(BaseCommand):
                             help='Only images with a blank or placeholder title.')
         parser.add_argument('--all', action='store_true',
                             help='Include images that already have a suggestion (default skips them).')
+        parser.add_argument('--replace', action='store_true',
+                            help='Re-label images whose suggestion is still PENDING: delete the '
+                                 'stale pending suggestion and generate a fresh one. Leaves '
+                                 'already-approved/applied images untouched. Use after tuning the prompt/model.')
 
     def handle(self, *args, **opts):
-        already = ImageLabelSuggestion.objects.filter(
-            status__in=['pending', 'approved', 'applied']
+        # Images already approved/applied are "done" — never touch them.
+        done = ImageLabelSuggestion.objects.filter(
+            status__in=['approved', 'applied']
+        ).values_list('image_id', flat=True)
+        pending = ImageLabelSuggestion.objects.filter(
+            status='pending'
         ).values_list('image_id', flat=True)
 
-        qs = Image.objects.all().order_by('id')
-        if not opts['all']:
-            qs = qs.exclude(id__in=already)
+        qs = Image.objects.all().order_by('id').exclude(id__in=done)
+        if not opts['replace'] and not opts['all']:
+            # Default: skip anything that already has a pending suggestion too.
+            qs = qs.exclude(id__in=pending)
         if opts['needs_label']:
             qs = qs.filter(Q(title='') | Q(title__isnull=True) | Q(title__iregex=PLACEHOLDER_RE))
 
         image_ids = list(qs.values_list('id', flat=True)[:opts['limit']])
+        if opts['replace'] and image_ids:
+            removed = ImageLabelSuggestion.objects.filter(
+                image_id__in=image_ids, status='pending'
+            ).delete()[0]
+            self.stdout.write(f'Cleared {removed} stale pending suggestion(s) before re-labeling.')
         if not image_ids:
             self.stdout.write(self.style.WARNING('No images to label (all caught up?).'))
             return
