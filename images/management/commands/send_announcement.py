@@ -70,13 +70,19 @@ class Command(BaseCommand):
             plain_message = (
                 f"Hi {first_name},\n\n"
                 f"It's been a little while! We've given the {couple} wedding gallery a fresh new "
-                f"look and tidied everything up. "
+                "look and tidied everything up. With a little help from AI, we've also labeled as "
+                "many people as we could by name, given the photos proper titles, and added "
+                "captions — so the gallery is much easier to browse and search.\n\n"
                 + (f"All {image_count} photos and films are waiting for you" if image_count
                    else "All our photos and films are waiting for you")
                 + " — and if you have pictures from the day you haven't shared yet, we'd love to "
                 "see them.\n\n"
                 "One quick note: the gallery is now private, so just log in with your account to "
-                f"view.\n\nRelive the day: {gallery_url}\n\nWith love,\n{couple}"
+                f"view.\n\nRelive the day: {gallery_url}\n\n"
+                f"With love,\n{couple}\n\n"
+                "—\nYou're receiving this because you created an account on our wedding gallery. "
+                "To stop receiving these emails, just reply and let us know and we'll take you "
+                "off the list."
             )
             try:
                 send_mail(subject=subject, message=plain_message,
