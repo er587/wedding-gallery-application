@@ -44,6 +44,7 @@ urlpatterns = [
 
     # Staff dashboard: stats + synchronous, client-driven batch runners
     path('api/labeling/stats/', views.labeling_stats, name='labeling-stats'),
+    path('api/labeling/prompts/', views.labeling_prompts, name='labeling-prompts'),
     path('api/labeling/generate-batch/', views.generate_labels_batch, name='labeling-generate-batch'),
     path('api/labeling/match-people/', views.match_people_batch, name='labeling-match-people'),
     path('api/labeling/propagate/', views.propagate_labels_batch, name='labeling-propagate'),

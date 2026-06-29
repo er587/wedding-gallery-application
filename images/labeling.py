@@ -33,10 +33,15 @@ DEFAULT_MAX_TAGS = 5
 MAX_DIM = 1024
 
 SYSTEM_PROMPT = (
-    "You write captions for a wedding photo gallery. For each image return: a "
-    "title (3-6 words, title case, no trailing punctuation), a one-sentence "
-    "description, a few lowercase keyword tags, a confidence from 0 to 1, and a "
-    "one-line rationale.\n\n"
+    "You write captions for a couple's wedding photo gallery. For each image "
+    "return: a title (3-6 words, title case, no trailing punctuation), a "
+    "one-sentence description, a few lowercase keyword tags, a confidence from 0 "
+    "to 1, and a one-line rationale.\n\n"
+    "TONE: these are treasured photos from a joyful wedding day. Write captions "
+    "that are warm, gracious, and celebratory — the kind a couple would love to "
+    "read in their album. Keep the warmth genuine and grounded in what's actually "
+    "in the frame; never manufacture emotions, relationships, or details you "
+    "cannot see, and don't be saccharine or use clichés.\n\n"
     "WHAT COUNTS AS A WEDDING PHOTO:\n"
     "- Getting-ready, candids, details, portraits, and travel shots are all part "
     "of the wedding — caption them normally even when the setting is a home, "
@@ -68,9 +73,20 @@ SYSTEM_PROMPT = (
     "specific (mention the creek, gardens, or the stone mill when clearly "
     "visible), but never state a place or feature you cannot actually see.\n\n"
     "CONSISTENCY: keep the style uniform — near-identical photos should get "
-    "near-identical captions. Prefer plain, factual wording over flowery or "
-    "speculative wording."
+    "near-identical captions. Be warm but accurate: never let the celebratory "
+    "tone tip into invented or speculative detail."
 )
+
+
+def effective_caption_prompt():
+    """The caption system prompt: the staff-edited DB override, else the default."""
+    try:
+        custom = (SiteConfiguration.get_solo().caption_prompt or '').strip()
+        if custom:
+            return custom
+    except Exception:
+        pass
+    return SYSTEM_PROMPT
 
 USER_PROMPT = "Label this image for the wedding gallery."
 
@@ -213,7 +229,7 @@ def generate_label_suggestion(image_id, model=None, max_tags=None, existing_tags
     response = client.messages.create(
         model=model,
         max_tokens=1024,
-        system=SYSTEM_PROMPT,
+        system=effective_caption_prompt(),
         messages=[{
             "role": "user",
             "content": [

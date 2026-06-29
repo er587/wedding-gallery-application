@@ -370,8 +370,9 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
             'fields': ('site_domain', 'footer_message'),
         }),
         ('AI labeling', {
-            'fields': ('labeling_context',),
-            'description': 'Context fed to the AI photo labeler (not shown publicly).',
+            'fields': ('labeling_context', 'caption_prompt', 'match_prompt'),
+            'description': 'Context + prompts for the AI photo labeler (not shown publicly). '
+                           'Leave a prompt blank to use the built-in default.',
         }),
         (None, {'fields': ('updated_at',)}),
     )

@@ -773,6 +773,16 @@ class SiteConfiguration(models.Model):
                   'and setting, season, notable features, etc. Not shown publicly; '
                   'fed to the model so captions can reference the location accurately.',
     )
+    caption_prompt = models.TextField(
+        blank=True, default='',
+        help_text='System prompt for AI caption generation. Leave blank to use the '
+                  'built-in default. Editable here or on the labeling dashboard.',
+    )
+    match_prompt = models.TextField(
+        blank=True, default='',
+        help_text='System prompt for AI people-matching. Leave blank to use the '
+                  'built-in default.',
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
