@@ -279,6 +279,31 @@ def hamming(a, b):
     return bin(a ^ b).count('1')
 
 
+def tagged_reference_hashes():
+    """[(image_id, phash, [tag_name, ...]), ...] for every tagged, readable image."""
+    refs = []
+    for img in Image.objects.prefetch_related('tags').all():
+        names = [t.name for t in img.tags.all()]
+        if not names:
+            continue
+        h = image_phash(img)
+        if h is not None:
+            refs.append((img.id, h, names))
+    return refs
+
+
+def nearest_reference(phash, refs, max_distance):
+    """Closest reference within max_distance, or None. Returns (id, tags, distance)."""
+    best_id, best_tags, best_d = None, None, 65
+    for ref_id, ref_h, ref_tags in refs:
+        d = hamming(phash, ref_h)
+        if d < best_d:
+            best_id, best_tags, best_d = ref_id, ref_tags, d
+    if best_id is None or best_d > max_distance:
+        return None
+    return best_id, best_tags, best_d
+
+
 def fetch_site_text(url, max_chars=2000, timeout=15, verify=True):
     """Fetch a web page and return its readable text (HTML/scripts stripped).
 
