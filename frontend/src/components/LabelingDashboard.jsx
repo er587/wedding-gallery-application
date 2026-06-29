@@ -87,6 +87,19 @@ function TaskRunner({ title, blurb, runFn, fields, defaultOpts, total, disabled,
                       onChange={(e) => setOpt(f.key, e.target.checked)} />
                     {f.label}
                   </>
+                ) : f.type === 'select' ? (
+                  <>
+                    <span>{f.label}</span>
+                    <select
+                      value={opts[f.key]} disabled={running}
+                      onChange={(e) => setOpt(f.key, e.target.value)}
+                      className="rounded border border-sand-line bg-white px-2 py-1 text-ink capitalize"
+                    >
+                      {(f.options || []).map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                  </>
                 ) : (
                   <>
                     <span>{f.label}</span>
@@ -140,25 +153,38 @@ function TaskRunner({ title, blurb, runFn, fields, defaultOpts, total, disabled,
 }
 
 function RunTab({ stats, onDone }) {
-  const noKey = stats && !stats.anthropic_configured
+  const provs = stats?.providers || {}
+  const providerOptions = Object.entries(provs).filter(([, ok]) => ok).map(([p]) => ({ value: p, label: p }))
+  const anyProvider = providerOptions.length > 0
+  const defaultProvider = (stats?.default_provider && provs[stats.default_provider])
+    ? stats.default_provider : (providerOptions[0]?.value || '')
+
+  const captionFields = [
+    ...(providerOptions.length > 1
+      ? [{ key: 'provider', label: 'Provider', type: 'select', options: providerOptions }]
+      : []),
+    { key: 'model', label: 'Model', type: 'text', placeholder: '(provider default)' },
+    { key: 'max_tags', label: 'Max tags', type: 'number' },
+    { key: 'existing_tags_only', label: 'Existing tags only', type: 'checkbox' },
+  ]
+
   const runners = [
     {
       key: 'captions', title: 'Generate captions',
-      blurb: 'Write a title & description for photos that still need one.',
+      blurb: `Write a title & description for photos that still need one.${
+        anyProvider ? ` Provider: ${providerOptions.length > 1 ? 'choose below' : defaultProvider}.` : ''}`,
       runFn: apiService.runGenerateBatch, total: stats?.caption_queue,
-      disabled: noKey, disabledNote: 'Needs ANTHROPIC_API_KEY on the server.',
-      defaultOpts: { model: '', max_tags: '', existing_tags_only: false },
-      fields: [
-        { key: 'model', label: 'Model', type: 'text', placeholder: '(server default)' },
-        { key: 'max_tags', label: 'Max tags', type: 'number' },
-        { key: 'existing_tags_only', label: 'Existing tags only', type: 'checkbox' },
-      ],
+      disabled: !anyProvider,
+      disabledNote: 'Set an API key on the server (ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY).',
+      defaultOpts: { provider: defaultProvider, model: '', max_tags: '', existing_tags_only: false },
+      fields: captionFields,
     },
     {
       key: 'match', title: 'Match people',
       blurb: 'Find your tagged people in untagged photos and suggest their names.',
       runFn: apiService.runMatchPeople, total: stats?.match_candidates,
-      disabled: noKey, disabledNote: 'Needs ANTHROPIC_API_KEY on the server.',
+      disabled: stats && !stats.matching_configured,
+      disabledNote: 'People-matching needs ANTHROPIC_API_KEY on the server.',
       defaultOpts: { model: '', min_confidence: 0.6, refs_per_person: 2 },
       fields: [
         { key: 'model', label: 'Model', type: 'text', placeholder: '(server default)' },

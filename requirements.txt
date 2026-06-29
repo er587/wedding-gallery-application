@@ -40,9 +40,11 @@ django-ratelimit==4.1.0
 django-q2==1.7.2
 
 # ============================================================================
-# AI LABELING (server-side Claude vision suggestions)
+# AI LABELING (server-side vision suggestions; pick a provider via LABELING_PROVIDER)
 # ============================================================================
 anthropic>=0.40.0
+openai>=1.40.0                # optional: only needed for LABELING_PROVIDER=openai
+google-generativeai>=0.8.0   # optional: only needed for LABELING_PROVIDER=gemini
 
 # ============================================================================
 # HTTP CLIENT
