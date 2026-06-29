@@ -906,6 +906,7 @@ def suggest_labels(request, image_id):
             model=request.data.get('model'),
             max_tags=request.data.get('max_tags'),
             existing_tags_only=bool(request.data.get('existing_tags_only', False)),
+            provider=request.data.get('provider'),
         )
     except LabelingNotConfigured as exc:
         return Response({'error': str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
@@ -988,11 +989,13 @@ def _batch_params(request, default_limit, max_limit):
 @permission_classes([permissions.IsAdminUser])
 def labeling_stats(request):
     """Counts for the staff dashboard header and runner progress denominators."""
+    from . import providers
     handled = ImageLabelSuggestion.objects.filter(
         status__in=['pending', 'approved', 'applied']
     ).values_list('image_id', flat=True)
     person_tagged = Image.objects.filter(tags__kind=Tag.PERSON).values_list('id', flat=True)
     known_people = Tag.objects.filter(kind=Tag.PERSON, images__isnull=False).distinct().count()
+    configured = providers.configured_providers()
     return Response({
         'images_total': Image.objects.count(),
         'images_untagged': Image.objects.filter(tags__isnull=True).count(),
@@ -1005,7 +1008,11 @@ def labeling_stats(request):
             tags__isnull=True).count(),
         'pending_suggestions': ImageLabelSuggestion.objects.filter(status='pending').count(),
         'known_people': known_people,
-        'anthropic_configured': bool(os.environ.get('ANTHROPIC_API_KEY')),
+        'anthropic_configured': configured.get('anthropic', False),
+        'providers': configured,
+        'default_provider': providers.default_provider(),
+        # People-matching is Anthropic-only for now.
+        'matching_configured': configured.get('anthropic', False),
     }, status=status.HTTP_200_OK)
 
 
@@ -1038,8 +1045,11 @@ def labeling_prompts(request):
 @permission_classes([permissions.IsAdminUser])
 def generate_labels_batch(request):
     """Caption a small batch synchronously (no worker needed). Pages by after_id."""
-    if not os.environ.get('ANTHROPIC_API_KEY'):
-        return Response({'error': 'ANTHROPIC_API_KEY is not set.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    from . import providers
+    provider = providers.normalize(request.data.get('provider')) or providers.default_provider()
+    if not providers.configured_providers().get(provider):
+        return Response({'error': f'{providers.KEY_ENV[provider]} is not set.'},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
     limit, after_id = _batch_params(request, default_limit=3, max_limit=10)
     needs_label = request.GET.get('needs_label', 'true').lower() != 'false'
     model = request.data.get('model') or None
@@ -1055,7 +1065,7 @@ def generate_labels_batch(request):
     for img in images:
         try:
             s = generate_label_suggestion(img.id, model=model, max_tags=max_tags,
-                                          existing_tags_only=existing_only)
+                                          existing_tags_only=existing_only, provider=provider)
             created += 1
             detail.append({'image': img.id, 'title': s.suggested_title, 'tags': s.suggested_tags})
         except LabelingNotConfigured as exc:

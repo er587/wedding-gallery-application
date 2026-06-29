@@ -6,8 +6,9 @@ pending ImageLabelSuggestion. It shares the same review/approval gate as
 agent-submitted suggestions, so nothing reaches the live gallery without a
 staff approval.
 
-Requires the ANTHROPIC_API_KEY environment variable. The model defaults to
-claude-opus-4-8 and can be overridden with ANTHROPIC_LABELING_MODEL.
+Captioning runs through a pluggable provider layer (see images/providers.py), so
+the operator can use Anthropic, OpenAI, or Gemini — selected with LABELING_PROVIDER
+and the matching API key. People-matching still uses Anthropic.
 """
 import base64
 import json
@@ -188,28 +189,22 @@ def _encode_image(image):
     return base64.standard_b64encode(buf.getvalue()).decode('utf-8'), 'image/jpeg'
 
 
-def generate_label_suggestion(image_id, model=None, max_tags=None, existing_tags_only=False):
-    """Generate one pending ImageLabelSuggestion for an image via Claude vision.
+def generate_label_suggestion(image_id, model=None, max_tags=None, existing_tags_only=False,
+                              provider=None):
+    """Generate one pending ImageLabelSuggestion for an image via a vision LLM.
 
-    max_tags caps AI-suggested tags (0 = none); defaults to ANTHROPIC_LABEL_MAX_TAGS
-    or DEFAULT_MAX_TAGS. If existing_tags_only is True, the model is restricted to
-    the current Tag vocabulary and any tag it invents is dropped (so no new tags are
-    created). Returns the created ImageLabelSuggestion. Raises LabelingNotConfigured
-    if the SDK isn't installed or ANTHROPIC_API_KEY is unset; lets Image.DoesNotExist
-    propagate for an unknown id.
+    provider selects the AI backend (anthropic | openai | gemini); defaults to
+    LABELING_PROVIDER or anthropic. max_tags caps AI-suggested tags (0 = none).
+    If existing_tags_only is True, the model is restricted to the current Tag
+    vocabulary and any tag it invents is dropped. Returns the created
+    ImageLabelSuggestion. Raises LabelingNotConfigured if the selected provider's
+    SDK/API key isn't available; lets Image.DoesNotExist propagate for an unknown id.
     """
-    try:
-        import anthropic
-    except ImportError as exc:
-        raise LabelingNotConfigured(
-            "The 'anthropic' package is not installed. Add it to requirements and install."
-        ) from exc
-
-    if not os.environ.get('ANTHROPIC_API_KEY'):
-        raise LabelingNotConfigured("ANTHROPIC_API_KEY is not set.")
+    from . import providers
 
     image = Image.objects.get(pk=image_id)
-    model = model or os.environ.get('ANTHROPIC_LABELING_MODEL', DEFAULT_MODEL)
+    provider = providers.normalize(provider) or providers.default_provider()
+    model = providers.resolve_model(provider, model)
     if max_tags is None:
         try:
             max_tags = int(os.environ.get('ANTHROPIC_LABEL_MAX_TAGS', DEFAULT_MAX_TAGS))
@@ -225,23 +220,15 @@ def generate_label_suggestion(image_id, model=None, max_tags=None, existing_tags
     allowed_tags = sorted(vocab.values(), key=str.lower) if vocab is not None else None
     b64, media_type = _encode_image(image)
 
-    client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from the environment
-    response = client.messages.create(
-        model=model,
-        max_tokens=1024,
-        system=effective_caption_prompt(),
-        messages=[{
-            "role": "user",
-            "content": [
-                {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": b64}},
-                {"type": "text", "text": _build_user_prompt(image, max_tags=max_tags, allowed_tags=allowed_tags)},
-            ],
-        }],
-        output_config={"format": {"type": "json_schema", "schema": LABEL_SCHEMA}},
-    )
-
-    text = next((b.text for b in response.content if b.type == "text"), "")
-    data = json.loads(text)
+    try:
+        data = providers.generate_caption(
+            provider, model, b64=b64, media_type=media_type,
+            system_prompt=effective_caption_prompt(),
+            user_prompt=_build_user_prompt(image, max_tags=max_tags, allowed_tags=allowed_tags),
+            schema=LABEL_SCHEMA,
+        )
+    except providers.ProviderNotConfigured as exc:
+        raise LabelingNotConfigured(str(exc)) from exc
 
     tags = [str(t).strip().lower() for t in data.get("tags", []) if str(t).strip()]
     if vocab is not None:
@@ -255,10 +242,11 @@ def generate_label_suggestion(image_id, model=None, max_tags=None, existing_tags
         suggested_tags=tags[:cap],
         confidence=data.get("confidence"),
         rationale=data.get("rationale") or "",
-        source=model[:64],
+        source=f"{provider}:{model}"[:64],
         status="pending",
     )
-    logger.info("Generated label suggestion %s for image %s via %s", suggestion.pk, image_id, model)
+    logger.info("Generated label suggestion %s for image %s via %s/%s",
+                suggestion.pk, image_id, provider, model)
     return suggestion
 
 
