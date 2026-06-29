@@ -58,6 +58,8 @@ export const apiService = {
 
   // Staff AI labeling dashboard
   getLabelingStats: () => api.get('/api/labeling/stats/'),
+  getLabelingPrompts: () => api.get('/api/labeling/prompts/'),
+  updateLabelingPrompts: (data) => api.put('/api/labeling/prompts/', data),
   listLabelSuggestions: (status = 'pending', limit = 100) =>
     api.get(`/api/label-suggestions/?status=${status}&limit=${limit}`),
   approveLabelSuggestion: (id) => api.post(`/api/label-suggestions/${id}/approve/`),
