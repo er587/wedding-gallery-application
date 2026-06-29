@@ -13,8 +13,11 @@ import base64
 import json
 import logging
 import os
+import re
 from io import BytesIO
 
+import requests
+from django.utils.html import strip_tags
 from PIL import Image as PILImage
 
 from .models import Image, ImageLabelSuggestion, SiteConfiguration
@@ -166,3 +169,21 @@ def generate_label_suggestion(image_id, model=None):
     )
     logger.info("Generated label suggestion %s for image %s via %s", suggestion.pk, image_id, model)
     return suggestion
+
+
+def fetch_site_text(url, max_chars=2000, timeout=15):
+    """Fetch a web page and return its readable text (HTML/scripts stripped).
+
+    Used to pull a venue website into SiteConfiguration.labeling_context so the
+    AI labeler has real context about the location.
+    """
+    resp = requests.get(
+        url, timeout=timeout,
+        headers={'User-Agent': 'Mozilla/5.0 (wedding-gallery labeler)'},
+    )
+    resp.raise_for_status()
+    # Drop script/style blocks (their inner text is code, not content) before stripping tags.
+    html = re.sub(r'(?is)<(script|style)[^>]*>.*?</\1>', ' ', resp.text)
+    text = strip_tags(html)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text[:max_chars]
