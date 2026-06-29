@@ -127,7 +127,7 @@ TEST_EMAIL=your-email@gmail.com  # Optional: for testing email functionality
 FRONTEND_URL=https://yourdomain.com
 ```
 
-**⚠️ IMPORTANT:** The `FRONTEND_URL` must be set to your actual production domain (e.g., `https://reneeanderic.wedding`). This URL is used in:
+**⚠️ IMPORTANT:** The `FRONTEND_URL` must be set to your actual production domain (e.g., `https://yourdomain.com`). This URL is used in:
 - Password reset email links
 - Email verification links
 

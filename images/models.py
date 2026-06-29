@@ -327,12 +327,9 @@ class Image(models.Model):
             
             # Get domain for Referer header (needed for domain-restricted videos)
             # Use production domain first (this is whitelisted on Vimeo for domain-restricted videos)
-            frontend_url = os.environ.get('FRONTEND_URL', '')
-            if frontend_url:
-                referer = frontend_url
-            else:
-                # Use the production domain - this is whitelisted on Vimeo
-                referer = "https://reneeanderic.wedding"
+            # Vimeo uses the Referer to honor domain-restricted videos; set
+            # FRONTEND_URL to the domain whitelisted on your Vimeo account.
+            referer = os.environ.get('FRONTEND_URL', '') or 'http://localhost'
             
             # Fetch thumbnail URL from Vimeo oEmbed API
             # Include Referer header for domain-restricted videos

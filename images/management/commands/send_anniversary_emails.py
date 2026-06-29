@@ -62,7 +62,7 @@ class Command(BaseCommand):
             self.stdout.write('No active users with email addresses found.')
             return
 
-        gallery_url = getattr(settings, 'FRONTEND_URL', '') or 'https://reneeanderic.wedding'
+        gallery_url = getattr(settings, 'FRONTEND_URL', '') or 'http://localhost:5173'
         image_count = Image.objects.count()
         sent = 0
         errors = 0
