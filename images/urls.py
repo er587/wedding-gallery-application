@@ -70,6 +70,10 @@ urlpatterns = [
     path('api/cloud/files/', views.list_user_files, name='list-user-files'),
     path('api/files/<path:file_path>', views.serve_protected_file, name='serve-protected-file'),
     
+    # Auth-gated media: the gallery is invitation-only, so the image bytes
+    # require a logged-in session (nginx serves them via X-Accel-Redirect).
+    re_path(r'^media/(?P<path>.*)$', views.serve_protected_media, name='protected-media'),
+
     # Serve React frontend for all non-API and non-media routes
     re_path(r'^(?!(api/|media/|admin/)).*$', views.serve_frontend, name='frontend'),
 ]

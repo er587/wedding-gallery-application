@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.db.models import Count, Exists, F, OuterRef, Q, Prefetch
 from django.core.cache import cache
-from django.http import JsonResponse, HttpResponse, Http404
+from django.http import JsonResponse, HttpResponse, HttpResponseForbidden, FileResponse, Http404
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -731,6 +731,33 @@ def get_image_count(request):
     """Get total count of all images in the database"""
     count = Image.objects.count()
     return Response({'count': count}, status=status.HTTP_200_OK)
+
+
+def serve_protected_media(request, path):
+    """Auth-gate media files (the gallery is invitation-only).
+
+    Logged-in users only — authenticated via the Django session cookie that the
+    browser sends with <img> requests. In production nginx serves the bytes via
+    X-Accel-Redirect (fast); in DEBUG Django streams the file directly so local
+    dev works without nginx.
+    """
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden('Authentication required.')
+
+    # Resolve the real path and confine it to MEDIA_ROOT (block path traversal).
+    media_root = os.path.realpath(settings.MEDIA_ROOT)
+    full = os.path.realpath(os.path.join(media_root, path))
+    if not (full == media_root or full.startswith(media_root + os.sep)) or not os.path.isfile(full):
+        raise Http404('Not found')
+
+    if settings.DEBUG:
+        return FileResponse(open(full, 'rb'))
+
+    rel = os.path.relpath(full, media_root).replace(os.sep, '/')
+    response = HttpResponse(status=200)
+    response['X-Accel-Redirect'] = settings.PROTECTED_MEDIA_INTERNAL + rel
+    response['Content-Type'] = ''  # let nginx set the type from the served file
+    return response
 
 
 @api_view(['GET'])
