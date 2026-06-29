@@ -658,6 +658,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                     tags={imageData.tags || []}
                     onTagsChange={handleUpdateTags}
                     canEdit={canEditTags()}
+                    canCreate={!!user?.is_staff}
                   />
                 </div>
               </div>
@@ -768,6 +769,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                 tags={imageData.tags || []}
                 onTagsChange={handleUpdateTags}
                 canEdit={canEditTags()}
+                canCreate={!!user?.is_staff}
               />
             </div>
           </div>

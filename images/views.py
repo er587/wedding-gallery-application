@@ -476,6 +476,7 @@ def login_view(request):
                 'last_name': user.last_name,
                 'role': profile.role,
                 'role_display': profile.get_role_display(),
+                'is_staff': user.is_staff,
                 'can_upload_images': profile.can_upload_images,
                 'can_delete_images': profile.can_delete_images,
                 'can_comment': profile.can_comment,
