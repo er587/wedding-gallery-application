@@ -24,6 +24,9 @@ class Command(BaseCommand):
                             help='Max characters of site text to keep (default 2000).')
         parser.add_argument('--append', action='store_true',
                             help='Append to existing labeling_context instead of replacing it.')
+        parser.add_argument('--insecure', action='store_true',
+                            help='Skip TLS certificate verification (for sites with an '
+                                 'incomplete cert chain). Insecure — use only for trusted URLs.')
 
     def handle(self, *args, **opts):
         cfg = SiteConfiguration.get_solo()
@@ -31,9 +34,11 @@ class Command(BaseCommand):
         if not url:
             raise CommandError('No venue_url set on SiteConfiguration and no --url given.')
 
+        if opts['insecure']:
+            self.stderr.write(self.style.WARNING('⚠ TLS verification disabled (--insecure).'))
         self.stdout.write(f'Fetching {url} …')
         try:
-            text = fetch_site_text(url, max_chars=opts['max_chars'])
+            text = fetch_site_text(url, max_chars=opts['max_chars'], verify=not opts['insecure'])
         except Exception as exc:
             raise CommandError(f'Failed to fetch {url}: {exc}')
         if not text:

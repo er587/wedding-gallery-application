@@ -171,14 +171,22 @@ def generate_label_suggestion(image_id, model=None):
     return suggestion
 
 
-def fetch_site_text(url, max_chars=2000, timeout=15):
+def fetch_site_text(url, max_chars=2000, timeout=15, verify=True):
     """Fetch a web page and return its readable text (HTML/scripts stripped).
 
     Used to pull a venue website into SiteConfiguration.labeling_context so the
-    AI labeler has real context about the location.
+    AI labeler has real context about the location. Pass verify=False to tolerate
+    a site that serves an incomplete TLS chain (insecure — caller's choice).
     """
+    if not verify:
+        # Caller explicitly opted out of cert verification; silence the noise.
+        try:
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        except Exception:
+            pass
     resp = requests.get(
-        url, timeout=timeout,
+        url, timeout=timeout, verify=verify,
         headers={'User-Agent': 'Mozilla/5.0 (wedding-gallery labeler)'},
     )
     resp.raise_for_status()
