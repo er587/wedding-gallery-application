@@ -30,8 +30,10 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--limit', type=int, default=50,
                             help='Max images to process this run (default 50).')
+        parser.add_argument('--provider', default=None,
+                            help='AI provider: anthropic | openai | gemini (default LABELING_PROVIDER).')
         parser.add_argument('--model', default=None,
-                            help='Override ANTHROPIC_LABELING_MODEL for this run.')
+                            help='Override the provider model for this run.')
         parser.add_argument('--max-tags', type=int, default=None,
                             help='Cap AI-suggested tags per image (0 = none; default 5 or '
                                  'ANTHROPIC_LABEL_MAX_TAGS).')
@@ -46,6 +48,13 @@ class Command(BaseCommand):
                             help='Re-label images whose suggestion is still PENDING: delete the '
                                  'stale pending suggestion and generate a fresh one. Leaves '
                                  'already-approved/applied images untouched. Use after tuning the prompt/model.')
+        parser.add_argument('--redo', action='store_true',
+                            help='Re-caption EVERY image, including ones already approved/applied '
+                                 '(clears their pending suggestions first). For a full refresh after '
+                                 'changing the prompt. Combine with --apply to write the results.')
+        parser.add_argument('--apply', action='store_true',
+                            help='Apply each generated caption immediately (overwrite title/description, '
+                                 'no manual review). DESTRUCTIVE — back up the DB first.')
 
     def handle(self, *args, **opts):
         # Images already approved/applied are "done" — never touch them.
@@ -56,15 +65,18 @@ class Command(BaseCommand):
             status='pending'
         ).values_list('image_id', flat=True)
 
-        qs = Image.objects.all().order_by('id').exclude(id__in=done)
-        if not opts['replace'] and not opts['all']:
-            # Default: skip anything that already has a pending suggestion too.
-            qs = qs.exclude(id__in=pending)
+        qs = Image.objects.all().order_by('id')
+        if not opts['redo']:
+            # --redo re-captions everything; otherwise leave finished images alone.
+            qs = qs.exclude(id__in=done)
+            if not opts['replace'] and not opts['all']:
+                # Default: skip anything that already has a pending suggestion too.
+                qs = qs.exclude(id__in=pending)
         if opts['needs_label']:
             qs = qs.filter(Q(title='') | Q(title__isnull=True) | Q(title__iregex=PLACEHOLDER_RE))
 
         image_ids = list(qs.values_list('id', flat=True)[:opts['limit']])
-        if opts['replace'] and image_ids:
+        if (opts['replace'] or opts['redo']) and image_ids:
             removed = ImageLabelSuggestion.objects.filter(
                 image_id__in=image_ids, status='pending'
             ).delete()[0]
@@ -73,18 +85,26 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('No images to label (all caught up?).'))
             return
 
-        self.stdout.write(f'Labeling {len(image_ids)} image(s)…')
-        ok = failed = 0
+        verb = 'Re-captioning' if opts['redo'] else 'Labeling'
+        if opts['apply']:
+            self.stdout.write(self.style.WARNING(
+                '--apply: captions will OVERWRITE titles/descriptions immediately (no review).'))
+        self.stdout.write(f'{verb} {len(image_ids)} image(s)…')
+        ok = applied = failed = 0
         for i, image_id in enumerate(image_ids, 1):
             try:
                 suggestion = generate_label_suggestion(
                     image_id, model=opts['model'], max_tags=opts['max_tags'],
-                    existing_tags_only=opts['existing_tags_only'],
+                    existing_tags_only=opts['existing_tags_only'], provider=opts['provider'],
                 )
                 ok += 1
+                if opts['apply']:
+                    suggestion.apply()
+                    applied += 1
                 self.stdout.write(
                     f'  [{i}/{len(image_ids)}] image {image_id} → "{suggestion.suggested_title}" '
                     f'(conf {suggestion.confidence}, {suggestion.source})'
+                    + (' [applied]' if opts['apply'] else '')
                 )
             except LabelingNotConfigured as exc:
                 # Misconfiguration affects every image — fail fast rather than loop.
@@ -93,7 +113,10 @@ class Command(BaseCommand):
                 failed += 1
                 self.stderr.write(f'  [{i}/{len(image_ids)}] image {image_id} FAILED: {exc}')
 
-        self.stdout.write(self.style.SUCCESS(
-            f'Done: {ok} suggested, {failed} failed. '
-            f'Review and approve in /admin/ → Image label suggestions.'
-        ))
+        if opts['apply']:
+            self.stdout.write(self.style.SUCCESS(
+                f'Done: {ok} captioned, {applied} applied, {failed} failed.'))
+        else:
+            self.stdout.write(self.style.SUCCESS(
+                f'Done: {ok} suggested, {failed} failed. '
+                f'Review and approve in /admin/ → Image label suggestions.'))
