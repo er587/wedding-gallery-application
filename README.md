@@ -36,6 +36,13 @@ A beautiful, secure wedding gallery application for sharing precious memories wi
 - **Smooth animations** and intuitive user experience
 - **Customizable themes** and wedding-specific branding
 
+### 🤖 **AI Photo Labeling** (optional)
+- **Auto-captioning** with your choice of **Claude, ChatGPT, or Gemini**
+- **People matching** - find already-tagged guests across your untagged photos
+- **Near-duplicate tagging** - copy tags to burst/duplicate shots (no API cost)
+- **Staff review gate** - every AI suggestion is approved before it goes live
+- **Editable prompts** - tune the AI's tone from the dashboard or Django admin
+
 ## 🚀 Quick Start
 
 ### One-Minute Demo
@@ -64,6 +71,7 @@ For detailed installation instructions, see our **[Complete Setup Guide](SETUP.m
 - **OpenCV** - Intelligent face detection for thumbnail generation
 - **Pillow** - Advanced image processing and optimization
 - **SQLite/PostgreSQL** - Flexible database options
+- **Vision LLMs** - Optional AI captioning via Anthropic, OpenAI, or Gemini
 
 ### Frontend (React + Vite)
 - **React 19.1** - Modern component-based UI
@@ -151,21 +159,75 @@ npm run dev
 ## 🎨 Customization
 
 ### Wedding Branding
-Edit `frontend/src/components/App.jsx`:
-```javascript
-const weddingInfo = {
-  coupleName: "Your Names Here",
-  weddingDate: "Your Wedding Date", 
-  venue: "Your Venue",
-  hashtag: "#YourHashtag"
-}
-```
+All wedding details (couple names, date, venue, intro/footer copy, featured
+photo) are stored in the database — no code edits needed. Set them in the Django
+admin under **Site configuration** (`/admin/`), and the site updates instantly.
 
 ### Styling
 - **Colors**: Update Tailwind config in `tailwind.config.js`
 - **Fonts**: Add Google Fonts in `index.html`
 - **Layout**: Modify component files in `src/components/`
 - **Images**: Replace logo and background images in `public/`
+
+## 🤖 AI Photo Labeling
+
+Generate captions and tags for your gallery with a vision LLM. **Every suggestion
+goes through a staff review gate**, so nothing is published without your approval.
+
+Three tools, available from a staff-only dashboard at **`/labeling`** and as
+management commands:
+
+- **Generate captions** — a warm, wedding-aware title + description per photo.
+- **Match people** — finds people you've already tagged in your *other* untagged
+  photos and suggests their names (few-shot visual matching).
+- **Propagate to duplicates** — copies tags from a tagged photo to its
+  near-identical shots via perceptual hashing (no API cost).
+
+### Choose your AI provider
+
+Captioning works with **Anthropic Claude**, **OpenAI (ChatGPT)**, or **Google
+Gemini** — use whichever you have a key for. Configure in `.env`:
+
+| Variable | Purpose |
+| --- | --- |
+| `LABELING_PROVIDER` | Default provider: `anthropic` (default), `openai`, or `gemini` |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` | API key for the provider(s) you use |
+| `ANTHROPIC_LABELING_MODEL` / `OPENAI_LABELING_MODEL` / `GEMINI_LABELING_MODEL` | Optional model override per provider |
+| `ANTHROPIC_LABEL_MAX_TAGS` | Optional cap on AI-suggested tags per image (`0` = none) |
+
+The provider SDKs (`anthropic`, `openai`, `google-generativeai`) are in
+`requirements.txt` and imported lazily — you only need the one you use.
+People-matching currently uses Anthropic only.
+
+### The staff dashboard
+
+Log in as a staff user and open **Labeling** in the top bar:
+
+- **Review** — approve/reject pending suggestions (thumbnail, suggested title,
+  description, tags, confidence, rationale).
+- **Run tasks** — run captions / match people / propagate with a live progress
+  bar; choose the provider and model per run.
+- **Prompts** — edit the caption and people-matching prompts right in the browser
+  (stored in the DB; leave blank for the built-in default). Also editable in the
+  Django admin.
+
+### Labeling context
+
+Set the couple names, venue, and location in the Django admin (**Site
+configuration**) so captions are accurate. `fetch_venue_context` can pull your
+venue website's text into the labeling context automatically.
+
+### From the command line
+
+The same tools are management commands — all write **pending** suggestions for
+review:
+
+```bash
+python manage.py autolabel --limit 20 --model claude-sonnet-4-6   # captions
+python manage.py match_people --min-confidence 0.7                # match tagged people
+python manage.py propagate_labels --dry-run                       # near-duplicate tags
+python manage.py fetch_venue_context                              # venue site -> context
+```
 
 ## 📊 Performance Features
 
