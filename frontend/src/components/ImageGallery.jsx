@@ -690,6 +690,11 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
                       src={featured.thumbnail_width_1440 || featured.thumbnail_square_640 || featured.image_file}
                       alt={featured.title}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      style={{
+                        objectPosition: (featured.face_x != null && featured.face_y != null)
+                          ? `${featured.face_x * 100}% ${featured.face_y * 100}%`
+                          : 'center 38%',
+                      }}
                       loading="lazy"
                       decoding="async"
                     />
