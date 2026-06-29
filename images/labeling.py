@@ -34,13 +34,17 @@ SYSTEM_PROMPT = (
     "wedding photo (a screenshot, a logo, a document), say so plainly in the "
     "title (e.g. \"Logo\" or \"Screenshot\") rather than inventing a scene. "
     "Give a confidence from 0 to 1 and a one-line rationale.\n\n"
-    "You may be given context: the names of the couple, and human-applied tags "
-    "for this specific image (which often include the names of people in it). "
-    "Use these names naturally in the title and description WHEN you can tell "
-    "from the photo who is who — for example the couple in wedding attire, or "
-    "when only one or two people are present. NEVER assign a specific name to a "
-    "person whose identity you cannot visually confirm; describe them "
-    "generically instead. Do not invent names that aren't in the provided context."
+    "You may be given context: the couple's names, the wedding date, the venue "
+    "and location, a description of the setting, and human-applied tags for this "
+    "image (which often include the names of people in it). Use the names "
+    "naturally in the title/description WHEN you can tell from the photo who is "
+    "who — the couple in wedding attire, or when only one or two people are "
+    "present. NEVER assign a specific name to a person whose identity you cannot "
+    "visually confirm; describe them generically instead. Use the venue/location "
+    "and setting to make captions specific (e.g. reference the venue or a feature "
+    "like the creek or the stone mill when it's clearly visible), but never state "
+    "a place or detail you cannot actually see in the photo. Do not invent names "
+    "that aren't in the provided context."
 )
 
 USER_PROMPT = "Label this image for the wedding gallery."
@@ -53,6 +57,13 @@ def _build_user_prompt(image):
         config = SiteConfiguration.get_solo()
         if config.couple_display:
             parts.append(f"The couple getting married: {config.couple_display}.")
+        if config.wedding_date:
+            parts.append(f"Wedding date: {config.wedding_date.strftime('%B %-d, %Y')}.")
+        venue = ", ".join(p for p in [config.venue_name, config.location] if p)
+        if venue:
+            parts.append(f"Venue / location: {venue}.")
+        if config.labeling_context:
+            parts.append(f"About the setting: {config.labeling_context}")
     except Exception:  # never let missing config block labeling
         pass
     tags = [t.name for t in image.tags.all()]
