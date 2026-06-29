@@ -12,7 +12,7 @@ Requires ANTHROPIC_API_KEY. Pairs with autolabel (captions) and propagate_labels
 import json
 import logging
 
-from .models import Tag, ImageLabelSuggestion
+from .models import Tag, ImageLabelSuggestion, SiteConfiguration
 from .labeling import _encode_image
 
 logger = logging.getLogger(__name__)
@@ -48,6 +48,17 @@ MATCH_SCHEMA = {
     "required": ["people"],
     "additionalProperties": False,
 }
+
+
+def effective_match_prompt():
+    """The people-matching system prompt: staff-edited DB override, else default."""
+    try:
+        custom = (SiteConfiguration.get_solo().match_prompt or '').strip()
+        if custom:
+            return custom
+    except Exception:
+        pass
+    return MATCH_SYSTEM_PROMPT
 
 
 def build_people_references(refs_per_person=2, max_people=None):
@@ -91,13 +102,14 @@ def build_people_references(refs_per_person=2, max_people=None):
     return content, known, people
 
 
-def match_people_in_image(image, *, client, model, reference_content, known, min_confidence):
+def match_people_in_image(image, *, client, model, reference_content, known,
+                          min_confidence, system_prompt=None):
     """Return [(canonical_name, confidence), ...] for known people found in image."""
     b64, media_type = _encode_image(image)
     response = client.messages.create(
         model=model,
         max_tokens=512,
-        system=MATCH_SYSTEM_PROMPT,
+        system=system_prompt or MATCH_SYSTEM_PROMPT,
         messages=[{
             "role": "user",
             "content": reference_content + [

@@ -1009,6 +1009,31 @@ def labeling_stats(request):
     }, status=status.HTTP_200_OK)
 
 
+@api_view(['GET', 'PUT'])
+@permission_classes([permissions.IsAdminUser])
+def labeling_prompts(request):
+    """Read/update the editable AI prompts (caption + people-matching).
+
+    Blank stored value means "use the built-in default" (also returned, so the
+    dashboard can show it and offer reset/edit-from-default).
+    """
+    from .labeling import SYSTEM_PROMPT
+    from .matching import MATCH_SYSTEM_PROMPT
+    cfg = SiteConfiguration.get_solo()
+    if request.method == 'PUT':
+        if 'caption_prompt' in request.data:
+            cfg.caption_prompt = (request.data.get('caption_prompt') or '').strip()
+        if 'match_prompt' in request.data:
+            cfg.match_prompt = (request.data.get('match_prompt') or '').strip()
+        cfg.save()
+    return Response({
+        'caption_prompt': cfg.caption_prompt,
+        'match_prompt': cfg.match_prompt,
+        'caption_default': SYSTEM_PROMPT,
+        'match_default': MATCH_SYSTEM_PROMPT,
+    }, status=status.HTTP_200_OK)
+
+
 @api_view(['POST'])
 @permission_classes([permissions.IsAdminUser])
 def generate_labels_batch(request):
@@ -1050,7 +1075,10 @@ def match_people_batch(request):
     """Match known (person-tagged) people into a batch of untagged photos."""
     if not os.environ.get('ANTHROPIC_API_KEY'):
         return Response({'error': 'ANTHROPIC_API_KEY is not set.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-    from .matching import build_people_references, match_people_in_image, create_match_suggestion
+    from .matching import (
+        build_people_references, match_people_in_image, create_match_suggestion,
+        effective_match_prompt,
+    )
     try:
         import anthropic
     except ImportError:
@@ -1074,12 +1102,14 @@ def match_people_batch(request):
     images = list(_unhandled_image_qs(after_id).exclude(id__in=person_tagged)[:limit])
 
     client = anthropic.Anthropic()
+    system_prompt = effective_match_prompt()
     detail, created = [], 0
     for img in images:
         try:
             matches = match_people_in_image(img, client=client, model=model,
                                             reference_content=reference_content,
-                                            known=known, min_confidence=min_conf)
+                                            known=known, min_confidence=min_conf,
+                                            system_prompt=system_prompt)
         except Exception as exc:
             detail.append({'image': img.id, 'error': str(exc)})
             continue

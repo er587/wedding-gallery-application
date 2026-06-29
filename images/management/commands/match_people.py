@@ -13,6 +13,7 @@ from images.models import Image, ImageLabelSuggestion, Tag
 from images.labeling import DEFAULT_MODEL
 from images.matching import (
     build_people_references, match_people_in_image, create_match_suggestion,
+    effective_match_prompt,
 )
 
 
@@ -71,13 +72,14 @@ class Command(BaseCommand):
 
         self.stdout.write(f'Scanning {len(targets)} photo(s) at min-confidence {opts["min_confidence"]}…')
         client = anthropic.Anthropic()
+        system_prompt = effective_match_prompt()
         created = matched = failed = 0
         for i, image in enumerate(targets, 1):
             try:
                 matches = match_people_in_image(
                     image, client=client, model=model,
                     reference_content=reference_content, known=known,
-                    min_confidence=opts['min_confidence'],
+                    min_confidence=opts['min_confidence'], system_prompt=system_prompt,
                 )
             except Exception as exc:
                 failed += 1
