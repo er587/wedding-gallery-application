@@ -321,38 +321,13 @@ Report security issues privately via our **[Security Policy](SECURITY.md)**.
 - **[Frontend Components](docs/FRONTEND.md)** - React component guide
 - **[Testing Guide](docs/TESTING.md)** - Test coverage and best practices
 
-## 🎉 Success Stories
-
-> "Our wedding gallery was perfect! Guests loved how easy it was to upload photos, and we got so many beautiful memories we would have missed otherwise." - Sarah & John
-
-> "The face detection thumbnails made browsing photos so much better. We could actually see people in the previews!" - Maria & David
-
-> "Setup was incredibly easy. Had our gallery running in 10 minutes!" - Alex & Jordan
-
-## 📊 Project Stats
-
-- **🎯 Production Ready** - Tested with real weddings
-- **⚡ Performance Optimized** - Sub-second loading times  
-- **📱 Mobile First** - 90%+ mobile traffic support
-- **🔧 Easy Setup** - 5-minute quickstart
-- **🛡️ Secure by Design** - Privacy-focused architecture
-- **🌍 Open Source** - MIT licensed, community-driven
-
-## 🏆 Awards & Recognition
-
-- **Best Wedding Tech 2024** - WeddingWire Innovation Awards
-- **Open Source Favorite** - Developer's Choice Awards
-- **Security Excellence** - OpenSSF Best Practices Badge
-
 ## 🚀 Roadmap
 
 ### Coming Soon
-- **Video Upload Support** - Share wedding videos
-- **Guest Book Integration** - Digital guest book features  
 - **Photo Slideshow** - Automated photo presentations
-- **Email Notifications** - Alert on new uploads
 - **Social Media Export** - Easy sharing to platforms
 - **Advanced Analytics** - Photo engagement insights
+- **Edit-before-approve** - Tweak AI suggestions before applying them
 
 ### Long Term
 - **Multi-Wedding Support** - Host multiple events
@@ -377,19 +352,11 @@ A: Multiple backup options available - local exports, cloud storage, and databas
 ### **Q: Can I use my own domain?**
 A: Yes! Deploy to any domain with full DNS and SSL support.
 
-## 📞 Support & Community
+## 📞 Support
 
-### Get Help
 - **GitHub Issues** - Bug reports and feature requests
-- **GitHub Discussions** - Community questions and chat
-- **Email Support** - help@wedding-gallery.dev (if available)
-- **Discord Community** - Real-time chat and support
-
-### Stay Updated
+- **GitHub Discussions** - Questions and community help
 - **GitHub Releases** - New version announcements
-- **Newsletter** - Wedding tech tips and updates  
-- **Blog** - Implementation guides and success stories
-- **Social Media** - @WeddingGalleryApp
 
 ## 🙏 Acknowledgments
 
