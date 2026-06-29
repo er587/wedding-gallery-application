@@ -20,7 +20,7 @@ import requests
 from django.utils.html import strip_tags
 from PIL import Image as PILImage
 
-from .models import Image, ImageLabelSuggestion, SiteConfiguration
+from .models import Image, ImageLabelSuggestion, SiteConfiguration, Tag
 
 logger = logging.getLogger(__name__)
 
@@ -75,8 +75,12 @@ SYSTEM_PROMPT = (
 USER_PROMPT = "Label this image for the wedding gallery."
 
 
-def _build_user_prompt(image, max_tags=DEFAULT_MAX_TAGS):
-    """Compose the user text: the ask plus any name context (couple + image tags)."""
+def _build_user_prompt(image, max_tags=DEFAULT_MAX_TAGS, allowed_tags=None):
+    """Compose the user text: the ask plus any name context (couple + image tags).
+
+    If allowed_tags is a list, the model is told to choose tags only from it
+    (controlled vocabulary); an empty list means "use no tags".
+    """
     parts = [USER_PROMPT]
     try:
         config = SiteConfiguration.get_solo()
@@ -102,6 +106,15 @@ def _build_user_prompt(image, max_tags=DEFAULT_MAX_TAGS):
         )
     if max_tags <= 0:
         parts.append("Do not output any keyword tags — return an empty tags list.")
+    elif allowed_tags is not None:
+        if allowed_tags:
+            parts.append(
+                f"Choose tags ONLY from this existing list — do NOT invent any new "
+                f"tag. If none apply, return no tags. Use at most {max_tags}. "
+                f"Allowed tags: " + ", ".join(allowed_tags) + "."
+            )
+        else:
+            parts.append("Do not invent tags; there are no existing tags, so return none.")
     else:
         parts.append(
             f"Return at most {max_tags} tags, and prefer the people's names over "
@@ -149,13 +162,15 @@ def _encode_image(image):
     return base64.standard_b64encode(buf.getvalue()).decode('utf-8'), 'image/jpeg'
 
 
-def generate_label_suggestion(image_id, model=None, max_tags=None):
+def generate_label_suggestion(image_id, model=None, max_tags=None, existing_tags_only=False):
     """Generate one pending ImageLabelSuggestion for an image via Claude vision.
 
     max_tags caps AI-suggested tags (0 = none); defaults to ANTHROPIC_LABEL_MAX_TAGS
-    or DEFAULT_MAX_TAGS. Returns the created ImageLabelSuggestion. Raises
-    LabelingNotConfigured if the SDK isn't installed or ANTHROPIC_API_KEY is unset;
-    lets Image.DoesNotExist propagate for an unknown id.
+    or DEFAULT_MAX_TAGS. If existing_tags_only is True, the model is restricted to
+    the current Tag vocabulary and any tag it invents is dropped (so no new tags are
+    created). Returns the created ImageLabelSuggestion. Raises LabelingNotConfigured
+    if the SDK isn't installed or ANTHROPIC_API_KEY is unset; lets Image.DoesNotExist
+    propagate for an unknown id.
     """
     try:
         import anthropic
@@ -174,6 +189,12 @@ def generate_label_suggestion(image_id, model=None, max_tags=None):
             max_tags = int(os.environ.get('ANTHROPIC_LABEL_MAX_TAGS', DEFAULT_MAX_TAGS))
         except (TypeError, ValueError):
             max_tags = DEFAULT_MAX_TAGS
+
+    # Controlled vocabulary: map lowercased -> canonical existing tag name.
+    vocab = None
+    if existing_tags_only:
+        vocab = {t.lower(): t for t in Tag.objects.values_list('name', flat=True)}
+    allowed_tags = sorted(vocab.values(), key=str.lower) if vocab is not None else None
     b64, media_type = _encode_image(image)
 
     client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from the environment
@@ -185,7 +206,7 @@ def generate_label_suggestion(image_id, model=None, max_tags=None):
             "role": "user",
             "content": [
                 {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": b64}},
-                {"type": "text", "text": _build_user_prompt(image, max_tags=max_tags)},
+                {"type": "text", "text": _build_user_prompt(image, max_tags=max_tags, allowed_tags=allowed_tags)},
             ],
         }],
         output_config={"format": {"type": "json_schema", "schema": LABEL_SCHEMA}},
@@ -195,6 +216,9 @@ def generate_label_suggestion(image_id, model=None, max_tags=None):
     data = json.loads(text)
 
     tags = [str(t).strip().lower() for t in data.get("tags", []) if str(t).strip()]
+    if vocab is not None:
+        # Drop anything the model invented; keep the canonical existing casing.
+        tags = [vocab[t] for t in tags if t in vocab]
     cap = max(0, min(max_tags, ImageLabelSuggestion.MAX_TAGS))
     suggestion = ImageLabelSuggestion.objects.create(
         image=image,
