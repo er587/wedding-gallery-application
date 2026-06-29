@@ -17,7 +17,7 @@ from io import BytesIO
 
 from PIL import Image as PILImage
 
-from .models import Image, ImageLabelSuggestion
+from .models import Image, ImageLabelSuggestion, SiteConfiguration
 
 logger = logging.getLogger(__name__)
 
@@ -33,10 +33,35 @@ SYSTEM_PROMPT = (
     "tags. Be specific and warm but accurate. If the image is clearly NOT a "
     "wedding photo (a screenshot, a logo, a document), say so plainly in the "
     "title (e.g. \"Logo\" or \"Screenshot\") rather than inventing a scene. "
-    "Give a confidence from 0 to 1 and a one-line rationale."
+    "Give a confidence from 0 to 1 and a one-line rationale.\n\n"
+    "You may be given context: the names of the couple, and human-applied tags "
+    "for this specific image (which often include the names of people in it). "
+    "Use these names naturally in the title and description WHEN you can tell "
+    "from the photo who is who — for example the couple in wedding attire, or "
+    "when only one or two people are present. NEVER assign a specific name to a "
+    "person whose identity you cannot visually confirm; describe them "
+    "generically instead. Do not invent names that aren't in the provided context."
 )
 
 USER_PROMPT = "Label this image for the wedding gallery."
+
+
+def _build_user_prompt(image):
+    """Compose the user text: the ask plus any name context (couple + image tags)."""
+    parts = [USER_PROMPT]
+    try:
+        config = SiteConfiguration.get_solo()
+        if config.couple_display:
+            parts.append(f"The couple getting married: {config.couple_display}.")
+    except Exception:  # never let missing config block labeling
+        pass
+    tags = [t.name for t in image.tags.all()]
+    if tags:
+        parts.append(
+            "Human-applied tags for this image (treat any name-like tags as "
+            "people present in the photo): " + ", ".join(tags) + "."
+        )
+    return "\n".join(parts)
 
 LABEL_SCHEMA = {
     "type": "object",
@@ -108,7 +133,7 @@ def generate_label_suggestion(image_id, model=None):
             "role": "user",
             "content": [
                 {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": b64}},
-                {"type": "text", "text": USER_PROMPT},
+                {"type": "text", "text": _build_user_prompt(image)},
             ],
         }],
         output_config={"format": {"type": "json_schema", "schema": LABEL_SCHEMA}},
