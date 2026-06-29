@@ -33,6 +33,7 @@ env = environ.Env(
     EMAIL_HOST_USER=(str, ''),
     EMAIL_HOST_PASSWORD=(str, ''),
     DEFAULT_FROM_EMAIL=(str, ''),
+    REPLY_TO_EMAIL=(str, ''),
     SERVER_EMAIL=(str, 'admin@localhost'),
     FRONTEND_URL=(str, 'http://localhost:5173'),
     STATIC_ROOT=(str, str(BASE_DIR / 'staticfiles')),
@@ -302,6 +303,8 @@ EMAIL_USE_TLS = env('EMAIL_USE_TLS')
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL') or EMAIL_HOST_USER
+# Reply-To for outbound announcements (a monitored inbox); falls back to From.
+REPLY_TO_EMAIL = env('REPLY_TO_EMAIL')
 SERVER_EMAIL = env('SERVER_EMAIL')
 
 FRONTEND_URL = env('FRONTEND_URL')

@@ -11,10 +11,11 @@ from SiteConfiguration / FRONTEND_URL. Edit the copy below and
 images/templates/emails/announcement.html to taste.
 """
 import logging
+from email.utils import make_msgid, parseaddr
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
 
@@ -33,6 +34,8 @@ class Command(BaseCommand):
                             help='Send a single preview to this address only.')
         parser.add_argument('--limit', type=int, default=None,
                             help='Cap how many emails to send (for batching).')
+        parser.add_argument('--reply-to', metavar='EMAIL', default=None,
+                            help='Reply-To address (default: REPLY_TO_EMAIL env, else DEFAULT_FROM_EMAIL).')
 
     def handle(self, *args, **opts):
         config = SiteConfiguration.get_solo()
@@ -45,12 +48,22 @@ class Command(BaseCommand):
             self.stderr.write(self.style.WARNING(
                 'DEFAULT_FROM_EMAIL is not set — emails may be rejected by the mail server.'))
 
+        reply_to = (opts['reply_to'] or getattr(settings, 'REPLY_TO_EMAIL', '')
+                    or settings.DEFAULT_FROM_EMAIL)
+
+        # Stamp the Message-ID with the From domain (not the server's hostname),
+        # so headers are consistent for spam filters / SPF/DKIM alignment.
+        from_addr = parseaddr(settings.DEFAULT_FROM_EMAIL)[1]
+        msgid_domain = from_addr.rsplit('@', 1)[-1] if '@' in from_addr else None
+
         if opts['test']:
-            recipients = [('there', opts['test'])]
+            recipients = [('', opts['test'])]
             self.stdout.write(self.style.WARNING(f'TEST mode → sending ONE preview to {opts["test"]}'))
         else:
             users = User.objects.filter(is_active=True).exclude(email='').order_by('id')
-            recipients = [(u.first_name or u.username, u.email) for u in users]
+            # Use the first name only when it's set; otherwise greet generically
+            # (never expose a username in the greeting).
+            recipients = [(u.first_name, u.email) for u in users]
             if opts['limit']:
                 recipients = recipients[:opts['limit']]
             if not recipients:
@@ -63,12 +76,13 @@ class Command(BaseCommand):
             if opts['dry_run']:
                 self.stdout.write(f'  would email: {email}')
                 continue
+            name = (first_name or '').strip() or 'there'
             html_message = render_to_string('emails/announcement.html', {
-                'first_name': first_name, 'couple': couple,
+                'first_name': name, 'couple': couple,
                 'gallery_url': gallery_url, 'image_count': image_count,
             })
             plain_message = (
-                f"Hi {first_name},\n\n"
+                f"Hi {name},\n\n"
                 f"It's been a little while! We've given the {couple} wedding gallery a fresh new "
                 "look and tidied everything up. With a little help from AI, we've also labeled as "
                 "many people as we could by name, given the photos proper titles, and added "
@@ -85,9 +99,14 @@ class Command(BaseCommand):
                 "off the list."
             )
             try:
-                send_mail(subject=subject, message=plain_message,
-                          from_email=settings.DEFAULT_FROM_EMAIL, recipient_list=[email],
-                          html_message=html_message, fail_silently=False)
+                msg = EmailMultiAlternatives(
+                    subject=subject, body=plain_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL, to=[email],
+                    reply_to=[reply_to] if reply_to else None,
+                    headers={'Message-ID': make_msgid(domain=msgid_domain)} if msgid_domain else None,
+                )
+                msg.attach_alternative(html_message, 'text/html')
+                msg.send(fail_silently=False)
                 sent += 1
             except Exception as exc:
                 failed += 1
