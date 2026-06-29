@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.db.models import Count, Exists, OuterRef, Q, Prefetch
+from django.db.models import Count, Exists, F, OuterRef, Q, Prefetch
 from django.core.cache import cache
 from django.http import JsonResponse, HttpResponse, Http404
 from django.conf import settings
@@ -738,8 +738,19 @@ def get_image_count(request):
 def site_config(request):
     """Public wedding display content (couple, date, venue, masthead/footer copy)."""
     config = SiteConfiguration.get_solo()
-    serializer = SiteConfigurationSerializer(config, context={'request': request})
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    data = SiteConfigurationSerializer(config, context={'request': request}).data
+    if config.randomize_featured:
+        # Pick a fresh opening frame each visit. Prefer a landscape photo for the
+        # wide hero; fall back to any non-video image.
+        from .serializers import FeaturedImageSerializer
+        # Photos only (exclude videos via empty vimeo_url) and not soft-deleted.
+        base = Image.objects.filter(is_deleted=False).filter(
+            Q(vimeo_url='') | Q(vimeo_url__isnull=True))
+        pick = base.filter(image_width__gte=F('image_height')).order_by('?').first() \
+            or base.order_by('?').first()
+        if pick:
+            data['featured_image'] = FeaturedImageSerializer(pick, context={'request': request}).data
+    return Response(data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])

@@ -757,6 +757,11 @@ class SiteConfiguration(models.Model):
         help_text='Caption shown over the featured photo. Leave blank for no text overlay.',
     )
     featured_subtitle = models.CharField(max_length=160, blank=True, default='')
+    randomize_featured = models.BooleanField(
+        default=False,
+        help_text='Show a random photo as the opening/featured frame on each visit '
+                  '(overrides the chosen featured photo above).',
+    )
     site_domain = models.CharField(
         max_length=120, blank=True, default='',
         help_text='Shown in the footer, e.g. "yourwedding.com".',

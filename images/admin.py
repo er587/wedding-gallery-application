@@ -364,7 +364,8 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
             'fields': ('wedding_date', 'venue_name', 'venue_url', 'location'),
         }),
         ('Gallery copy', {
-            'fields': ('intro_text', 'featured_image', 'featured_title', 'featured_subtitle'),
+            'fields': ('intro_text', 'featured_image', 'randomize_featured',
+                       'featured_title', 'featured_subtitle'),
         }),
         ('Footer', {
             'fields': ('site_domain', 'footer_message'),
