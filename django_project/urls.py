@@ -16,13 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.conf import settings
-from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('images.urls')),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Note: /media/ is intentionally NOT served by Django's static() helper. The
+# gallery is private, so media goes through the auth-gated serve_protected_media
+# view (see images/urls.py), which streams in DEBUG and uses nginx
+# X-Accel-Redirect in production.

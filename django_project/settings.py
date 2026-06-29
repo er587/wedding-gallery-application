@@ -193,6 +193,9 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = env('MEDIA_ROOT')
+# Internal nginx location used by the protected-media view's X-Accel-Redirect.
+# Must match the `internal` location block in the nginx config.
+PROTECTED_MEDIA_INTERNAL = env('PROTECTED_MEDIA_INTERNAL', default='/protected-media/')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
