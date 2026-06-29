@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0; padding:0; background-color:#f4efe6; font-family:Georgia, 'Times New Roman', serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4efe6; padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; background-color:#ffffff; border:1px solid #e8dfce;">
+          <!-- Header -->
+          <tr>
+            <td style="padding:44px 36px 26px 36px; text-align:center; border-bottom:1px solid #efe7d8;">
+              <div style="font-size:11px; letter-spacing:0.28em; text-transform:uppercase; color:#b9694e; margin-bottom:14px;">A little update</div>
+              <h1 style="font-size:34px; line-height:1.15; margin:0; color:#2b2724; font-weight:normal;">{{ couple }}</h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:32px 36px;">
+              <p style="color:#3a342d; font-size:16px; line-height:1.7; margin:0 0 18px 0;">Hi {{ first_name }},</p>
+              <p style="color:#3a342d; font-size:16px; line-height:1.7; margin:0 0 18px 0;">
+                It&rsquo;s been a little while! We&rsquo;ve given the gallery a fresh new look and tidied
+                everything up.
+                {% if image_count > 0 %}All {{ image_count }} photos and films are waiting for you{% else %}All our photos and films are waiting for you{% endif %}
+                &mdash; and if you have pictures from the day you haven&rsquo;t shared yet, we&rsquo;d love to see them.
+              </p>
+              <p style="color:#6f675b; font-size:15px; line-height:1.7; margin:0 0 28px 0;">
+                One quick note: the gallery is now private, so just log in with your account to view.
+              </p>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding:4px 0 28px 0;">
+                    <a href="{{ gallery_url }}" style="display:inline-block; background-color:#b9694e; color:#ffffff; text-decoration:none; padding:14px 38px; font-size:15px; letter-spacing:0.02em;">
+                      Relive the day
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="color:#9c9384; font-size:14px; line-height:1.6; margin:0; text-align:center; font-style:italic;">
+                With love,<br>{{ couple }}
+              </p>
+            </td>
+          </tr>
+        </table>
+        <p style="color:#b3a994; font-size:12px; margin:18px 0 0 0;">
+          If the button doesn&rsquo;t work, visit {{ gallery_url }}
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
