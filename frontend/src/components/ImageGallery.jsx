@@ -552,6 +552,20 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
   }
   const gridImages = featured ? images.filter((img) => img.id !== featured.id) : images
 
+  // The featured photo may be a thin payload (a random or admin-chosen photo not
+  // in the current page lacks uploader/tags/comments the viewer needs), so fetch
+  // the full image before opening it.
+  const openFeatured = async () => {
+    if (!featured) return
+    try {
+      const { data } = await apiService.getImage(featured.id)
+      setSelectedImage(data)
+    } catch (err) {
+      console.error('Failed to open featured image:', err)
+      toast?.error?.('Could not open this photo. Please try again.')
+    }
+  }
+
   const tabs = [
     { key: 'all', label: 'All', onClick: () => { setViewMode('all'); setShowSearchBar(false) }, active: viewMode === 'all' && !showSearchBar },
     { key: 'videos', label: 'Films', onClick: () => { setViewMode('videos'); setShowSearchBar(false) }, active: viewMode === 'videos' },
@@ -670,7 +684,7 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
                 <>
                   <div
                     className="relative aspect-[16/7] overflow-hidden mb-[14px] cursor-pointer group bg-[#ece5d8]"
-                    onClick={() => setSelectedImage(featured)}
+                    onClick={openFeatured}
                   >
                     <img
                       src={featured.thumbnail_width_1440 || featured.thumbnail_square_640 || featured.image_file}
