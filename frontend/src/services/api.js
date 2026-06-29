@@ -56,6 +56,20 @@ export const apiService = {
   // Tags
   getTags: () => api.get('/api/tags/'),
 
+  // Staff AI labeling dashboard
+  getLabelingStats: () => api.get('/api/labeling/stats/'),
+  listLabelSuggestions: (status = 'pending', limit = 100) =>
+    api.get(`/api/label-suggestions/?status=${status}&limit=${limit}`),
+  approveLabelSuggestion: (id) => api.post(`/api/label-suggestions/${id}/approve/`),
+  rejectLabelSuggestion: (id) => api.post(`/api/label-suggestions/${id}/reject/`),
+  // Client-driven batch runners (page by after_id until done)
+  runGenerateBatch: (afterId = 0, opts = {}) =>
+    api.post(`/api/labeling/generate-batch/?after_id=${afterId}`, opts),
+  runMatchPeople: (afterId = 0, opts = {}) =>
+    api.post(`/api/labeling/match-people/?after_id=${afterId}`, opts),
+  runPropagate: (afterId = 0, opts = {}) =>
+    api.post(`/api/labeling/propagate/?after_id=${afterId}`, opts),
+
   // Site configuration (wedding display content set in the Django admin)
   getSiteConfig: () => api.get('/api/site-config/'),
 
