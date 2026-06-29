@@ -68,7 +68,7 @@ class ImageListSerializer(serializers.ModelSerializer):
         model = Image
         fields = ['id', 'title', 'description', 'image_file', 'vimeo_url', 'is_video',
                  'thumbnail_square_320', 'thumbnail_square_640', 'thumbnail_width_1440',
-                 'image_width', 'image_height',
+                 'image_width', 'image_height', 'face_x', 'face_y',
                  'uploader', 'uploaded_at', 'updated_at',
                  'comment_count', 'like_count', 'user_has_liked', 'tags', 'tag_names']
         read_only_fields = ['id', 'uploader', 'uploaded_at', 'updated_at']
@@ -241,7 +241,7 @@ class FeaturedImageSerializer(ImageListSerializer):
     class Meta(ImageListSerializer.Meta):
         fields = ['id', 'title', 'is_video', 'image_file',
                   'thumbnail_square_640', 'thumbnail_width_1440',
-                  'image_width', 'image_height']
+                  'image_width', 'image_height', 'face_x', 'face_y']
         read_only_fields = fields
 
 
