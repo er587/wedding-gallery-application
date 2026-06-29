@@ -20,15 +20,17 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
-from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken, GuestBookEntry, SiteConfiguration
+from .models import Image, Comment, Tag, UserProfile, InvitationCode, Like, EmailVerificationToken, PasswordResetToken, GuestBookEntry, SiteConfiguration, ImageLabelSuggestion
 
 
 def _is_postgres():
     """Check if the default database is PostgreSQL."""
     engine = settings.DATABASES.get('default', {}).get('ENGINE', '')
     return 'postgresql' in engine or 'postgis' in engine
-from .serializers import ImageSerializer, ImageListSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer, GuestBookEntrySerializer, SiteConfigurationSerializer
+from .serializers import ImageSerializer, ImageListSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer, GuestBookEntrySerializer, SiteConfigurationSerializer, LabelingImageSerializer, LabelSuggestionInputSerializer, ImageLabelSuggestionSerializer
 from .storage import ReplitAppStorage, FileAccessControl
+from .permissions import IsLabelingAgentOrStaff
+from .labeling import generate_label_suggestion, LabelingNotConfigured
 
 
 class ImagePagination(PageNumberPagination):
@@ -741,6 +743,201 @@ def get_user_upload_count(request):
     """Get count of images uploaded by the authenticated user"""
     count = request.user.uploaded_images.count()
     return Response({'count': count}, status=status.HTTP_200_OK)
+
+
+# ---------------------------------------------------------------------------
+# Image labeling agent API
+# ---------------------------------------------------------------------------
+# A scoped surface for an AI agent (authenticated with an X-Agent-Key, or a
+# staff session) to review images and submit suggested labels. Suggestions are
+# stored pending review; only a staff approval applies them to the live image.
+
+# Heuristic for auto-generated / placeholder filenames worth relabeling.
+_PLACEHOLDER_TITLE_RE = (
+    r'^(img[_-]|dsc[_-]|dscf|pxl_|vid[_-]|mvimg|gopr|screenshot|image\d|photo\d|untitled|logo$)'
+)
+
+
+@api_view(['GET'])
+@permission_classes([IsLabelingAgentOrStaff])
+def labeling_queue(request):
+    """Images for an agent to review. Cursor with ?after_id=, page with ?limit=.
+
+    ?needs_label=true (default) restricts to blank or placeholder-named titles.
+    Images that already have a pending/approved/applied suggestion are excluded
+    so re-running the agent doesn't double-queue them.
+    """
+    try:
+        limit = min(int(request.GET.get('limit', 50)), 200)
+    except (TypeError, ValueError):
+        limit = 50
+    try:
+        after_id = int(request.GET.get('after_id', 0))
+    except (TypeError, ValueError):
+        after_id = 0
+    needs_label = request.GET.get('needs_label', 'true').lower() != 'false'
+
+    qs = Image.objects.all().order_by('id')
+    if after_id:
+        qs = qs.filter(id__gt=after_id)
+
+    already = ImageLabelSuggestion.objects.filter(
+        status__in=['pending', 'approved', 'applied']
+    ).values_list('image_id', flat=True)
+    qs = qs.exclude(id__in=already)
+
+    if needs_label:
+        qs = qs.filter(Q(title='') | Q(title__isnull=True) | Q(title__iregex=_PLACEHOLDER_TITLE_RE))
+
+    images = list(qs[:limit])
+    data = LabelingImageSerializer(images, many=True, context={'request': request}).data
+    return Response({
+        'results': data,
+        'count_returned': len(data),
+        'next_after_id': images[-1].id if images else None,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsLabelingAgentOrStaff])
+def create_label_suggestion(request, image_id):
+    """Submit one agent label suggestion for an image (stored as pending)."""
+    try:
+        image = Image.objects.get(pk=image_id)
+    except Image.DoesNotExist:
+        return Response({'error': 'Image not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = LabelSuggestionInputSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    data = serializer.validated_data
+
+    # Attribute the suggestion: explicit source > agent key name > staff user.
+    agent_key = getattr(request, 'agent_key', None)
+    source = data.get('source') or (agent_key.name if agent_key else None)
+    if not source:
+        source = f'staff:{request.user.username}' if request.user.is_authenticated else 'agent'
+
+    suggestion = ImageLabelSuggestion.objects.create(
+        image=image,
+        suggested_title=data.get('suggested_title', ''),
+        suggested_description=data.get('suggested_description', ''),
+        suggested_tags=data.get('suggested_tags', []),
+        confidence=data.get('confidence'),
+        rationale=data.get('rationale', ''),
+        source=source[:64],
+        status='pending',
+    )
+    return Response(
+        ImageLabelSuggestionSerializer(suggestion).data,
+        status=status.HTTP_201_CREATED,
+    )
+
+
+@api_view(['GET'])
+@permission_classes([IsLabelingAgentOrStaff])
+def list_label_suggestions(request):
+    """List suggestions for review. Filter with ?status= and ?image=."""
+    qs = ImageLabelSuggestion.objects.select_related('image', 'reviewed_by').all()
+    status_filter = request.GET.get('status')
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+    image_filter = request.GET.get('image')
+    if image_filter:
+        qs = qs.filter(image_id=image_filter)
+    try:
+        limit = min(int(request.GET.get('limit', 100)), 500)
+    except (TypeError, ValueError):
+        limit = 100
+    data = ImageLabelSuggestionSerializer(qs[:limit], many=True).data
+    return Response({'results': data, 'count_returned': len(data)}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAdminUser])
+def approve_label_suggestion(request, pk):
+    """Apply a pending suggestion to its image (staff only — the trust gate)."""
+    try:
+        suggestion = ImageLabelSuggestion.objects.select_related('image').get(pk=pk)
+    except ImageLabelSuggestion.DoesNotExist:
+        return Response({'error': 'Suggestion not found'}, status=status.HTTP_404_NOT_FOUND)
+    if suggestion.status not in ('pending', 'approved'):
+        return Response(
+            {'error': f'Cannot apply a suggestion in status "{suggestion.status}".'},
+            status=status.HTTP_409_CONFLICT,
+        )
+    suggestion.apply(reviewer=request.user)
+    return Response(ImageLabelSuggestionSerializer(suggestion).data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAdminUser])
+def reject_label_suggestion(request, pk):
+    """Reject a pending suggestion (staff only)."""
+    try:
+        suggestion = ImageLabelSuggestion.objects.get(pk=pk)
+    except ImageLabelSuggestion.DoesNotExist:
+        return Response({'error': 'Suggestion not found'}, status=status.HTTP_404_NOT_FOUND)
+    suggestion.reject(reviewer=request.user)
+    return Response(ImageLabelSuggestionSerializer(suggestion).data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsLabelingAgentOrStaff])
+def suggest_labels(request, image_id):
+    """Server-side: ask Claude to caption one image now (synchronous).
+
+    Creates a pending suggestion the same as the agent path. Returns 503 if the
+    Anthropic API key / SDK isn't configured on the server.
+    """
+    try:
+        Image.objects.get(pk=image_id)
+    except Image.DoesNotExist:
+        return Response({'error': 'Image not found'}, status=status.HTTP_404_NOT_FOUND)
+    try:
+        suggestion = generate_label_suggestion(image_id, model=request.data.get('model'))
+    except LabelingNotConfigured as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    return Response(ImageLabelSuggestionSerializer(suggestion).data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes([IsLabelingAgentOrStaff])
+def generate_labels_bulk(request, *args, **kwargs):
+    """Server-side: enqueue Claude label generation for the labeling queue.
+
+    Uses the django-q task queue (a qcluster worker must be running). Returns the
+    number of images enqueued. Honors the same ?needs_label / ?limit filters as
+    the queue endpoint.
+    """
+    if not os.environ.get('ANTHROPIC_API_KEY'):
+        return Response({'error': 'ANTHROPIC_API_KEY is not set.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    try:
+        from django_q.tasks import async_task
+    except ImportError:
+        return Response({'error': 'django-q is not installed.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    try:
+        limit = min(int(request.GET.get('limit', 25)), 200)
+    except (TypeError, ValueError):
+        limit = 25
+    needs_label = request.GET.get('needs_label', 'true').lower() != 'false'
+    model = request.data.get('model') or None
+
+    already = ImageLabelSuggestion.objects.filter(
+        status__in=['pending', 'approved', 'applied']
+    ).values_list('image_id', flat=True)
+    qs = Image.objects.exclude(id__in=already).order_by('id')
+    if needs_label:
+        qs = qs.filter(Q(title='') | Q(title__isnull=True) | Q(title__iregex=_PLACEHOLDER_TITLE_RE))
+
+    image_ids = list(qs.values_list('id', flat=True)[:limit])
+    for image_id in image_ids:
+        async_task('images.labeling.generate_label_suggestion', image_id, model)
+
+    return Response(
+        {'enqueued': len(image_ids), 'image_ids': image_ids},
+        status=status.HTTP_202_ACCEPTED,
+    )
 
 
 @api_view(['PUT'])

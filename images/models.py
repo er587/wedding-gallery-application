@@ -771,3 +771,119 @@ class SiteConfiguration(models.Model):
     def get_solo(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class AgentApiKey(models.Model):
+    """Scoped, hashed API key for headless agents that submit label suggestions.
+
+    The raw key is shown exactly once at creation and only its hash is stored,
+    so it can be issued and rotated independently of any admin password. Keys
+    authorize only the labeling endpoints (see images.permissions).
+    """
+    name = models.CharField(max_length=100, help_text='Human label, e.g. "claude-labeler".')
+    key_prefix = models.CharField(max_length=12, unique=True, db_index=True, editable=False)
+    key_hash = models.CharField(max_length=255, editable=False)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='+',
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.key_prefix}…)"
+
+    @classmethod
+    def issue(cls, name, created_by=None):
+        """Create a key and return (instance, raw_key). The raw key is never stored."""
+        prefix = secrets.token_hex(4)  # 8 chars, used for fast lookup
+        secret = secrets.token_urlsafe(32)
+        raw = f"{prefix}.{secret}"
+        obj = cls.objects.create(
+            name=name, key_prefix=prefix,
+            key_hash=make_password(raw), created_by=created_by,
+        )
+        return obj, raw
+
+    @classmethod
+    def authenticate(cls, raw):
+        """Return the matching active key (and stamp last_used_at), or None."""
+        if not raw or '.' not in raw:
+            return None
+        prefix = raw.split('.', 1)[0]
+        try:
+            key = cls.objects.get(key_prefix=prefix, is_active=True)
+        except cls.DoesNotExist:
+            return None
+        if not check_password(raw, key.key_hash):
+            return None
+        # Best-effort usage stamp; don't touch updated fields that don't exist.
+        cls.objects.filter(pk=key.pk).update(last_used_at=timezone.now())
+        return key
+
+
+class ImageLabelSuggestion(models.Model):
+    """An AI agent's proposed label for an image, pending human approval.
+
+    Suggestions never change the live image until approved — the approval step
+    is the trust boundary between automated labeling and guest-visible content.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('applied', 'Applied'),
+    ]
+    MAX_TAGS = 15
+
+    image = models.ForeignKey(Image, on_delete=models.CASCADE, related_name='label_suggestions')
+    suggested_title = models.CharField(max_length=255, blank=True, default='')
+    suggested_description = models.TextField(blank=True, default='')
+    suggested_tags = models.JSONField(default=list, blank=True)
+    source = models.CharField(max_length=64, help_text='Producer, e.g. "claude-opus-4-8".')
+    confidence = models.FloatField(null=True, blank=True)
+    rationale = models.TextField(blank=True, default='', help_text='Why the agent chose this label.')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='+',
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['image', 'status'])]
+
+    def __str__(self):
+        return f"[{self.status}] {self.suggested_title or '(no title)'} → image {self.image_id}"
+
+    def apply(self, reviewer=None):
+        """Write the suggested label onto the image and mark as applied."""
+        img = self.image
+        if self.suggested_title:
+            img.title = self.suggested_title[:255]
+        if self.suggested_description:
+            img.description = self.suggested_description
+        img.save(update_fields=['title', 'description', 'updated_at'])
+
+        for raw_name in (self.suggested_tags or [])[:self.MAX_TAGS]:
+            name = str(raw_name).strip().lower()[:50]
+            if name:
+                tag, _ = Tag.objects.get_or_create(name=name)
+                img.tags.add(tag)
+
+        self.status = 'applied'
+        self.reviewed_by = reviewer
+        self.reviewed_at = timezone.now()
+        self.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
+
+    def reject(self, reviewer=None):
+        self.status = 'rejected'
+        self.reviewed_by = reviewer
+        self.reviewed_at = timezone.now()
+        self.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
