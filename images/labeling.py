@@ -98,12 +98,22 @@ def _build_user_prompt(image, max_tags=DEFAULT_MAX_TAGS, allowed_tags=None):
             parts.append(f"About the setting: {config.labeling_context}")
     except Exception:  # never let missing config block labeling
         pass
-    tags = [t.name for t in image.tags.all()]
-    if tags:
-        parts.append(
-            "Tags on this image — personal names here are the people in the photo "
-            "(use them); other tags describe the scene: " + ", ".join(tags) + "."
-        )
+    tag_objs = list(image.tags.all())
+    if tag_objs:
+        person = [t.name for t in tag_objs if t.kind == Tag.PERSON]
+        if person:
+            # Curated: we know exactly who is in the photo.
+            parts.append("People in this photo (use these exact names): " + ", ".join(person) + ".")
+            others = [t.name for t in tag_objs if t.kind != Tag.PERSON]
+            if others:
+                parts.append("Other tags describe the scene, not people: " + ", ".join(others) + ".")
+        else:
+            # Uncurated: fall back to the heuristic over all tags.
+            parts.append(
+                "Tags on this image — personal names here are the people in the photo "
+                "(use them); other tags describe the scene: "
+                + ", ".join(t.name for t in tag_objs) + "."
+            )
     if max_tags <= 0:
         parts.append("Do not output any keyword tags — return an empty tags list.")
     elif allowed_tags is not None:
@@ -191,9 +201,11 @@ def generate_label_suggestion(image_id, model=None, max_tags=None, existing_tags
             max_tags = DEFAULT_MAX_TAGS
 
     # Controlled vocabulary: map lowercased -> canonical existing tag name.
+    # Only suggested tags count, so incidental/junk tags aren't offered to the AI.
     vocab = None
     if existing_tags_only:
-        vocab = {t.lower(): t for t in Tag.objects.values_list('name', flat=True)}
+        vocab = {t.lower(): t for t in
+                 Tag.objects.filter(suggested=True).values_list('name', flat=True)}
     allowed_tags = sorted(vocab.values(), key=str.lower) if vocab is not None else None
     b64, media_type = _encode_image(image)
 

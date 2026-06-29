@@ -46,7 +46,8 @@ class CommentPagination(PageNumberPagination):
 
 
 class TagListView(generics.ListAPIView):
-    queryset = Tag.objects.all()
+    # Suggested tags first so autocomplete offers the curated ones up top.
+    queryset = Tag.objects.all().order_by('-suggested', 'name')
     serializer_class = TagSerializer
     permission_classes = [permissions.AllowAny]
 

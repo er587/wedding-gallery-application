@@ -121,10 +121,28 @@ class CommentAdmin(admin.ModelAdmin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ['name', 'created_at', 'image_count']
+    list_display = ['name', 'kind', 'suggested', 'image_count', 'created_at']
+    list_editable = ['kind', 'suggested']
+    list_filter = ['kind', 'suggested']
     search_fields = ['name']
     readonly_fields = ['created_at']
-    actions = ['export_tags']
+    actions = ['export_tags', 'mark_person', 'mark_scene', 'mark_suggested', 'unmark_suggested']
+
+    @admin.action(description='Mark selected tags as People')
+    def mark_person(self, request, queryset):
+        queryset.update(kind=Tag.PERSON)
+
+    @admin.action(description='Mark selected tags as Scene')
+    def mark_scene(self, request, queryset):
+        queryset.update(kind=Tag.SCENE)
+
+    @admin.action(description='Mark selected as suggested')
+    def mark_suggested(self, request, queryset):
+        queryset.update(suggested=True)
+
+    @admin.action(description='Unmark suggested (hide from suggestions)')
+    def unmark_suggested(self, request, queryset):
+        queryset.update(suggested=False)
     
     def image_count(self, obj):
         return obj.images.count()

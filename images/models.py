@@ -529,12 +529,30 @@ class InvitationCode(models.Model):
 
 
 class Tag(models.Model):
+    PERSON = 'person'
+    SCENE = 'scene'
+    OTHER = 'other'
+    KIND_CHOICES = [
+        (PERSON, 'Person'),
+        (SCENE, 'Scene'),
+        (OTHER, 'Other'),
+    ]
+
     name = models.CharField(max_length=50, unique=True)
+    kind = models.CharField(
+        max_length=10, choices=KIND_CHOICES, default=OTHER,
+        help_text="Person tags name people in the photo; scene/other describe the setting.",
+    )
+    suggested = models.BooleanField(
+        default=True,
+        help_text="Offer this tag in autocomplete and allow AI labeling to use it. "
+                  "Uncheck to keep an incidental tag out of suggestions.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         ordering = ['name']
-    
+
     def __str__(self):
         return self.name
 
