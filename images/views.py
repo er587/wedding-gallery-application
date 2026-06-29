@@ -30,7 +30,10 @@ def _is_postgres():
 from .serializers import ImageSerializer, ImageListSerializer, ImageCreateSerializer, CommentSerializer, UserSerializer, TagSerializer, GuestBookEntrySerializer, SiteConfigurationSerializer, LabelingImageSerializer, LabelSuggestionInputSerializer, ImageLabelSuggestionSerializer
 from .storage import ReplitAppStorage, FileAccessControl
 from .permissions import IsLabelingAgentOrStaff
-from .labeling import generate_label_suggestion, LabelingNotConfigured
+from .labeling import (
+    generate_label_suggestion, LabelingNotConfigured,
+    image_phash, tagged_reference_hashes, nearest_reference,
+)
 
 
 class ImagePagination(PageNumberPagination):
@@ -850,7 +853,7 @@ def list_label_suggestions(request):
         limit = min(int(request.GET.get('limit', 100)), 500)
     except (TypeError, ValueError):
         limit = 100
-    data = ImageLabelSuggestionSerializer(qs[:limit], many=True).data
+    data = ImageLabelSuggestionSerializer(qs[:limit], many=True, context={'request': request}).data
     return Response({'results': data, 'count_returned': len(data)}, status=status.HTTP_200_OK)
 
 
@@ -868,7 +871,8 @@ def approve_label_suggestion(request, pk):
             status=status.HTTP_409_CONFLICT,
         )
     suggestion.apply(reviewer=request.user)
-    return Response(ImageLabelSuggestionSerializer(suggestion).data, status=status.HTTP_200_OK)
+    return Response(ImageLabelSuggestionSerializer(suggestion, context={'request': request}).data,
+                    status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -880,7 +884,8 @@ def reject_label_suggestion(request, pk):
     except ImageLabelSuggestion.DoesNotExist:
         return Response({'error': 'Suggestion not found'}, status=status.HTTP_404_NOT_FOUND)
     suggestion.reject(reviewer=request.user)
-    return Response(ImageLabelSuggestionSerializer(suggestion).data, status=status.HTTP_200_OK)
+    return Response(ImageLabelSuggestionSerializer(suggestion, context={'request': request}).data,
+                    status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -896,10 +901,18 @@ def suggest_labels(request, image_id):
     except Image.DoesNotExist:
         return Response({'error': 'Image not found'}, status=status.HTTP_404_NOT_FOUND)
     try:
-        suggestion = generate_label_suggestion(image_id, model=request.data.get('model'))
+        suggestion = generate_label_suggestion(
+            image_id,
+            model=request.data.get('model'),
+            max_tags=request.data.get('max_tags'),
+            existing_tags_only=bool(request.data.get('existing_tags_only', False)),
+        )
     except LabelingNotConfigured as exc:
         return Response({'error': str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-    return Response(ImageLabelSuggestionSerializer(suggestion).data, status=status.HTTP_201_CREATED)
+    return Response(
+        ImageLabelSuggestionSerializer(suggestion, context={'request': request}).data,
+        status=status.HTTP_201_CREATED,
+    )
 
 
 @api_view(['POST'])
@@ -940,6 +953,185 @@ def generate_labels_bulk(request, *args, **kwargs):
         {'enqueued': len(image_ids), 'image_ids': image_ids},
         status=status.HTTP_202_ACCEPTED,
     )
+
+
+# ---------------------------------------------------------------------------
+# Staff dashboard: synchronous, client-driven batch runners. Each returns the
+# same shape — {scanned, created, next_after_id, done, detail[]} — so one React
+# loop can drive any of them by paging on next_after_id until done is true.
+# ---------------------------------------------------------------------------
+
+def _unhandled_image_qs(after_id=0):
+    """Images with no pending/approved/applied suggestion, ordered by id."""
+    handled = ImageLabelSuggestion.objects.filter(
+        status__in=['pending', 'approved', 'applied']
+    ).values_list('image_id', flat=True)
+    qs = Image.objects.exclude(id__in=handled).order_by('id')
+    if after_id:
+        qs = qs.filter(id__gt=after_id)
+    return qs
+
+
+def _batch_params(request, default_limit, max_limit):
+    try:
+        limit = min(int(request.GET.get('limit', default_limit)), max_limit)
+    except (TypeError, ValueError):
+        limit = default_limit
+    try:
+        after_id = int(request.GET.get('after_id', 0))
+    except (TypeError, ValueError):
+        after_id = 0
+    return limit, after_id
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAdminUser])
+def labeling_stats(request):
+    """Counts for the staff dashboard header and runner progress denominators."""
+    handled = ImageLabelSuggestion.objects.filter(
+        status__in=['pending', 'approved', 'applied']
+    ).values_list('image_id', flat=True)
+    person_tagged = Image.objects.filter(tags__kind=Tag.PERSON).values_list('id', flat=True)
+    known_people = Tag.objects.filter(kind=Tag.PERSON, images__isnull=False).distinct().count()
+    return Response({
+        'images_total': Image.objects.count(),
+        'images_untagged': Image.objects.filter(tags__isnull=True).count(),
+        'caption_queue': Image.objects.exclude(id__in=handled).filter(
+            Q(title='') | Q(title__isnull=True) | Q(title__iregex=_PLACEHOLDER_TITLE_RE)
+        ).count(),
+        'match_candidates': Image.objects.exclude(id__in=handled).exclude(
+            id__in=person_tagged).count(),
+        'propagate_candidates': Image.objects.exclude(id__in=handled).filter(
+            tags__isnull=True).count(),
+        'pending_suggestions': ImageLabelSuggestion.objects.filter(status='pending').count(),
+        'known_people': known_people,
+        'anthropic_configured': bool(os.environ.get('ANTHROPIC_API_KEY')),
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAdminUser])
+def generate_labels_batch(request):
+    """Caption a small batch synchronously (no worker needed). Pages by after_id."""
+    if not os.environ.get('ANTHROPIC_API_KEY'):
+        return Response({'error': 'ANTHROPIC_API_KEY is not set.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    limit, after_id = _batch_params(request, default_limit=3, max_limit=10)
+    needs_label = request.GET.get('needs_label', 'true').lower() != 'false'
+    model = request.data.get('model') or None
+    max_tags = request.data.get('max_tags')
+    existing_only = bool(request.data.get('existing_tags_only', False))
+
+    qs = _unhandled_image_qs(after_id)
+    if needs_label:
+        qs = qs.filter(Q(title='') | Q(title__isnull=True) | Q(title__iregex=_PLACEHOLDER_TITLE_RE))
+    images = list(qs[:limit])
+
+    detail, created = [], 0
+    for img in images:
+        try:
+            s = generate_label_suggestion(img.id, model=model, max_tags=max_tags,
+                                          existing_tags_only=existing_only)
+            created += 1
+            detail.append({'image': img.id, 'title': s.suggested_title, 'tags': s.suggested_tags})
+        except LabelingNotConfigured as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception as exc:
+            detail.append({'image': img.id, 'error': str(exc)})
+    return Response({
+        'scanned': len(images), 'created': created,
+        'next_after_id': images[-1].id if images else after_id,
+        'done': len(images) < limit, 'detail': detail,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAdminUser])
+def match_people_batch(request):
+    """Match known (person-tagged) people into a batch of untagged photos."""
+    if not os.environ.get('ANTHROPIC_API_KEY'):
+        return Response({'error': 'ANTHROPIC_API_KEY is not set.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    from .matching import build_people_references, match_people_in_image, create_match_suggestion
+    try:
+        import anthropic
+    except ImportError:
+        return Response({'error': 'anthropic SDK not installed.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    limit, after_id = _batch_params(request, default_limit=4, max_limit=10)
+    try:
+        min_conf = float(request.data.get('min_confidence', 0.6))
+    except (TypeError, ValueError):
+        min_conf = 0.6
+    model = request.data.get('model') or os.environ.get('ANTHROPIC_LABELING_MODEL', 'claude-opus-4-8')
+
+    reference_content, known, people = build_people_references(
+        refs_per_person=int(request.data.get('refs_per_person', 2)))
+    if not known:
+        return Response({'error': 'No person-tagged reference photos. Tag people first '
+                                  '(set a tag\'s kind to "Person").'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    person_tagged = Image.objects.filter(tags__kind=Tag.PERSON).values_list('id', flat=True)
+    images = list(_unhandled_image_qs(after_id).exclude(id__in=person_tagged)[:limit])
+
+    client = anthropic.Anthropic()
+    detail, created = [], 0
+    for img in images:
+        try:
+            matches = match_people_in_image(img, client=client, model=model,
+                                            reference_content=reference_content,
+                                            known=known, min_confidence=min_conf)
+        except Exception as exc:
+            detail.append({'image': img.id, 'error': str(exc)})
+            continue
+        if matches:
+            create_match_suggestion(img, matches)
+            created += 1
+            detail.append({'image': img.id, 'matches': [n for n, _ in matches]})
+    return Response({
+        'scanned': len(images), 'created': created,
+        'next_after_id': images[-1].id if images else after_id,
+        'done': len(images) < limit, 'detail': detail, 'known_people': people,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAdminUser])
+def propagate_labels_batch(request):
+    """Copy tags to a batch of near-duplicate untagged photos (no API needed)."""
+    limit, after_id = _batch_params(request, default_limit=25, max_limit=200)
+    try:
+        max_distance = int(request.data.get('max_distance', 8))
+    except (TypeError, ValueError):
+        max_distance = 8
+
+    refs = tagged_reference_hashes()
+    if not refs:
+        return Response({'error': 'No tagged reference images yet. Tag a few photos first.'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    images = list(_unhandled_image_qs(after_id).filter(tags__isnull=True)[:limit])
+    detail, created = [], 0
+    for img in images:
+        h = image_phash(img)
+        if h is None:
+            continue
+        match = nearest_reference(h, refs, max_distance)
+        if match is None:
+            continue
+        best_id, best_tags, best_d = match
+        ImageLabelSuggestion.objects.create(
+            image=img, suggested_tags=best_tags,
+            confidence=round(max(0.0, 1 - best_d / 32.0), 2),
+            rationale=f'Near-duplicate of image #{best_id} (hash distance {best_d}); copied its tags.',
+            source=f'near-dup:{best_id}'[:64], status='pending',
+        )
+        created += 1
+        detail.append({'image': img.id, 'matched': best_id, 'distance': best_d, 'tags': best_tags})
+    return Response({
+        'scanned': len(images), 'created': created,
+        'next_after_id': images[-1].id if images else after_id,
+        'done': len(images) < limit, 'detail': detail,
+    }, status=status.HTTP_200_OK)
 
 
 @api_view(['PUT'])

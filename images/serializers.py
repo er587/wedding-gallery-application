@@ -301,13 +301,14 @@ class LabelSuggestionInputSerializer(serializers.Serializer):
 class ImageLabelSuggestionSerializer(serializers.ModelSerializer):
     """Read serializer for reviewing suggestions."""
     image_title = serializers.CharField(source='image.title', read_only=True)
+    image_detail = LabelingImageSerializer(source='image', read_only=True)
     reviewed_by = serializers.CharField(source='reviewed_by.username', read_only=True, default=None)
 
     class Meta:
         model = ImageLabelSuggestion
         fields = [
-            'id', 'image', 'image_title', 'suggested_title', 'suggested_description',
-            'suggested_tags', 'source', 'confidence', 'rationale', 'status',
-            'created_at', 'reviewed_by', 'reviewed_at',
+            'id', 'image', 'image_title', 'image_detail', 'suggested_title',
+            'suggested_description', 'suggested_tags', 'source', 'confidence',
+            'rationale', 'status', 'created_at', 'reviewed_by', 'reviewed_at',
         ]
         read_only_fields = fields

@@ -12,8 +12,8 @@ handles genuinely-new photos).
 """
 from django.core.management.base import BaseCommand
 
-from images.models import Image, Tag, ImageLabelSuggestion
-from images.labeling import image_phash, hamming
+from images.models import Image, ImageLabelSuggestion
+from images.labeling import image_phash, tagged_reference_hashes, nearest_reference
 
 
 class Command(BaseCommand):
@@ -31,15 +31,7 @@ class Command(BaseCommand):
     def handle(self, *args, **opts):
         max_d = opts['max_distance']
 
-        # Reference set: images that already have tags (the labels we propagate).
-        refs = []
-        for img in Image.objects.prefetch_related('tags').all():
-            tag_names = [t.name for t in img.tags.all()]
-            if not tag_names:
-                continue
-            h = image_phash(img)
-            if h is not None:
-                refs.append((img.id, h, tag_names))
+        refs = tagged_reference_hashes()
         if not refs:
             self.stdout.write(self.style.WARNING('No tagged images to learn from. Tag a few first.'))
             return
@@ -57,13 +49,10 @@ class Command(BaseCommand):
             h = image_phash(img)
             if h is None:
                 continue
-            best_id, best_tags, best_d = None, None, 65
-            for ref_id, ref_h, ref_tags in refs:
-                d = hamming(h, ref_h)
-                if d < best_d:
-                    best_id, best_tags, best_d = ref_id, ref_tags, d
-            if best_id is None or best_d > max_d:
+            match = nearest_reference(h, refs, max_d)
+            if match is None:
                 continue
+            best_id, best_tags, best_d = match
             matched += 1
             self.stdout.write(
                 f'  image {img.id}  ~  #{best_id} (distance {best_d})  → tags {best_tags}'

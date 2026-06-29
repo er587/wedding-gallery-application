@@ -41,6 +41,12 @@ urlpatterns = [
     # Server-side (turnkey) Claude label generation into the same review queue
     path('api/images/<int:image_id>/suggest-labels/', views.suggest_labels, name='suggest-labels'),
     path('api/labeling/generate/', views.generate_labels_bulk, name='labeling-generate'),
+
+    # Staff dashboard: stats + synchronous, client-driven batch runners
+    path('api/labeling/stats/', views.labeling_stats, name='labeling-stats'),
+    path('api/labeling/generate-batch/', views.generate_labels_batch, name='labeling-generate-batch'),
+    path('api/labeling/match-people/', views.match_people_batch, name='labeling-match-people'),
+    path('api/labeling/propagate/', views.propagate_labels_batch, name='labeling-propagate'),
     
     # Authentication endpoints
     path('api/auth/csrf/', views.get_csrf_token, name='csrf-token'),
