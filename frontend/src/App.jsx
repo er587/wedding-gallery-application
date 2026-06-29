@@ -1,5 +1,5 @@
 import { useState, useEffect, Suspense, lazy } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate, Link } from 'react-router-dom'
 import ImageGallery from './components/ImageGallery'
 import Auth from './components/Auth'
 import MobileMenu from './components/MobileMenu'
@@ -14,6 +14,7 @@ const HelpModal = lazy(() => import('./components/HelpModal'))
 const ResetPassword = lazy(() => import('./components/ResetPassword'))
 const EmailVerification = lazy(() => import('./components/EmailVerification'))
 const ImagePage = lazy(() => import('./components/ImagePage'))
+const LabelingDashboard = lazy(() => import('./components/LabelingDashboard'))
 const CelebrationOverlay = lazy(() => import('./components/CelebrationOverlay'))
 const GuestBook = lazy(() => import('./components/GuestBook'))
 import { authService } from './services/auth'
@@ -141,6 +142,9 @@ function App() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/image/:id" element={<ImagePage />} />
         <Route path="/verify-email/:token" element={<EmailVerification />} />
+        <Route path="/labeling" element={
+          user?.is_staff ? <LabelingDashboard /> : <Navigate to="/" replace />
+        } />
         <Route path="/" element={
           <div className="min-h-screen bg-cream text-ink font-sans flex flex-col">
             {/* Utility bar */}
@@ -166,6 +170,14 @@ function App() {
 
                     {/* Desktop utility nav */}
                     <div className="hidden md:flex items-center gap-[30px] text-[13px] text-sand-soft">
+                      {user?.is_staff && (
+                        <Link
+                          to="/labeling"
+                          className="hover:text-ink transition-colors"
+                        >
+                          Labeling
+                        </Link>
+                      )}
                       <button
                         onClick={() => setShowGuestBook(true)}
                         className="hover:text-ink transition-colors"
