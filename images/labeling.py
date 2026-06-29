@@ -193,6 +193,39 @@ def generate_label_suggestion(image_id, model=None):
     return suggestion
 
 
+def _dhash(pil_img, hash_size=8):
+    """64-bit difference hash (perceptual). Near-identical images share most bits."""
+    img = pil_img.convert('L').resize((hash_size + 1, hash_size))
+    px = list(img.getdata())
+    width = hash_size + 1
+    bits = 0
+    for row in range(hash_size):
+        for col in range(hash_size):
+            left = px[row * width + col]
+            right = px[row * width + col + 1]
+            bits = (bits << 1) | (1 if left > right else 0)
+    return bits
+
+
+def image_phash(image):
+    """Perceptual hash for an Image, or None if its file can't be read."""
+    source = _readable_source(image)
+    if not source:
+        return None
+    try:
+        with source.open('rb') as fh:
+            raw = fh.read()
+        return _dhash(PILImage.open(BytesIO(raw)))
+    except Exception as exc:
+        logger.warning("phash failed for image %s: %s", getattr(image, 'pk', '?'), exc)
+        return None
+
+
+def hamming(a, b):
+    """Bit difference between two integer hashes (0 = identical)."""
+    return bin(a ^ b).count('1')
+
+
 def fetch_site_text(url, max_chars=2000, timeout=15, verify=True):
     """Fetch a web page and return its readable text (HTML/scripts stripped).
 
