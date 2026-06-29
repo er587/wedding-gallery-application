@@ -351,6 +351,10 @@ class SiteConfigurationAdmin(admin.ModelAdmin):
         ('Footer', {
             'fields': ('site_domain', 'footer_message'),
         }),
+        ('AI labeling', {
+            'fields': ('labeling_context',),
+            'description': 'Context fed to the AI photo labeler (not shown publicly).',
+        }),
         (None, {'fields': ('updated_at',)}),
     )
 

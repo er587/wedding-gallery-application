@@ -749,6 +749,12 @@ class SiteConfiguration(models.Model):
     footer_message = models.CharField(
         max_length=200, blank=True, default='With love, from our day to yours.',
     )
+    labeling_context = models.TextField(
+        blank=True, default='',
+        help_text='Extra context for AI photo labeling — a description of the venue '
+                  'and setting, season, notable features, etc. Not shown publicly; '
+                  'fed to the model so captions can reference the location accurately.',
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
