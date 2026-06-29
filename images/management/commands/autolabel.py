@@ -32,6 +32,9 @@ class Command(BaseCommand):
                             help='Max images to process this run (default 50).')
         parser.add_argument('--model', default=None,
                             help='Override ANTHROPIC_LABELING_MODEL for this run.')
+        parser.add_argument('--max-tags', type=int, default=None,
+                            help='Cap AI-suggested tags per image (0 = none; default 5 or '
+                                 'ANTHROPIC_LABEL_MAX_TAGS).')
         parser.add_argument('--needs-label', action='store_true',
                             help='Only images with a blank or placeholder title.')
         parser.add_argument('--all', action='store_true',
@@ -71,7 +74,7 @@ class Command(BaseCommand):
         ok = failed = 0
         for i, image_id in enumerate(image_ids, 1):
             try:
-                suggestion = generate_label_suggestion(image_id, model=opts['model'])
+                suggestion = generate_label_suggestion(image_id, model=opts['model'], max_tags=opts['max_tags'])
                 ok += 1
                 self.stdout.write(
                     f'  [{i}/{len(image_ids)}] image {image_id} → "{suggestion.suggested_title}" '

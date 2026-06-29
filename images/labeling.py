@@ -25,6 +25,9 @@ from .models import Image, ImageLabelSuggestion, SiteConfiguration
 logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL = 'claude-opus-4-8'
+# Default cap on AI-suggested tags per image (keeps the tag list from sprawling).
+# Override per run with --max-tags, or globally via ANTHROPIC_LABEL_MAX_TAGS.
+DEFAULT_MAX_TAGS = 5
 # Long-edge cap for the image we send — keeps vision token cost down while
 # staying sharp enough to caption a photo.
 MAX_DIM = 1024
@@ -32,7 +35,7 @@ MAX_DIM = 1024
 SYSTEM_PROMPT = (
     "You write captions for a wedding photo gallery. For each image return: a "
     "title (3-6 words, title case, no trailing punctuation), a one-sentence "
-    "description, up to 6 lowercase keyword tags, a confidence from 0 to 1, and a "
+    "description, a few lowercase keyword tags, a confidence from 0 to 1, and a "
     "one-line rationale.\n\n"
     "WHAT COUNTS AS A WEDDING PHOTO:\n"
     "- Getting-ready, candids, details, portraits, and travel shots are all part "
@@ -72,7 +75,7 @@ SYSTEM_PROMPT = (
 USER_PROMPT = "Label this image for the wedding gallery."
 
 
-def _build_user_prompt(image):
+def _build_user_prompt(image, max_tags=DEFAULT_MAX_TAGS):
     """Compose the user text: the ask plus any name context (couple + image tags)."""
     parts = [USER_PROMPT]
     try:
@@ -96,6 +99,13 @@ def _build_user_prompt(image):
         parts.append(
             "Tags on this image — personal names here are the people in the photo "
             "(use them); other tags describe the scene: " + ", ".join(tags) + "."
+        )
+    if max_tags <= 0:
+        parts.append("Do not output any keyword tags — return an empty tags list.")
+    else:
+        parts.append(
+            f"Return at most {max_tags} tags, and prefer the people's names over "
+            f"generic scene words."
         )
     return "\n".join(parts)
 
@@ -139,12 +149,13 @@ def _encode_image(image):
     return base64.standard_b64encode(buf.getvalue()).decode('utf-8'), 'image/jpeg'
 
 
-def generate_label_suggestion(image_id, model=None):
+def generate_label_suggestion(image_id, model=None, max_tags=None):
     """Generate one pending ImageLabelSuggestion for an image via Claude vision.
 
-    Returns the created ImageLabelSuggestion. Raises LabelingNotConfigured if the
-    SDK isn't installed or ANTHROPIC_API_KEY is unset; lets Image.DoesNotExist
-    propagate for an unknown id.
+    max_tags caps AI-suggested tags (0 = none); defaults to ANTHROPIC_LABEL_MAX_TAGS
+    or DEFAULT_MAX_TAGS. Returns the created ImageLabelSuggestion. Raises
+    LabelingNotConfigured if the SDK isn't installed or ANTHROPIC_API_KEY is unset;
+    lets Image.DoesNotExist propagate for an unknown id.
     """
     try:
         import anthropic
@@ -158,6 +169,11 @@ def generate_label_suggestion(image_id, model=None):
 
     image = Image.objects.get(pk=image_id)
     model = model or os.environ.get('ANTHROPIC_LABELING_MODEL', DEFAULT_MODEL)
+    if max_tags is None:
+        try:
+            max_tags = int(os.environ.get('ANTHROPIC_LABEL_MAX_TAGS', DEFAULT_MAX_TAGS))
+        except (TypeError, ValueError):
+            max_tags = DEFAULT_MAX_TAGS
     b64, media_type = _encode_image(image)
 
     client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from the environment
@@ -169,7 +185,7 @@ def generate_label_suggestion(image_id, model=None):
             "role": "user",
             "content": [
                 {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": b64}},
-                {"type": "text", "text": _build_user_prompt(image)},
+                {"type": "text", "text": _build_user_prompt(image, max_tags=max_tags)},
             ],
         }],
         output_config={"format": {"type": "json_schema", "schema": LABEL_SCHEMA}},
@@ -179,11 +195,12 @@ def generate_label_suggestion(image_id, model=None):
     data = json.loads(text)
 
     tags = [str(t).strip().lower() for t in data.get("tags", []) if str(t).strip()]
+    cap = max(0, min(max_tags, ImageLabelSuggestion.MAX_TAGS))
     suggestion = ImageLabelSuggestion.objects.create(
         image=image,
         suggested_title=(data.get("title") or "")[:255],
         suggested_description=data.get("description") or "",
-        suggested_tags=tags[:ImageLabelSuggestion.MAX_TAGS],
+        suggested_tags=tags[:cap],
         confidence=data.get("confidence"),
         rationale=data.get("rationale") or "",
         source=model[:64],
