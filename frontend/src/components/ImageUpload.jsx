@@ -261,7 +261,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                 setCoverPreview(null)
                 setFormData(prev => ({ ...prev, image_file: null, vimeo_url: '', cover_image: null }))
               }}
-              className="px-3 py-1 text-sm rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+              className="px-3 py-1 text-sm rounded-md bg-sand-line/50 text-ink hover:bg-sand-line transition-colors"
             >
               {uploadType === 'image' ? '🎬 Add Video' : '🖼️ Upload Image'}
             </button>
@@ -272,7 +272,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
               bulkMode 
                 ? 'bg-terracotta/10 text-[#974f30] hover:bg-terracotta/20' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-sand-line/50 text-ink hover:bg-sand-line'
             }`}
           >
             {bulkMode ? '📄 Single Upload' : '📚 Bulk Upload'}
@@ -280,7 +280,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
         </div>
         <button 
           onClick={onCancel}
-          className="text-gray-400 hover:text-gray-600"
+          className="text-sand-faint hover:text-sand-soft"
         >
           ✕
         </button>
@@ -291,7 +291,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
         {uploadType === 'video' && !bulkMode ? (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-ink mb-2">
                 Vimeo Embed Code or URL
               </label>
               <textarea
@@ -303,21 +303,21 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                   const extractedUrl = iframeMatch ? iframeMatch[1] : value
                   setFormData(prev => ({ ...prev, vimeo_url: extractedUrl.trim() }))
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta font-mono text-sm"
+                className="w-full px-3 py-2 border border-sand-line rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta font-mono text-sm"
                 placeholder='<iframe src="https://player.vimeo.com/video/..." ...></iframe>'
                 rows="3"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-sand-mute mt-1">
                 Paste the entire Vimeo iframe embed code or just the player URL
               </p>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-ink mb-2">
                 Cover Image (Optional)
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+              <div className="border-2 border-dashed border-sand-line rounded-lg p-4 text-center hover:border-sand-line transition-colors">
                 {coverPreview ? (
                   <div className="space-y-2">
                     <img 
@@ -338,7 +338,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                   </div>
                 ) : (
                   <>
-                    <div className="text-gray-400 mb-2">
+                    <div className="text-sand-faint mb-2">
                       <svg className="mx-auto h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
@@ -360,25 +360,25 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                     />
                     <label
                       htmlFor="cover-image-upload"
-                      className="cursor-pointer inline-block bg-gray-100 text-gray-700 px-4 py-2 rounded hover:bg-gray-200 transition-colors text-sm"
+                      className="cursor-pointer inline-block bg-sand-line/50 text-ink px-4 py-2 rounded hover:bg-sand-line transition-colors text-sm"
                     >
                       Choose Cover Image
                     </label>
                   </>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-sand-mute mt-1">
                 Upload a custom thumbnail for this video (optional - will auto-fetch from Vimeo if not provided)
               </p>
             </div>
           </div>
         ) : (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink mb-2">
               {bulkMode ? 'Images' : 'Image'}
             </label>
             <div
-              className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
+              className="border-2 border-dashed border-sand-line rounded-lg p-6 text-center hover:border-sand-line transition-colors"
               onDragOver={handleDragOver}
               onDrop={handleDrop}
             >
@@ -402,12 +402,12 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                 </div>
               ) : (
                 <>
-                  <div className="text-gray-400 mb-2">
+                  <div className="text-sand-faint mb-2">
                     <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
                   </div>
-                  <p className="text-gray-600 mb-2">
+                  <p className="text-sand-soft mb-2">
                     {bulkMode ? 'Drag and drop multiple images here, or' : 'Drag and drop your image here, or'}
                   </p>
                   <input
@@ -433,7 +433,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
         {/* Bulk Upload: Selected Files Preview */}
         {bulkMode && selectedFiles.length > 0 && (
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">
+            <h3 className="text-lg font-medium text-ink">
               Selected Images ({selectedFiles.length})
             </h3>
             <div className="max-h-96 overflow-y-auto space-y-3">
@@ -448,8 +448,8 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                         className="w-16 h-16 object-cover rounded"
                       />
                     ) : (
-                      <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                        <span className="text-gray-400 text-xs">Loading...</span>
+                      <div className="w-16 h-16 bg-sand-line rounded flex items-center justify-center">
+                        <span className="text-sand-faint text-xs">Loading...</span>
                       </div>
                     )}
                   </div>
@@ -461,7 +461,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                         type="text"
                         value={fileObj.title}
                         onChange={(e) => updateFileTitle(fileObj.id, e.target.value)}
-                        className="text-sm font-medium text-gray-900 border-0 border-b border-transparent hover:border-gray-300 focus:border-terracotta focus:outline-none bg-transparent"
+                        className="text-sm font-medium text-ink border-0 border-b border-transparent hover:border-sand-line focus:border-terracotta focus:outline-none bg-transparent"
                         placeholder="Image title"
                       />
                       <button
@@ -476,12 +476,12 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                     {/* Status and Progress */}
                     <div className="flex items-center space-x-2">
                       {fileObj.status === 'ready' && (
-                        <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">Ready</span>
+                        <span className="text-xs text-sand-soft bg-sand-line/50 px-2 py-1 rounded">Ready</span>
                       )}
                       {fileObj.status === 'uploading' && (
                         <>
                           <span className="text-xs text-terracotta bg-terracotta/10 px-2 py-1 rounded">{fileObj.progress || 0}%</span>
-                          <div className="flex-grow h-2 bg-gray-200 rounded">
+                          <div className="flex-grow h-2 bg-sand-line rounded">
                             <div className="h-2 bg-terracotta rounded transition-all duration-300" style={{ width: `${fileObj.progress || 0}%` }}></div>
                           </div>
                         </>
@@ -504,16 +504,16 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
         {bulkMode ? (
           /* Bulk Mode: Shared Metadata */
           <div className="space-y-4 border-t pt-4">
-            <h3 className="text-lg font-medium text-gray-900">Shared Information</h3>
+            <h3 className="text-lg font-medium text-ink">Shared Information</h3>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-ink mb-2">
                 Description (Memory)
               </label>
               <textarea
                 value={sharedMetadata.description}
                 onChange={(e) => setSharedMetadata(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
+                className="w-full px-3 py-2 border border-sand-line rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                 placeholder="Share the memory or story behind these images (applied to all)"
               />
             </div>
@@ -523,7 +523,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                 onTagsChange={(tags) => setSharedMetadata(prev => ({ ...prev, tags }))}
                 canEdit={true}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-sand-mute mt-1">
                 These tags will be applied to all uploaded images
               </p>
             </div>
@@ -532,7 +532,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
           /* Single Mode: Individual Metadata */
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-ink mb-2">
                 Title
               </label>
               <input
@@ -541,13 +541,13 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                 value={formData.title}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
+                className="w-full px-3 py-2 border border-sand-line rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                 placeholder="Give your image a title"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-ink mb-2">
                 Description (Memory)
               </label>
               <textarea
@@ -555,7 +555,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
+                className="w-full px-3 py-2 border border-sand-line rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                 placeholder="Share the memory or story behind this image"
               />
             </div>
@@ -566,7 +566,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                 onTagsChange={(tags) => setFormData(prev => ({ ...prev, tags }))}
                 canEdit={true}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-sand-mute mt-1">
                 Tags help others find and filter images by themes or events
               </p>
             </div>
@@ -577,7 +577,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 text-ink bg-sand-line/50 rounded hover:bg-sand-line transition-colors"
           >
             Cancel
           </button>
@@ -588,7 +588,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                 ? selectedFiles.length === 0 || uploading
                 : (uploadType === 'image' ? !formData.image_file : !formData.vimeo_url) || uploading
             }
-            className="px-4 py-2 bg-terracotta text-white rounded hover:bg-[#974f30] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 bg-terracotta text-white rounded hover:bg-[#974f30] disabled:bg-sand-mute disabled:cursor-not-allowed transition-colors"
           >
             {uploading 
               ? (bulkMode ? `Uploading... (${selectedFiles.filter(f => f.status === 'success').length}/${selectedFiles.length})` : `Uploading... ${uploadProgress}%`)

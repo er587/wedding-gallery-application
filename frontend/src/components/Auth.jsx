@@ -125,7 +125,7 @@ export default function Auth({ onLogin }) {
               value={loginData.username}
               onChange={handleLoginInputChange}
               required
-              className="px-3 py-2 md:py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta w-full sm:w-auto min-h-[44px] md:min-h-0"
+              className="px-3 py-2 md:py-1 border border-sand-line rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta w-full sm:w-auto min-h-[44px] md:min-h-0"
             />
             <input
               type="password"
@@ -134,7 +134,7 @@ export default function Auth({ onLogin }) {
               value={loginData.password}
               onChange={handleLoginInputChange}
               required
-              className="px-3 py-2 md:py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta w-full sm:w-auto min-h-[44px] md:min-h-0"
+              className="px-3 py-2 md:py-1 border border-sand-line rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta w-full sm:w-auto min-h-[44px] md:min-h-0"
             />
           </div>
           
@@ -156,7 +156,7 @@ export default function Auth({ onLogin }) {
             <button
               type="button"
               onClick={() => setShowForgotPasswordModal(true)}
-              className="text-gray-600 text-sm hover:underline px-4 py-3 md:py-2 whitespace-nowrap min-h-[44px] md:min-h-0"
+              className="text-sand-soft text-sm hover:underline px-4 py-3 md:py-2 whitespace-nowrap min-h-[44px] md:min-h-0"
             >
               Forgot Password?
             </button>
@@ -169,10 +169,10 @@ export default function Auth({ onLogin }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Join Wedding Gallery</h2>
+              <h2 className="text-xl font-bold text-ink">Join Wedding Gallery</h2>
               <button
                 onClick={() => setShowSignupModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-sand-faint hover:text-sand-soft"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -188,7 +188,7 @@ export default function Auth({ onLogin }) {
                   placeholder="First Name"
                   value={signupData.first_name}
                   onChange={handleSignupInputChange}
-                  className="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
+                  className="px-3 py-2 border border-sand-line rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
                 />
                 <input
                   type="text"
@@ -196,7 +196,7 @@ export default function Auth({ onLogin }) {
                   placeholder="Last Name"
                   value={signupData.last_name}
                   onChange={handleSignupInputChange}
-                  className="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
+                  className="px-3 py-2 border border-sand-line rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
                 />
               </div>
               
@@ -207,7 +207,7 @@ export default function Auth({ onLogin }) {
                 value={signupData.email}
                 onChange={handleSignupInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
+                className="w-full px-3 py-2 border border-sand-line rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
               />
               
               <div className="relative">
@@ -218,12 +218,12 @@ export default function Auth({ onLogin }) {
                   value={signupData.password}
                   onChange={handleSignupInputChange}
                   required
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
+                  className="w-full px-3 py-2 pr-10 border border-sand-line rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sand-mute hover:text-ink"
                 >
                   {showPassword ? (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -245,7 +245,7 @@ export default function Auth({ onLogin }) {
                   <div className="space-y-1">
                     <div className="flex gap-1">
                       {[1, 2, 3, 4].map(i => (
-                        <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= strength.score ? strength.color : 'bg-gray-200'}`} />
+                        <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= strength.score ? strength.color : 'bg-sand-line'}`} />
                       ))}
                     </div>
                     <p className={`text-xs ${strength.score <= 1 ? 'text-red-600' : strength.score <= 2 ? 'text-orange-600' : strength.score <= 3 ? 'text-yellow-600' : 'text-green-600'}`}>
@@ -269,13 +269,13 @@ export default function Auth({ onLogin }) {
                   className={`w-full px-3 py-2 pr-10 border rounded text-sm focus:outline-none focus:ring-2 ${
                     passwordError 
                       ? 'border-red-300 focus:ring-red-500' 
-                      : 'border-gray-300 focus:ring-terracotta'
+                      : 'border-sand-line focus:ring-terracotta'
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-sand-mute hover:text-ink"
                 >
                   {showConfirmPassword ? (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -316,7 +316,7 @@ export default function Auth({ onLogin }) {
                 <button
                   type="button"
                   onClick={() => setShowSignupModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-sand-line text-ink rounded hover:bg-sand-line/30 transition-colors"
                 >
                   Cancel
                 </button>
@@ -337,10 +337,10 @@ export default function Auth({ onLogin }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Reset Password</h2>
+              <h2 className="text-xl font-bold text-ink">Reset Password</h2>
               <button
                 onClick={() => setShowForgotPasswordModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-sand-faint hover:text-sand-soft"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -348,7 +348,7 @@ export default function Auth({ onLogin }) {
               </button>
             </div>
             
-            <p className="text-gray-600 text-sm mb-4">
+            <p className="text-sand-soft text-sm mb-4">
               Enter your email address and we'll send you instructions to reset your password.
             </p>
             
@@ -359,14 +359,14 @@ export default function Auth({ onLogin }) {
                 value={resetEmail}
                 onChange={(e) => setResetEmail(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
+                className="w-full px-3 py-2 border border-sand-line rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
               />
               
               <div className="flex space-x-3">
                 <button
                   type="button"
                   onClick={() => setShowForgotPasswordModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-sand-line text-ink rounded hover:bg-sand-line/30 transition-colors"
                 >
                   Cancel
                 </button>

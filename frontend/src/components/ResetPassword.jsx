@@ -43,14 +43,14 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-sand-line/30 flex items-center justify-center px-4">
       <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Reset Your Password</h1>
-        <p className="text-gray-600 text-sm mb-6">Enter your new password below</p>
+        <h1 className="text-2xl font-bold text-ink mb-2">Reset Your Password</h1>
+        <p className="text-sand-soft text-sm mb-6">Enter your new password below</p>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-ink mb-1">
               New Password
             </label>
             <input
@@ -61,12 +61,12 @@ export default function ResetPassword() {
                 if (passwordError) setPasswordError('')
               }}
               required
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-terracotta"
+              className="w-full px-3 py-2 pr-10 border border-sand-line rounded focus:outline-none focus:ring-2 focus:ring-terracotta"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 top-9 text-gray-500 hover:text-gray-700"
+              className="absolute right-2 top-9 text-sand-mute hover:text-ink"
             >
               {showPassword ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,7 +82,7 @@ export default function ResetPassword() {
           </div>
           
           <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-ink mb-1">
               Confirm New Password
             </label>
             <input
@@ -96,13 +96,13 @@ export default function ResetPassword() {
               className={`w-full px-3 py-2 pr-10 border rounded focus:outline-none focus:ring-2 ${
                 passwordError 
                   ? 'border-red-300 focus:ring-red-500' 
-                  : 'border-gray-300 focus:ring-terracotta'
+                  : 'border-sand-line focus:ring-terracotta'
               }`}
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-2 top-9 text-gray-500 hover:text-gray-700"
+              className="absolute right-2 top-9 text-sand-mute hover:text-ink"
             >
               {showConfirmPassword ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,7 +132,7 @@ export default function ResetPassword() {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="w-full text-gray-600 text-sm hover:underline"
+            className="w-full text-sand-soft text-sm hover:underline"
           >
             Back to Login
           </button>

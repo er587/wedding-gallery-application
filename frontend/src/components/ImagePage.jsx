@@ -38,9 +38,9 @@ export default function ImagePage() {
 
   if (error || !image) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-sand-line/30 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-xl text-gray-600 mb-4">{error || 'Image not found'}</p>
+          <p className="text-xl text-sand-soft mb-4">{error || 'Image not found'}</p>
           <button onClick={() => navigate('/')} className="text-terracotta hover:underline">
             Back to gallery
           </button>

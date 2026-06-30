@@ -88,11 +88,11 @@ const InlineEditableText = ({
         tabIndex={canEdit ? 0 : -1}
         onKeyPress={(e) => canEdit && e.key === 'Enter' && startEdit()}
       >
-        <span className={canEdit ? 'group-hover:bg-gray-100 group-hover:rounded px-1 py-0.5 transition-colors duration-150' : ''}>
+        <span className={canEdit ? 'group-hover:bg-sand-line/50 group-hover:rounded px-1 py-0.5 transition-colors duration-150' : ''}>
           {value || placeholder}
         </span>
         {canEdit && (
-          <span className="ml-2 opacity-0 group-hover:opacity-50 transition-opacity duration-150 text-xs text-gray-500">
+          <span className="ml-2 opacity-0 group-hover:opacity-50 transition-opacity duration-150 text-xs text-sand-mute">
             Click to edit
           </span>
         )}
@@ -109,7 +109,7 @@ const InlineEditableText = ({
             value={editValue}
             onChange={handleInputChange}
             onKeyDown={handleKeyPress}
-            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-terracotta focus:border-transparent resize-none"
+            className="w-full px-2 py-1 border border-sand-line rounded focus:outline-none focus:ring-2 focus:ring-terracotta focus:border-transparent resize-none"
             placeholder={placeholder}
             disabled={isLoading}
             rows={3}
@@ -121,12 +121,12 @@ const InlineEditableText = ({
             value={editValue}
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
-            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-terracotta focus:border-transparent"
+            className="w-full px-2 py-1 border border-sand-line rounded focus:outline-none focus:ring-2 focus:ring-terracotta focus:border-transparent"
             placeholder={placeholder}
             disabled={isLoading}
           />
         )}
-        <div className="absolute -bottom-5 right-0 text-xs text-gray-500">
+        <div className="absolute -bottom-5 right-0 text-xs text-sand-mute">
           {editValue.length}/{maxLength}
         </div>
       </div>
@@ -135,7 +135,7 @@ const InlineEditableText = ({
         <button
           onClick={cancelEdit}
           disabled={isLoading}
-          className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 disabled:opacity-50 transition-colors"
+          className="px-3 py-1 text-sm text-sand-soft hover:text-ink disabled:opacity-50 transition-colors"
         >
           Cancel
         </button>
@@ -165,7 +165,7 @@ const InlineEditableText = ({
         </button>
       </div>
       
-      <div className="text-xs text-gray-500">
+      <div className="text-xs text-sand-mute">
         Press Enter to save, Escape to cancel
       </div>
     </div>
