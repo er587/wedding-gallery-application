@@ -110,7 +110,7 @@ export default function SearchBar({ onTagFilter, currentTags, onMediaTypeFilter,
           type="text"
           value={searchText}
           onChange={(e) => handleSearchChange(e.target.value)}
-          placeholder="Search title, description, or uploader…"
+          placeholder="Search title or description…"
           className="w-full pl-10 pr-3 py-2 border border-sand-line rounded-lg text-sm text-ink focus:ring-2 focus:ring-terracotta/40 focus:border-terracotta outline-none"
         />
       </div>
