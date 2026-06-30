@@ -113,15 +113,13 @@ class ImageListCreateView(generics.ListCreateAPIView):
                     search=vector,
                     rank=SearchRank(vector, query),
                 ).filter(
-                    Q(search=query) |
-                    Q(uploader__username__icontains=search)
+                    Q(search=query)
                 ).order_by('-rank', '-uploaded_at')
             else:
                 # SQLite fallback: simple substring matching
                 queryset = queryset.filter(
                     Q(title__icontains=search) |
-                    Q(description__icontains=search) |
-                    Q(uploader__username__icontains=search)
+                    Q(description__icontains=search)
                 )
         
         if tags:

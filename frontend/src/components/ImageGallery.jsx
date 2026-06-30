@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import ImageViewer from './ImageViewer'
 import SearchBar from './SearchBar'
+import PeoplePanel from './PeoplePanel'
 import InlineEditableText from './InlineEditableText'
 import { apiService } from '../services/api'
 import { useToast } from './Toast'
@@ -76,6 +77,7 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
   const [selectedImages, setSelectedImages] = useState(new Set())
   const [downloading, setDownloading] = useState(false)
   const [showSearchBar, setShowSearchBar] = useState(false)
+  const [showPeople, setShowPeople] = useState(false)
   const [showBackToTop, setShowBackToTop] = useState(false)
   const [totalImageCount, setTotalImageCount] = useState(0)
   const [pagination, setPagination] = useState({
@@ -566,12 +568,23 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
     }
   }
 
+  const closePanels = () => { setShowSearchBar(false); setShowPeople(false) }
   const tabs = [
-    { key: 'all', label: 'All', onClick: () => { setViewMode('all'); setShowSearchBar(false) }, active: viewMode === 'all' && !showSearchBar },
-    { key: 'videos', label: 'Films', onClick: () => { setViewMode('videos'); setShowSearchBar(false) }, active: viewMode === 'videos' },
-    { key: 'favorites', label: 'Favorites', onClick: () => { setViewMode('favorites'); setShowSearchBar(false) }, active: viewMode === 'favorites' },
-    { key: 'tags', label: 'Tags', onClick: () => setShowSearchBar((s) => !s), active: showSearchBar },
+    { key: 'all', label: 'All', onClick: () => { setViewMode('all'); closePanels() }, active: viewMode === 'all' && !showSearchBar && !showPeople },
+    { key: 'videos', label: 'Films', onClick: () => { setViewMode('videos'); closePanels() }, active: viewMode === 'videos' },
+    { key: 'favorites', label: 'Favorites', onClick: () => { setViewMode('favorites'); closePanels() }, active: viewMode === 'favorites' },
+    { key: 'people', label: 'People', onClick: () => { setShowPeople((s) => !s); setShowSearchBar(false) }, active: showPeople },
+    { key: 'tags', label: 'Tags', onClick: () => { setShowSearchBar((s) => !s); setShowPeople(false) }, active: showSearchBar },
   ]
+
+  // Selecting a person from the People panel filters the gallery to their photos.
+  const handlePersonSelect = (name) => {
+    setSelectedTags(name)
+    setViewMode('all')
+    setShowPeople(false)
+  }
+  const activeTagList = selectedTags ? selectedTags.split(',').map((t) => t.trim()).filter(Boolean) : []
+  const removeActiveTag = (name) => setSelectedTags(activeTagList.filter((t) => t !== name).join(','))
 
   const uploaderName = (img) =>
     img.uploader.first_name && img.uploader.last_name
@@ -656,6 +669,24 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
         </div>
       )}
 
+      {/* Active tag/person filter — visible even when the filter panel is closed */}
+      {activeTagList.length > 0 && !showSearchBar && (
+        <div className="max-w-shell mx-auto px-6 md:px-12 pt-5 flex flex-wrap items-center gap-2">
+          <span className="text-[12px] uppercase tracking-[0.16em] text-sand-mute mr-1">Filtering</span>
+          {activeTagList.map((name) => (
+            <button
+              key={name}
+              onClick={() => removeActiveTag(name)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-terracotta text-white text-[13px] px-3 py-1 hover:opacity-90 transition"
+            >
+              #{name}
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+            </button>
+          ))}
+          <button onClick={() => setSelectedTags('')} className="text-[13px] text-sand-soft hover:text-ink underline ml-1">Clear</button>
+        </div>
+      )}
+
       {/* Tag Filter Bar */}
       {showSearchBar && (
         <div className="max-w-shell mx-auto px-6 md:px-12 pt-6">
@@ -667,6 +698,17 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
             onSearchFilter={setSearchText}
             currentSearch={searchText}
             onClose={() => setShowSearchBar(false)}
+          />
+        </div>
+      )}
+
+      {/* People Panel */}
+      {showPeople && (
+        <div className="max-w-shell mx-auto px-6 md:px-12 pt-6">
+          <PeoplePanel
+            currentTags={selectedTags}
+            onSelect={handlePersonSelect}
+            onClose={() => setShowPeople(false)}
           />
         </div>
       )}
