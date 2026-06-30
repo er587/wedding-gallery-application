@@ -249,7 +249,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
       <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-4">
-          <h2 className="text-xl font-semibold">
+          <h2 className="font-serif font-medium text-[22px]">
             {bulkMode ? 'Bulk Upload Images' : (uploadType === 'video' ? 'Add Vimeo Video' : 'Upload New Image')}
           </h2>
           {!bulkMode && (
@@ -433,7 +433,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
         {/* Bulk Upload: Selected Files Preview */}
         {bulkMode && selectedFiles.length > 0 && (
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-ink">
+            <h3 className="font-serif text-[18px] text-ink">
               Selected Images ({selectedFiles.length})
             </h3>
             <div className="max-h-96 overflow-y-auto space-y-3">
@@ -504,7 +504,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
         {bulkMode ? (
           /* Bulk Mode: Shared Metadata */
           <div className="space-y-4 border-t pt-4">
-            <h3 className="text-lg font-medium text-ink">Shared Information</h3>
+            <h3 className="font-serif text-[18px] text-ink">Shared Information</h3>
             <div>
               <label className="block text-sm font-medium text-ink mb-2">
                 Description (Memory)

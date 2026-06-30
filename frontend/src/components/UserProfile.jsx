@@ -180,7 +180,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                 {getInitials()}
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-ink">{getFullName()}</h2>
+                <h2 className="font-serif font-medium text-[26px] text-ink">{getFullName()}</h2>
                 <p className="text-sand-soft">{user?.email || user?.username}</p>
               </div>
             </div>
@@ -251,7 +251,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
           {activeTab === 'profile' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium text-ink">Profile Information</h3>
+                <h3 className="font-serif text-[18px] text-ink">Profile Information</h3>
                 <button
                   onClick={() => setEditMode(!editMode)}
                   className="text-terracotta hover:text-[#974f30] text-sm font-medium"
@@ -343,7 +343,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
           {activeTab === 'settings' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-ink mb-4">Change Password</h3>
+                <h3 className="font-serif text-[18px] text-ink mb-4">Change Password</h3>
                 <form onSubmit={handlePasswordChange} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-ink mb-1">
@@ -401,7 +401,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
               {/* User's Uploaded Images Section */}
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium text-ink">
+                  <h3 className="font-serif text-[18px] text-ink">
                     Your Shared Images ({uploadCount})
                   </h3>
                   {user.can_upload_images && onUpload && (

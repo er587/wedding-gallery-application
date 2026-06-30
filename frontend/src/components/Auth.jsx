@@ -169,7 +169,7 @@ export default function Auth({ onLogin }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-ink">Join Wedding Gallery</h2>
+              <h2 className="font-serif font-medium text-[22px] text-ink">Join Wedding Gallery</h2>
               <button
                 onClick={() => setShowSignupModal(false)}
                 className="text-sand-faint hover:text-sand-soft"
@@ -337,7 +337,7 @@ export default function Auth({ onLogin }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-ink">Reset Password</h2>
+              <h2 className="font-serif font-medium text-[22px] text-ink">Reset Password</h2>
               <button
                 onClick={() => setShowForgotPasswordModal(false)}
                 className="text-sand-faint hover:text-sand-soft"

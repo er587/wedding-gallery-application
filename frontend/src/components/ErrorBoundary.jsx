@@ -24,7 +24,7 @@ export default class ErrorBoundary extends Component {
         <div className="min-h-screen bg-sand-line/30 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
             <div className="text-4xl mb-4">😢</div>
-            <h2 className="text-xl font-bold text-ink mb-2">Something went wrong</h2>
+            <h2 className="font-serif font-medium text-[22px] text-ink mb-2">Something went wrong</h2>
             <p className="text-sand-soft mb-6">
               An unexpected error occurred. Please try again.
             </p>

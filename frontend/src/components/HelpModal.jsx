@@ -39,7 +39,7 @@ export default function HelpModal({ isOpen, onClose }) {
         {/* Header */}
         <div className="px-6 py-4 border-b border-sand-line sticky top-0 bg-white">
           <div className="flex items-center justify-between">
-            <h2 id="help-modal-title" className="text-xl font-semibold text-ink">How to Use the Wedding Gallery</h2>
+            <h2 id="help-modal-title" className="font-serif font-medium text-[22px] text-ink">How to Use the Wedding Gallery</h2>
             <button
               onClick={onClose}
               className="text-sand-faint hover:text-sand-soft transition-colors"
@@ -58,7 +58,7 @@ export default function HelpModal({ isOpen, onClose }) {
           <div className="bg-gradient-to-r from-terracotta to-terracotta rounded-lg p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold mb-2">🎯 Interactive Tour</h3>
+                <h3 className="font-serif text-[18px] mb-2">🎯 Interactive Tour</h3>
                 <p className="text-terracotta/5 text-sm">
                   Take a guided tour of the key features: filters, image selection, and uploads.
                 </p>
@@ -74,7 +74,7 @@ export default function HelpModal({ isOpen, onClose }) {
 
           {/* Loading More Pictures */}
           <div className="bg-terracotta/5 border border-terracotta/20 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-ink mb-2 flex items-center">
+            <h3 className="font-serif text-[18px] text-ink mb-2 flex items-center">
               <svg className="w-5 h-5 mr-2 text-terracotta" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
@@ -88,7 +88,7 @@ export default function HelpModal({ isOpen, onClose }) {
 
           {/* Opening Images */}
           <div className="bg-terracotta/5 border border-terracotta/20 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-ink mb-2 flex items-center">
+            <h3 className="font-serif text-[18px] text-ink mb-2 flex items-center">
               <svg className="w-5 h-5 mr-2 text-terracotta" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -102,7 +102,7 @@ export default function HelpModal({ isOpen, onClose }) {
 
           {/* Adding Tags */}
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-ink mb-2 flex items-center">
+            <h3 className="font-serif text-[18px] text-ink mb-2 flex items-center">
               <svg className="w-5 h-5 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
@@ -117,7 +117,7 @@ export default function HelpModal({ isOpen, onClose }) {
 
           {/* Downloading Images */}
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-ink mb-2 flex items-center">
+            <h3 className="font-serif text-[18px] text-ink mb-2 flex items-center">
               <svg className="w-5 h-5 mr-2 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
@@ -135,7 +135,7 @@ export default function HelpModal({ isOpen, onClose }) {
 
           {/* Using Filters */}
           <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-ink mb-2 flex items-center">
+            <h3 className="font-serif text-[18px] text-ink mb-2 flex items-center">
               <svg className="w-5 h-5 mr-2 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>

@@ -69,7 +69,7 @@ export default function CelebrationOverlay({ emoji, message, onClose }) {
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center animate-bounce-in">
           <div className="text-7xl md:text-8xl mb-4">{emoji}</div>
-          <h2 className="text-2xl md:text-4xl font-bold text-white drop-shadow-lg">
+          <h2 className="font-serif font-medium text-2xl md:text-4xl text-white drop-shadow-lg">
             {message}
           </h2>
         </div>

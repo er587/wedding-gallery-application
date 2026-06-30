@@ -30,7 +30,7 @@ export default function WelcomeModal({ isOpen, onClose }) {
         {/* Header */}
         <div className="px-6 py-4 border-b border-sand-line">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-ink">Welcome to Our Wedding Gallery! 🎉</h2>
+            <h2 className="font-serif font-medium text-[22px] text-ink">Welcome to Our Wedding Gallery! 🎉</h2>
             <button
               onClick={onClose}
               className="text-sand-faint hover:text-sand-soft transition-colors"
