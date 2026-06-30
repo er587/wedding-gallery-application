@@ -18,13 +18,15 @@ export default {
         ink: '#2c271f',
         terracotta: '#ad5f3c',
         sand: {
-          line: '#e6dfd2',   // hairline borders
-          rule: '#d8cfbf',   // masthead rule
-          edge: '#d9b9a8',   // button outline
-          mute: '#9a9082',   // muted labels
-          soft: '#7d7466',   // utility-bar text
-          dim: '#8c8375',    // inactive tabs
-          faint: '#bcae9b',  // footer / decorative
+          line: '#e6dfd2',   // hairline borders (non-text)
+          rule: '#d8cfbf',   // masthead rule (non-text)
+          edge: '#d9b9a8',   // button outline (non-text)
+          // Text tokens darkened to meet WCAG AA (4.5:1) on cream/white —
+          // the previous ramp ran 1.96–3.4:1 (illegible for muted text).
+          mute: '#756b5c',   // muted labels        (4.7:1 on cream)
+          soft: '#6b6354',   // utility / body text  (5.4:1 on cream)
+          dim: '#736a5b',    // inactive tabs        (4.8:1 on cream)
+          faint: '#7c7160',  // footer / decorative  (4.3:1 cream, 4.8:1 white)
         },
       },
       maxWidth: {

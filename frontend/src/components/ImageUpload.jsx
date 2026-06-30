@@ -271,7 +271,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
             onClick={toggleBulkMode}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
               bulkMode 
-                ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' 
+                ? 'bg-terracotta/10 text-[#974f30] hover:bg-terracotta/20' 
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -303,7 +303,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                   const extractedUrl = iframeMatch ? iframeMatch[1] : value
                   setFormData(prev => ({ ...prev, vimeo_url: extractedUrl.trim() }))
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta font-mono text-sm"
                 placeholder='<iframe src="https://player.vimeo.com/video/..." ...></iframe>'
                 rows="3"
                 required
@@ -420,7 +420,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                   />
                   <label
                     htmlFor="image-upload"
-                    className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                    className="cursor-pointer bg-terracotta text-white px-4 py-2 rounded hover:bg-[#974f30] transition-colors"
                   >
                     {bulkMode ? 'Choose Multiple Files' : 'Choose File'}
                   </label>
@@ -461,7 +461,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                         type="text"
                         value={fileObj.title}
                         onChange={(e) => updateFileTitle(fileObj.id, e.target.value)}
-                        className="text-sm font-medium text-gray-900 border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none bg-transparent"
+                        className="text-sm font-medium text-gray-900 border-0 border-b border-transparent hover:border-gray-300 focus:border-terracotta focus:outline-none bg-transparent"
                         placeholder="Image title"
                       />
                       <button
@@ -480,9 +480,9 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                       )}
                       {fileObj.status === 'uploading' && (
                         <>
-                          <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">{fileObj.progress || 0}%</span>
+                          <span className="text-xs text-terracotta bg-terracotta/10 px-2 py-1 rounded">{fileObj.progress || 0}%</span>
                           <div className="flex-grow h-2 bg-gray-200 rounded">
-                            <div className="h-2 bg-blue-600 rounded transition-all duration-300" style={{ width: `${fileObj.progress || 0}%` }}></div>
+                            <div className="h-2 bg-terracotta rounded transition-all duration-300" style={{ width: `${fileObj.progress || 0}%` }}></div>
                           </div>
                         </>
                       )}
@@ -513,7 +513,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                 value={sharedMetadata.description}
                 onChange={(e) => setSharedMetadata(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                 placeholder="Share the memory or story behind these images (applied to all)"
               />
             </div>
@@ -541,7 +541,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                 value={formData.title}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                 placeholder="Give your image a title"
               />
             </div>
@@ -555,7 +555,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                 placeholder="Share the memory or story behind this image"
               />
             </div>
@@ -588,7 +588,7 @@ export default function ImageUpload({ user, onImageUploaded, onCancel }) {
                 ? selectedFiles.length === 0 || uploading
                 : (uploadType === 'image' ? !formData.image_file : !formData.vimeo_url) || uploading
             }
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 bg-terracotta text-white rounded hover:bg-[#974f30] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             {uploading 
               ? (bulkMode ? `Uploading... (${selectedFiles.filter(f => f.status === 'success').length}/${selectedFiles.length})` : `Uploading... ${uploadProgress}%`)

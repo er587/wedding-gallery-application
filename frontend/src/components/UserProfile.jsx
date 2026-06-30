@@ -176,7 +176,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
         <div className="p-6 border-b">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-xl font-bold">
+              <div className="w-16 h-16 bg-terracotta rounded-full flex items-center justify-center text-white text-xl font-bold">
                 {getInitials()}
               </div>
               <div>
@@ -218,7 +218,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
             onClick={() => setActiveTab('profile')}
             className={`px-6 py-3 text-sm font-medium ${
               activeTab === 'profile' 
-                ? 'text-blue-600 border-b-2 border-blue-600' 
+                ? 'text-terracotta border-b-2 border-terracotta' 
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -228,7 +228,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
             onClick={() => setActiveTab('settings')}
             className={`px-6 py-3 text-sm font-medium ${
               activeTab === 'settings' 
-                ? 'text-blue-600 border-b-2 border-blue-600' 
+                ? 'text-terracotta border-b-2 border-terracotta' 
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -238,7 +238,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
             onClick={() => setActiveTab('images')}
             className={`px-6 py-3 text-sm font-medium ${
               activeTab === 'images' 
-                ? 'text-blue-600 border-b-2 border-blue-600' 
+                ? 'text-terracotta border-b-2 border-terracotta' 
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -254,7 +254,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                 <h3 className="text-lg font-medium text-gray-900">Profile Information</h3>
                 <button
                   onClick={() => setEditMode(!editMode)}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  className="text-terracotta hover:text-[#974f30] text-sm font-medium"
                 >
                   {editMode ? 'Cancel' : 'Edit Profile'}
                 </button>
@@ -271,7 +271,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                         type="text"
                         value={profileData.first_name}
                         onChange={(e) => setProfileData({...profileData, first_name: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                         placeholder="Enter your first name"
                       />
                     </div>
@@ -283,7 +283,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                         type="text"
                         value={profileData.last_name}
                         onChange={(e) => setProfileData({...profileData, last_name: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                         placeholder="Enter your last name"
                       />
                     </div>
@@ -296,7 +296,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                       type="email"
                       value={profileData.email}
                       onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                       placeholder="Enter your email"
                     />
                   </div>
@@ -304,7 +304,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                     <button
                       type="submit"
                       disabled={updateLoading}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                      className="bg-terracotta text-white px-4 py-2 rounded-md hover:bg-[#974f30] disabled:opacity-50"
                     >
                       {updateLoading ? 'Updating...' : 'Update Profile'}
                     </button>
@@ -353,7 +353,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                       type="password"
                       value={passwordData.current_password}
                       onChange={(e) => setPasswordData({...passwordData, current_password: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                       placeholder="Enter your current password"
                       required
                     />
@@ -366,7 +366,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                       type="password"
                       value={passwordData.new_password}
                       onChange={(e) => setPasswordData({...passwordData, new_password: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                       placeholder="Enter your new password"
                       required
                     />
@@ -379,7 +379,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                       type="password"
                       value={passwordData.confirm_password}
                       onChange={(e) => setPasswordData({...passwordData, confirm_password: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                       placeholder="Confirm your new password"
                       required
                     />
@@ -410,7 +410,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                         onUpload()
                         onClose()
                       }}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2"
+                      className="bg-terracotta text-white px-4 py-2 rounded-md hover:bg-[#974f30] transition-colors text-sm font-medium flex items-center gap-2"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />

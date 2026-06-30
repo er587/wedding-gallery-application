@@ -61,7 +61,7 @@ export default function ResetPassword() {
                 if (passwordError) setPasswordError('')
               }}
               required
-              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-terracotta"
             />
             <button
               type="button"
@@ -96,7 +96,7 @@ export default function ResetPassword() {
               className={`w-full px-3 py-2 pr-10 border rounded focus:outline-none focus:ring-2 ${
                 passwordError 
                   ? 'border-red-300 focus:ring-red-500' 
-                  : 'border-gray-300 focus:ring-blue-500'
+                  : 'border-gray-300 focus:ring-terracotta'
               }`}
             />
             <button
@@ -124,7 +124,7 @@ export default function ResetPassword() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:bg-blue-300"
+            className="w-full bg-terracotta text-white px-4 py-2 rounded hover:bg-[#974f30] transition-colors disabled:bg-terracotta"
           >
             {isSubmitting ? 'Resetting Password...' : 'Reset Password'}
           </button>

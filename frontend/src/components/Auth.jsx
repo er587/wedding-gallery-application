@@ -125,7 +125,7 @@ export default function Auth({ onLogin }) {
               value={loginData.username}
               onChange={handleLoginInputChange}
               required
-              className="px-3 py-2 md:py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto min-h-[44px] md:min-h-0"
+              className="px-3 py-2 md:py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta w-full sm:w-auto min-h-[44px] md:min-h-0"
             />
             <input
               type="password"
@@ -134,7 +134,7 @@ export default function Auth({ onLogin }) {
               value={loginData.password}
               onChange={handleLoginInputChange}
               required
-              className="px-3 py-2 md:py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto min-h-[44px] md:min-h-0"
+              className="px-3 py-2 md:py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta w-full sm:w-auto min-h-[44px] md:min-h-0"
             />
           </div>
           
@@ -142,14 +142,14 @@ export default function Auth({ onLogin }) {
           <div className="flex flex-col sm:flex-row gap-2">
             <button
               type="submit"
-              className="bg-blue-600 text-white px-4 py-3 md:py-2 rounded text-sm hover:bg-blue-700 transition-colors whitespace-nowrap min-h-[44px] md:min-h-0"
+              className="bg-terracotta text-white px-4 py-3 md:py-2 rounded text-sm hover:bg-[#974f30] transition-colors whitespace-nowrap min-h-[44px] md:min-h-0"
             >
               Login
             </button>
             <button
               type="button"
               onClick={() => setShowSignupModal(true)}
-              className="text-blue-600 text-sm hover:underline px-4 py-3 md:py-2 min-h-[44px] md:min-h-0"
+              className="text-terracotta text-sm hover:underline px-4 py-3 md:py-2 min-h-[44px] md:min-h-0"
             >
               Sign Up
             </button>
@@ -188,7 +188,7 @@ export default function Auth({ onLogin }) {
                   placeholder="First Name"
                   value={signupData.first_name}
                   onChange={handleSignupInputChange}
-                  className="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
                 />
                 <input
                   type="text"
@@ -196,7 +196,7 @@ export default function Auth({ onLogin }) {
                   placeholder="Last Name"
                   value={signupData.last_name}
                   onChange={handleSignupInputChange}
-                  className="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
                 />
               </div>
               
@@ -207,7 +207,7 @@ export default function Auth({ onLogin }) {
                 value={signupData.email}
                 onChange={handleSignupInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
               />
               
               <div className="relative">
@@ -218,7 +218,7 @@ export default function Auth({ onLogin }) {
                   value={signupData.password}
                   onChange={handleSignupInputChange}
                   required
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
                 />
                 <button
                   type="button"
@@ -269,7 +269,7 @@ export default function Auth({ onLogin }) {
                   className={`w-full px-3 py-2 pr-10 border rounded text-sm focus:outline-none focus:ring-2 ${
                     passwordError 
                       ? 'border-red-300 focus:ring-red-500' 
-                      : 'border-gray-300 focus:ring-blue-500'
+                      : 'border-gray-300 focus:ring-terracotta'
                   }`}
                 />
                 <button
@@ -322,7 +322,7 @@ export default function Auth({ onLogin }) {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                  className="flex-1 bg-terracotta text-white px-4 py-2 rounded hover:bg-[#974f30] transition-colors"
                 >
                   Sign Up
                 </button>
@@ -359,7 +359,7 @@ export default function Auth({ onLogin }) {
                 value={resetEmail}
                 onChange={(e) => setResetEmail(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-terracotta"
               />
               
               <div className="flex space-x-3">
@@ -373,7 +373,7 @@ export default function Auth({ onLogin }) {
                 <button
                   type="submit"
                   disabled={isSubmittingReset}
-                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:bg-blue-300"
+                  className="flex-1 bg-terracotta text-white px-4 py-2 rounded hover:bg-[#974f30] transition-colors disabled:bg-terracotta"
                 >
                   {isSubmittingReset ? 'Sending...' : 'Send Reset Link'}
                 </button>

@@ -143,13 +143,13 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false, can
         {tags.map((tag, index) => (
           <span
             key={index}
-            className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800"
+            className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-terracotta/10 text-terracotta"
           >
             {tag.name}
             {canEdit && (
               <button
                 onClick={() => removeTag(tag)}
-                className="ml-1 text-blue-600 hover:text-blue-800 focus:outline-none"
+                className="ml-1 text-terracotta hover:text-terracotta focus:outline-none"
                 type="button"
               >
                 ×
@@ -169,7 +169,7 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false, can
             onKeyDown={handleKeyDown}
             onFocus={() => inputValue.trim() && setShowSuggestions(true)}
             placeholder={canCreate ? 'Type to add a new tag, or pick one…' : 'Select from existing tags…'}
-            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-terracotta"
           />
           {canCreate && inputValue.trim() &&
             !allTags.some(t => t.name.toLowerCase() === inputValue.trim().toLowerCase()) && (
@@ -190,8 +190,8 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false, can
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={`w-full px-3 py-2 text-left text-sm focus:outline-none transition-colors ${
                     selectedIndex === index 
-                      ? 'bg-blue-100 text-blue-900' 
-                      : 'hover:bg-blue-50'
+                      ? 'bg-terracotta/10 text-terracotta' 
+                      : 'hover:bg-terracotta/5'
                   }`}
                   type="button"
                 >

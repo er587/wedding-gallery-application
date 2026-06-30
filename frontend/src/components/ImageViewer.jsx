@@ -381,7 +381,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
         {/* Dismiss button in top left */}
         <button
           onClick={onClose}
-          className="absolute top-4 left-4 z-20 p-2 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-white transition-all shadow-md md:bg-white md:bg-opacity-80 md:hover:bg-opacity-100 md:text-gray-600 md:hover:text-gray-800"
+          className="absolute top-4 left-4 z-20 p-2 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-white transition-all shadow-md md:bg-white md:bg-opacity-80 md:hover:bg-opacity-100 md:text-sand-soft md:hover:text-ink"
           title="Close"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -567,7 +567,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               </button>
               <button
                 onClick={handleSaveImage}
-                className="text-white hover:text-blue-400 text-sm px-2 py-1 rounded transition-colors flex items-center gap-1"
+                className="text-white hover:text-terracotta text-sm px-2 py-1 rounded transition-colors flex items-center gap-1"
                 title="Save image to device"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -576,7 +576,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               </button>
               <button
                 onClick={handleCopyLink}
-                className="text-white hover:text-blue-400 text-sm px-2 py-1 rounded transition-colors flex items-center gap-1"
+                className="text-white hover:text-terracotta text-sm px-2 py-1 rounded transition-colors flex items-center gap-1"
                 title="Copy link"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -595,7 +595,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               )}
               <button
                 onClick={() => setShowMobileComments(true)}
-                className="text-white hover:text-blue-400 text-sm px-2 py-1 rounded transition-colors flex items-center gap-1"
+                className="text-white hover:text-terracotta text-sm px-2 py-1 rounded transition-colors flex items-center gap-1"
                 title="View comments"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -633,11 +633,11 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                     placeholder="Enter image title..."
                     canEdit={canEditImage()}
                   />
-                  <p className="text-sm text-gray-600">Details & Comments</p>
+                  <p className="text-sm text-sand-soft">Details & Comments</p>
                 </div>
                 <button
                   onClick={() => setShowMobileComments(false)}
-                  className="p-2 text-gray-500 hover:text-gray-700"
+                  className="p-2 text-sand-mute hover:text-ink"
                 >
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -652,7 +652,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                   <InlineEditableText
                     value={imageData.description || ''}
                     onSave={handleUpdateImageDescription}
-                    className="text-sm text-gray-700"
+                    className="text-sm text-ink"
                     placeholder="Add a description..."
                     canEdit={canEditImage()}
                     multiline={true}
@@ -660,7 +660,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                 </div>
                 <div className="relative">
                   {canEditTags() && !canEditImage() && (
-                    <div className="mb-1 flex items-center gap-1 text-xs text-blue-600">
+                    <div className="mb-1 flex items-center gap-1 text-xs text-terracotta">
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                       </svg>
@@ -705,7 +705,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                   placeholder="Enter image title..."
                   canEdit={canEditImage()}
                 />
-                <p className="text-sm text-gray-600">by {imageData.uploader.first_name && imageData.uploader.last_name ? `${imageData.uploader.first_name} ${imageData.uploader.last_name}` : imageData.uploader.first_name || imageData.uploader.username}</p>
+                <p className="text-sm text-sand-soft">by {imageData.uploader.first_name && imageData.uploader.last_name ? `${imageData.uploader.first_name} ${imageData.uploader.last_name}` : imageData.uploader.first_name || imageData.uploader.username}</p>
               </div>
               <div className="flex items-center space-x-2 flex-wrap gap-y-2">
                 <button
@@ -713,7 +713,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                   className={`flex items-center space-x-1 px-2 py-1 rounded-md transition-colors ${
                     imageData.user_has_liked 
                       ? 'text-red-600 hover:text-red-700' 
-                      : 'text-gray-500 hover:text-red-500'
+                      : 'text-sand-mute hover:text-red-500'
                   }`}
                   disabled={!user}
                   title={imageData.user_has_liked ? 'Unlike' : 'Like'}
@@ -735,7 +735,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                 </button>
                 <button
                   onClick={handleSaveImage}
-                  className="text-blue-500 hover:text-blue-700 text-sm px-3 py-1 rounded border border-blue-500 hover:border-blue-700 transition-colors flex items-center gap-1"
+                  className="text-terracotta hover:text-[#974f30] text-sm px-3 py-1 rounded border border-terracotta hover:border-[#974f30] transition-colors flex items-center gap-1"
                   title="Save image to device"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -761,7 +761,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               <InlineEditableText
                 value={imageData.description || ''}
                 onSave={handleUpdateImageDescription}
-                className="text-sm text-gray-700"
+                className="text-sm text-ink"
                 placeholder="Add a description..."
                 canEdit={canEditImage()}
                 multiline={true}
@@ -771,7 +771,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
             {/* Tags */}
             <div className="relative">
               {canEditTags() && !canEditImage() && (
-                <div className="mb-1 flex items-center gap-1 text-xs text-blue-600">
+                <div className="mb-1 flex items-center gap-1 text-xs text-terracotta">
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>

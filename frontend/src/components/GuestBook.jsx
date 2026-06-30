@@ -118,7 +118,7 @@ export default function GuestBook({ user, onClose }) {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Leave a message for the happy couple..."
-            className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-terracotta text-sm"
             rows={3}
             maxLength={2000}
             required
@@ -128,7 +128,7 @@ export default function GuestBook({ user, onClose }) {
             <button
               type="submit"
               disabled={submitting || !newMessage.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors text-sm font-medium"
+              className="px-4 py-2 bg-terracotta text-white rounded-lg hover:bg-[#974f30] disabled:bg-gray-400 transition-colors text-sm font-medium"
             >
               {submitting ? 'Posting...' : 'Sign Guest Book'}
             </button>
@@ -146,7 +146,7 @@ export default function GuestBook({ user, onClose }) {
           ) : (
             entries.map(entry => (
               <div key={entry.id} className="flex space-x-3">
-                <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
+                <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center bg-gradient-to-r from-terracotta to-terracotta">
                   <span className="text-white font-semibold text-sm">{getInitial(entry.author)}</span>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -181,7 +181,7 @@ export default function GuestBook({ user, onClose }) {
             <div className="text-center pt-2">
               <button
                 onClick={loadMore}
-                className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                className="text-sm text-terracotta hover:text-terracotta transition-colors"
               >
                 Load more ({entries.length} of {meta.count})
               </button>
