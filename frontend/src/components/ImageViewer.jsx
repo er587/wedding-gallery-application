@@ -15,6 +15,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
   const [deleting, setDeleting] = useState(false)
   const [imageData, setImageData] = useState(image) // Local copy for like updates
   const [showMobileComments, setShowMobileComments] = useState(false)
+  const [descExpanded, setDescExpanded] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [slideshowProgress, setSlideshowProgress] = useState(0)
@@ -30,6 +31,9 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
   const slideshowTimeoutRef = useRef(null)
   const slideshowTimerRef = useRef(null)
   const SLIDESHOW_DELAY = 5000
+
+  // Collapse the mobile caption when switching photos.
+  useEffect(() => { setDescExpanded(false) }, [imageData?.id])
 
   // Navigation helpers
   const hasPrevious = currentIndex > 0
@@ -535,7 +539,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               />
               <p className="text-sm text-gray-200">by {imageData.uploader.first_name && imageData.uploader.last_name ? `${imageData.uploader.first_name} ${imageData.uploader.last_name}` : imageData.uploader.first_name || imageData.uploader.username}</p>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 shrink-0">
               <button
                 onClick={handleLike}
                 className={`flex items-center space-x-1 px-2 py-1 rounded-md transition-colors ${
@@ -601,6 +605,15 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               </button>
             </div>
           </div>
+          {imageData.description && (
+            <p
+              onClick={() => setDescExpanded((v) => !v)}
+              className={`text-[13px] leading-snug text-gray-100 cursor-pointer ${descExpanded ? '' : 'line-clamp-2'}`}
+              title={descExpanded ? 'Tap to collapse' : 'Tap to read more'}
+            >
+              {imageData.description}
+            </p>
+          )}
         </div>
 
         {/* Mobile Comments Drawer */}
