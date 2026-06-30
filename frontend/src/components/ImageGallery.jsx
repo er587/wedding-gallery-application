@@ -944,8 +944,9 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
         />
       )}
 
-      {/* Floating Back to Top Button */}
-      {showBackToTop && (
+      {/* Floating Back to Top Button — hidden while the image viewer is open so
+          it doesn't overlap the viewer's caption/action bar. */}
+      {showBackToTop && !selectedImage && (
         <button
           onClick={scrollToTop}
           className="fixed bottom-8 right-8 bg-terracotta hover:bg-[#974f30] text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 z-50 group"

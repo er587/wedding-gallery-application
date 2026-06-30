@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 
 export default function MobileMenu({ user, onUpload, onProfile, onHelp, onLogout }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -27,15 +28,17 @@ export default function MobileMenu({ user, onUpload, onProfile, onHelp, onLogout
         </svg>
       </button>
 
-      {/* Mobile Menu Overlay */}
-      {isOpen && (
+      {/* Mobile Menu Overlay — portaled to <body> so the fixed positioning isn't
+          trapped by the masthead header's backdrop-filter (which would otherwise
+          become the containing block for these fixed elements on iOS Safari). */}
+      {isOpen && createPortal(
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
             onClick={() => setIsOpen(false)}
           />
-          
+
           {/* Menu Panel */}
           <div className="fixed top-0 right-0 w-64 h-full bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out md:hidden">
             <div className="p-4">
@@ -123,7 +126,8 @@ export default function MobileMenu({ user, onUpload, onProfile, onHelp, onLogout
               </nav>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </>
   )
