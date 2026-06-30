@@ -62,7 +62,7 @@ export default function WelcomeModal({ isOpen, onClose }) {
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              className="bg-terracotta text-white px-6 py-2 rounded-md hover:bg-[#974f30] transition-colors"
             >
               Let's Share Memories!
             </button>

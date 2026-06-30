@@ -55,17 +55,17 @@ export default function HelpModal({ isOpen, onClose }) {
         {/* Content */}
         <div className="px-6 py-6 space-y-6">
           {/* Interactive Tour Button */}
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white">
+          <div className="bg-gradient-to-r from-terracotta to-terracotta rounded-lg p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold mb-2">🎯 Interactive Tour</h3>
-                <p className="text-blue-50 text-sm">
+                <p className="text-terracotta/5 text-sm">
                   Take a guided tour of the key features: filters, image selection, and uploads.
                 </p>
               </div>
               <button
                 onClick={handleStartTour}
-                className="px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-semibold whitespace-nowrap ml-4"
+                className="px-6 py-3 bg-white text-terracotta rounded-lg hover:bg-terracotta/5 transition-colors font-semibold whitespace-nowrap ml-4"
               >
                 Start Tour
               </button>
@@ -73,23 +73,23 @@ export default function HelpModal({ isOpen, onClose }) {
           </div>
 
           {/* Loading More Pictures */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-terracotta/5 border border-terracotta/20 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-              <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 mr-2 text-terracotta" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               Loading More Pictures
             </h3>
             <p className="text-gray-700 leading-relaxed">
               Images load 8 at a time to keep things fast. Scroll down and click the <span className="font-semibold">"Load More"</span> button to see additional pictures. 
-              <span className="block mt-2 text-blue-800 font-medium">Important: You must load all images to see everything in the gallery and use filters effectively!</span>
+              <span className="block mt-2 text-terracotta font-medium">Important: You must load all images to see everything in the gallery and use filters effectively!</span>
             </p>
           </div>
 
           {/* Opening Images */}
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="bg-terracotta/5 border border-terracotta/20 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
-              <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 mr-2 text-terracotta" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
@@ -160,7 +160,7 @@ export default function HelpModal({ isOpen, onClose }) {
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              className="bg-terracotta text-white px-6 py-2 rounded-md hover:bg-[#974f30] transition-colors"
             >
               Got It!
             </button>

@@ -77,7 +77,7 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
     }
     
     return (
-      <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
+      <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center bg-gradient-to-r from-terracotta to-terracotta">
         <span className="text-white font-semibold text-xs">{initial}</span>
       </div>
     )
@@ -103,7 +103,7 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
               {!isReply && (
                 <button
                   onClick={() => setReplyTo(comment.id)}
-                  className="text-xs text-blue-600 hover:text-blue-800"
+                  className="text-xs text-terracotta hover:text-terracotta"
                 >
                   Reply
                 </button>
@@ -126,7 +126,7 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 placeholder="Write a reply..."
-                className="w-full p-2 text-sm border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 text-sm border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-terracotta"
                 rows={2}
                 required
               />
@@ -134,7 +134,7 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 disabled:bg-gray-400"
+                  className="px-3 py-1 bg-terracotta text-white text-xs rounded hover:bg-[#974f30] disabled:bg-gray-400"
                 >
                   {submitting ? 'Posting...' : 'Reply'}
                 </button>
@@ -156,7 +156,7 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
       
       {/* Render replies */}
       {comment.replies && comment.replies.length > 0 && (
-        <div className="ml-8 mt-3 space-y-3 border-l-2 border-blue-100 pl-4">
+        <div className="ml-8 mt-3 space-y-3 border-l-2 border-terracotta/10 pl-4">
           {comment.replies.map(reply => renderComment(reply, true))}
         </div>
       )}
@@ -180,14 +180,14 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Share your memory of this moment..."
-            className="w-full p-3 border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-terracotta"
             rows={3}
             required
           />
           <button
             type="submit"
             disabled={submitting}
-            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+            className="mt-2 px-4 py-2 bg-terracotta text-white rounded hover:bg-[#974f30] disabled:bg-gray-400 transition-colors"
           >
             {submitting ? 'Posting...' : 'Share Memory'}
           </button>
@@ -211,7 +211,7 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
         <div className="text-center pt-2">
           <button
             onClick={onLoadMore}
-            className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+            className="text-sm text-terracotta hover:text-terracotta transition-colors"
           >
             Load more comments ({comments.length} of {commentsMeta.count})
           </button>

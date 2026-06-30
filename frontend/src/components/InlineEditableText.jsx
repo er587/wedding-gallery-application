@@ -109,7 +109,7 @@ const InlineEditableText = ({
             value={editValue}
             onChange={handleInputChange}
             onKeyDown={handleKeyPress}
-            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-terracotta focus:border-transparent resize-none"
             placeholder={placeholder}
             disabled={isLoading}
             rows={3}
@@ -121,7 +121,7 @@ const InlineEditableText = ({
             value={editValue}
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
-            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-terracotta focus:border-transparent"
             placeholder={placeholder}
             disabled={isLoading}
           />
@@ -142,7 +142,7 @@ const InlineEditableText = ({
         <button
           onClick={saveEdit}
           disabled={isLoading || !editValue.trim()}
-          className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+          className="px-3 py-1 text-sm bg-terracotta text-white rounded hover:bg-[#974f30] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
         >
           {isLoading && (
             <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
