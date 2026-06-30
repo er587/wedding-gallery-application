@@ -98,12 +98,12 @@ export default function GuestBook({ user, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Guest Book</h2>
-            <p className="text-sm text-gray-500 mt-1">{meta.count} message{meta.count !== 1 ? 's' : ''}</p>
+            <h2 className="text-2xl font-bold text-ink">Guest Book</h2>
+            <p className="text-sm text-sand-mute mt-1">{meta.count} message{meta.count !== 1 ? 's' : ''}</p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-2"
+            className="text-sand-faint hover:text-sand-soft p-2"
             aria-label="Close"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,22 +113,22 @@ export default function GuestBook({ user, onClose }) {
         </div>
 
         {/* New message form */}
-        <form onSubmit={handleSubmit} className="p-6 border-b bg-gray-50">
+        <form onSubmit={handleSubmit} className="p-6 border-b bg-sand-line/30">
           <textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Leave a message for the happy couple..."
-            className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-terracotta text-sm"
+            className="w-full p-3 border border-sand-line rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-terracotta text-sm"
             rows={3}
             maxLength={2000}
             required
           />
           <div className="flex items-center justify-between mt-2">
-            <span className="text-xs text-gray-400">{newMessage.length}/2000</span>
+            <span className="text-xs text-sand-faint">{newMessage.length}/2000</span>
             <button
               type="submit"
               disabled={submitting || !newMessage.trim()}
-              className="px-4 py-2 bg-terracotta text-white rounded-lg hover:bg-[#974f30] disabled:bg-gray-400 transition-colors text-sm font-medium"
+              className="px-4 py-2 bg-terracotta text-white rounded-lg hover:bg-[#974f30] disabled:bg-sand-mute transition-colors text-sm font-medium"
             >
               {submitting ? 'Posting...' : 'Sign Guest Book'}
             </button>
@@ -140,8 +140,8 @@ export default function GuestBook({ user, onClose }) {
           {entries.length === 0 && !loading ? (
             <div className="text-center py-12">
               <div className="text-5xl mb-4">📖</div>
-              <h3 className="text-lg font-semibold text-gray-700">No messages yet</h3>
-              <p className="text-gray-400 text-sm mt-1">Be the first to sign the guest book!</p>
+              <h3 className="text-lg font-semibold text-ink">No messages yet</h3>
+              <p className="text-sand-faint text-sm mt-1">Be the first to sign the guest book!</p>
             </div>
           ) : (
             entries.map(entry => (
@@ -152,13 +152,13 @@ export default function GuestBook({ user, onClose }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="font-semibold text-sm text-gray-900">{getDisplayName(entry.author)}</span>
-                      <span className="text-xs text-gray-400 ml-2">{formatDate(entry.created_at)}</span>
+                      <span className="font-semibold text-sm text-ink">{getDisplayName(entry.author)}</span>
+                      <span className="text-xs text-sand-faint ml-2">{formatDate(entry.created_at)}</span>
                     </div>
                     {entry.author?.id === user?.id && (
                       <button
                         onClick={() => handleDelete(entry.id)}
-                        className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                        className="text-xs text-sand-faint hover:text-red-500 transition-colors"
                         title="Delete"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,14 +167,14 @@ export default function GuestBook({ user, onClose }) {
                       </button>
                     )}
                   </div>
-                  <p className="text-sm text-gray-700 mt-1 leading-relaxed whitespace-pre-wrap">{entry.message}</p>
+                  <p className="text-sm text-ink mt-1 leading-relaxed whitespace-pre-wrap">{entry.message}</p>
                 </div>
               </div>
             ))
           )}
 
           {loading && (
-            <div className="text-center py-4 text-gray-400">Loading...</div>
+            <div className="text-center py-4 text-sand-faint">Loading...</div>
           )}
 
           {meta.next && !loading && (

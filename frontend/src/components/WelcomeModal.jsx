@@ -28,12 +28,12 @@ export default function WelcomeModal({ isOpen, onClose }) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-md w-full mx-auto shadow-xl">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-sand-line">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Welcome to Our Wedding Gallery! 🎉</h2>
+            <h2 className="text-xl font-semibold text-ink">Welcome to Our Wedding Gallery! 🎉</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-sand-faint hover:text-sand-soft transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -44,7 +44,7 @@ export default function WelcomeModal({ isOpen, onClose }) {
 
         {/* Content */}
         <div className="px-6 py-6">
-          <div className="text-gray-700 leading-relaxed space-y-4">
+          <div className="text-ink leading-relaxed space-y-4">
             <p>
               This is a custom web app I built just for our wedding! 🎉 It's a space where family and friends can share memories, and thoughts about the special moments we all experienced together.
             </p>
@@ -58,7 +58,7 @@ export default function WelcomeModal({ isOpen, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-gray-50 rounded-b-lg">
+        <div className="px-6 py-4 bg-sand-line/30 rounded-b-lg">
           <div className="flex justify-end">
             <button
               onClick={onClose}

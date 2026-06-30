@@ -180,13 +180,13 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                 {getInitials()}
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{getFullName()}</h2>
-                <p className="text-gray-600">{user?.email || user?.username}</p>
+                <h2 className="text-2xl font-bold text-ink">{getFullName()}</h2>
+                <p className="text-sand-soft">{user?.email || user?.username}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-colors"
+              className="text-sand-faint hover:text-sand-soft hover:bg-sand-line/50 rounded-full p-2 transition-colors"
               title="Close profile"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -219,7 +219,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
             className={`px-6 py-3 text-sm font-medium ${
               activeTab === 'profile' 
                 ? 'text-terracotta border-b-2 border-terracotta' 
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-sand-mute hover:text-ink'
             }`}
           >
             Profile
@@ -229,7 +229,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
             className={`px-6 py-3 text-sm font-medium ${
               activeTab === 'settings' 
                 ? 'text-terracotta border-b-2 border-terracotta' 
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-sand-mute hover:text-ink'
             }`}
           >
             Settings
@@ -239,7 +239,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
             className={`px-6 py-3 text-sm font-medium ${
               activeTab === 'images' 
                 ? 'text-terracotta border-b-2 border-terracotta' 
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-sand-mute hover:text-ink'
             }`}
           >
             Images ({uploadCount})
@@ -251,7 +251,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
           {activeTab === 'profile' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium text-gray-900">Profile Information</h3>
+                <h3 className="text-lg font-medium text-ink">Profile Information</h3>
                 <button
                   onClick={() => setEditMode(!editMode)}
                   className="text-terracotta hover:text-[#974f30] text-sm font-medium"
@@ -264,39 +264,39 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                 <form onSubmit={handleProfileUpdate} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-ink mb-1">
                         First Name
                       </label>
                       <input
                         type="text"
                         value={profileData.first_name}
                         onChange={(e) => setProfileData({...profileData, first_name: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
+                        className="w-full px-3 py-2 border border-sand-line rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                         placeholder="Enter your first name"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-ink mb-1">
                         Last Name
                       </label>
                       <input
                         type="text"
                         value={profileData.last_name}
                         onChange={(e) => setProfileData({...profileData, last_name: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
+                        className="w-full px-3 py-2 border border-sand-line rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                         placeholder="Enter your last name"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-ink mb-1">
                       Email
                     </label>
                     <input
                       type="email"
                       value={profileData.email}
                       onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
+                      className="w-full px-3 py-2 border border-sand-line rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                       placeholder="Enter your email"
                     />
                   </div>
@@ -311,7 +311,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                     <button
                       type="button"
                       onClick={() => setEditMode(false)}
-                      className="border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50"
+                      className="border border-sand-line text-ink px-4 py-2 rounded-md hover:bg-sand-line/30"
                     >
                       Cancel
                     </button>
@@ -320,20 +320,20 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
               ) : (
                 <div className="space-y-4">
                   <div>
-                    <span className="text-sm font-medium text-gray-500">Full Name:</span>
-                    <span className="ml-2 text-sm text-gray-900">{getFullName()}</span>
+                    <span className="text-sm font-medium text-sand-mute">Full Name:</span>
+                    <span className="ml-2 text-sm text-ink">{getFullName()}</span>
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-500">Email:</span>
-                    <span className="ml-2 text-sm text-gray-900">{user.email || 'Not provided'}</span>
+                    <span className="text-sm font-medium text-sand-mute">Email:</span>
+                    <span className="ml-2 text-sm text-ink">{user.email || 'Not provided'}</span>
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-500">Username:</span>
-                    <span className="ml-2 text-sm text-gray-900">{user?.email || user?.username}</span>
+                    <span className="text-sm font-medium text-sand-mute">Username:</span>
+                    <span className="ml-2 text-sm text-ink">{user?.email || user?.username}</span>
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-500">Images Shared:</span>
-                    <span className="ml-2 text-sm text-gray-900">{uploadCount}</span>
+                    <span className="text-sm font-medium text-sand-mute">Images Shared:</span>
+                    <span className="ml-2 text-sm text-ink">{uploadCount}</span>
                   </div>
                 </div>
               )}
@@ -343,43 +343,43 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
           {activeTab === 'settings' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Change Password</h3>
+                <h3 className="text-lg font-medium text-ink mb-4">Change Password</h3>
                 <form onSubmit={handlePasswordChange} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-ink mb-1">
                       Current Password
                     </label>
                     <input
                       type="password"
                       value={passwordData.current_password}
                       onChange={(e) => setPasswordData({...passwordData, current_password: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
+                      className="w-full px-3 py-2 border border-sand-line rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                       placeholder="Enter your current password"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-ink mb-1">
                       New Password
                     </label>
                     <input
                       type="password"
                       value={passwordData.new_password}
                       onChange={(e) => setPasswordData({...passwordData, new_password: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
+                      className="w-full px-3 py-2 border border-sand-line rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                       placeholder="Enter your new password"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-ink mb-1">
                       Confirm New Password
                     </label>
                     <input
                       type="password"
                       value={passwordData.confirm_password}
                       onChange={(e) => setPasswordData({...passwordData, confirm_password: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
+                      className="w-full px-3 py-2 border border-sand-line rounded-md focus:outline-none focus:ring-2 focus:ring-terracotta"
                       placeholder="Confirm your new password"
                       required
                     />
@@ -401,7 +401,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
               {/* User's Uploaded Images Section */}
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">
+                  <h3 className="text-lg font-medium text-ink">
                     Your Shared Images ({uploadCount})
                   </h3>
                   {user.can_upload_images && onUpload && (
@@ -424,7 +424,7 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                 ) : userImages.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {userImages.map((image) => (
-                      <div key={image.id} className="bg-gray-100 rounded-lg overflow-hidden">
+                      <div key={image.id} className="bg-sand-line/50 rounded-lg overflow-hidden">
                         <img
                           src={image.thumbnail_url || image.image_file}
                           alt={image.title}
@@ -432,15 +432,15 @@ export default function UserProfile({ user, onClose, onUserUpdate, onUpload }) {
                         />
                         <div className="p-2">
                           <h4 className="text-sm font-medium truncate">{image.title}</h4>
-                          <p className="text-xs text-gray-500 mt-1">{image.comment_count} comments</p>
+                          <p className="text-xs text-sand-mute mt-1">{image.comment_count} comments</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <div className="text-gray-500">No images shared yet</div>
-                    <p className="text-gray-400 text-sm mt-1">Click "Upload New Image" above to get started!</p>
+                    <div className="text-sand-mute">No images shared yet</div>
+                    <p className="text-sand-faint text-sm mt-1">Click "Upload New Image" above to get started!</p>
                   </div>
                 )}
               </div>

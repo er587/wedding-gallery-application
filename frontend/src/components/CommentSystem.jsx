@@ -84,20 +84,20 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
   }
 
   const renderComment = (comment, isReply = false) => (
-    <div key={comment.id} className={`${isReply ? 'bg-gray-50 rounded-lg p-3' : 'bg-white'}`}>
+    <div key={comment.id} className={`${isReply ? 'bg-sand-line/30 rounded-lg p-3' : 'bg-white'}`}>
       <div className="flex items-start space-x-3 mb-2">
         {getUserAvatar(comment.author)}
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2 mb-1">
-            <span className="font-semibold text-sm text-gray-900">
+            <span className="font-semibold text-sm text-ink">
               {comment.author?.first_name && comment.author?.last_name 
                 ? `${comment.author.first_name} ${comment.author.last_name}`
                 : comment.author?.first_name || comment.author?.username || 'Unknown User'
               }
             </span>
-            <span className="text-xs text-gray-400">{formatDate(comment.created_at)}</span>
+            <span className="text-xs text-sand-faint">{formatDate(comment.created_at)}</span>
           </div>
-          <p className="text-sm text-gray-700 leading-relaxed">{comment.content}</p>
+          <p className="text-sm text-ink leading-relaxed">{comment.content}</p>
           {user && !comment.is_hidden && (
             <div className="flex items-center space-x-3 mt-1">
               {!isReply && (
@@ -111,7 +111,7 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
               {comment.author?.id !== user.id && (
                 <button
                   onClick={() => handleReport(comment.id)}
-                  className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                  className="text-xs text-sand-faint hover:text-red-500 transition-colors"
                   title="Report this comment"
                 >
                   Flag
@@ -126,7 +126,7 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 placeholder="Write a reply..."
-                className="w-full p-2 text-sm border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-terracotta"
+                className="w-full p-2 text-sm border border-sand-line rounded resize-none focus:outline-none focus:ring-2 focus:ring-terracotta"
                 rows={2}
                 required
               />
@@ -134,7 +134,7 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-3 py-1 bg-terracotta text-white text-xs rounded hover:bg-[#974f30] disabled:bg-gray-400"
+                  className="px-3 py-1 bg-terracotta text-white text-xs rounded hover:bg-[#974f30] disabled:bg-sand-mute"
                 >
                   {submitting ? 'Posting...' : 'Reply'}
                 </button>
@@ -144,7 +144,7 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
                     setReplyTo(null)
                     setReplyText('')
                   }}
-                  className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded hover:bg-gray-200"
+                  className="px-3 py-1 bg-sand-line/50 text-ink text-xs rounded hover:bg-sand-line"
                 >
                   Cancel
                 </button>
@@ -165,7 +165,7 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
 
   if (loading) {
     return (
-      <div className="p-4 text-center text-gray-500">
+      <div className="p-4 text-center text-sand-mute">
         Loading comments...
       </div>
     )
@@ -180,14 +180,14 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Share your memory of this moment..."
-            className="w-full p-3 border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-terracotta"
+            className="w-full p-3 border border-sand-line rounded resize-none focus:outline-none focus:ring-2 focus:ring-terracotta"
             rows={3}
             required
           />
           <button
             type="submit"
             disabled={submitting}
-            className="mt-2 px-4 py-2 bg-terracotta text-white rounded hover:bg-[#974f30] disabled:bg-gray-400 transition-colors"
+            className="mt-2 px-4 py-2 bg-terracotta text-white rounded hover:bg-[#974f30] disabled:bg-sand-mute transition-colors"
           >
             {submitting ? 'Posting...' : 'Share Memory'}
           </button>
@@ -199,7 +199,7 @@ export default function CommentSystem({ imageId, comments, commentsMeta, user, l
         {comments.length > 0 ? (
           comments.map(comment => renderComment(comment))
         ) : (
-          <div className="text-center text-gray-500 py-8">
+          <div className="text-center text-sand-mute py-8">
             <p>No memories shared yet</p>
             {user && <p className="text-sm">Be the first to share your memory!</p>}
           </div>
