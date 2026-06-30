@@ -137,7 +137,7 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false, can
 
   return (
     <div className="mt-3">
-      <label className="text-sm font-medium text-gray-700 block mb-1">Tags</label>
+      <label className="text-sm font-medium text-sand-soft block mb-1">Tags</label>
       
       <div className="flex flex-wrap gap-1 mb-2">
         {tags.map((tag, index) => (
@@ -149,7 +149,8 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false, can
             {canEdit && (
               <button
                 onClick={() => removeTag(tag)}
-                className="ml-1 text-terracotta hover:text-terracotta focus:outline-none"
+                aria-label={`Remove ${tag.name}`}
+                className="ml-1 text-terracotta hover:text-[#974f30] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta/50 rounded-full leading-none"
                 type="button"
               >
                 ×
@@ -169,11 +170,11 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false, can
             onKeyDown={handleKeyDown}
             onFocus={() => inputValue.trim() && setShowSuggestions(true)}
             placeholder={canCreate ? 'Type to add a new tag, or pick one…' : 'Select from existing tags…'}
-            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-terracotta"
+            className="w-full px-2 py-1 text-sm border border-sand-line rounded focus:outline-none focus:ring-1 focus:ring-terracotta"
           />
           {canCreate && inputValue.trim() &&
             !allTags.some(t => t.name.toLowerCase() === inputValue.trim().toLowerCase()) && (
-              <div className="mt-1 text-xs text-gray-500">
+              <div className="mt-1 text-xs text-sand-mute">
                 Press Enter to create “{inputValue.trim().toLowerCase()}”
               </div>
             )}
@@ -181,14 +182,14 @@ export default function TagInput({ tags = [], onTagsChange, canEdit = false, can
           {showSuggestions && suggestions.length > 0 && (
             <div
               ref={suggestionsRef}
-              className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-40 overflow-y-auto"
+              className="absolute z-10 w-full mt-1 bg-white border border-sand-line rounded shadow-lg max-h-40 overflow-y-auto"
             >
               {suggestions.map((tag, index) => (
                 <button
                   key={tag.id}
                   onClick={() => addTag(tag.name)}
                   onMouseEnter={() => setSelectedIndex(index)}
-                  className={`w-full px-3 py-2 text-left text-sm focus:outline-none transition-colors ${
+                  className={`w-full px-3 py-2 text-left text-sm focus:outline-none focus-visible:bg-terracotta/10 transition-colors ${
                     selectedIndex === index 
                       ? 'bg-terracotta/10 text-terracotta' 
                       : 'hover:bg-terracotta/5'

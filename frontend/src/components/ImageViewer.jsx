@@ -382,7 +382,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
         <button
           onClick={onClose}
           className="absolute top-4 left-4 z-20 p-2 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-white transition-all shadow-md md:bg-white md:bg-opacity-80 md:hover:bg-opacity-100 md:text-sand-soft md:hover:text-ink"
-          title="Close"
+          title="Close" aria-label="Close"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -408,6 +408,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               onClick={() => setIsPlaying(prev => !prev)}
               className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-all"
               title={isPlaying ? 'Pause slideshow' : 'Play slideshow'}
+              aria-label={isPlaying ? 'Pause slideshow' : 'Play slideshow'}
             >
               {isPlaying ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -427,7 +428,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
             <button
               onClick={() => { setIsPlaying(false); handlePrevious() }}
               className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-white transition-all shadow-lg hover:scale-110"
-              title="Previous image (←)"
+              title="Previous image (←)" aria-label="Previous image (←)"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6"></polyline>
@@ -517,7 +518,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
             <button
               onClick={() => { setIsPlaying(false); handleNext() }}
               className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-white transition-all shadow-lg hover:scale-110"
-              title="Next image (→)"
+              title="Next image (→)" aria-label="Next image (→)"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6"></polyline>
@@ -549,6 +550,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                 }`}
                 disabled={!user}
                 title={imageData.user_has_liked ? 'Unlike' : 'Like'}
+                aria-label={imageData.user_has_liked ? 'Unlike' : 'Like'}
               >
                 <svg 
                   className={`w-5 h-5 ${imageData.user_has_liked ? 'fill-current' : ''}`} 
@@ -568,7 +570,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               <button
                 onClick={handleSaveImage}
                 className="text-white hover:text-terracotta text-sm px-2 py-1 rounded transition-colors flex items-center gap-1"
-                title="Save image to device"
+                title="Save image to device" aria-label="Save image to device"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -577,7 +579,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               <button
                 onClick={handleCopyLink}
                 className="text-white hover:text-terracotta text-sm px-2 py-1 rounded transition-colors flex items-center gap-1"
-                title="Copy link"
+                title="Copy link" aria-label="Copy link"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -588,7 +590,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                   onClick={handleDeleteImage}
                   disabled={deleting}
                   className="text-white hover:text-red-400 text-sm px-2 py-1 rounded transition-colors disabled:opacity-50"
-                  title="Delete image"
+                  title="Delete image" aria-label="Delete image"
                 >
                   {deleting ? '...' : '🗑️'}
                 </button>
@@ -596,7 +598,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               <button
                 onClick={() => setShowMobileComments(true)}
                 className="text-white hover:text-terracotta text-sm px-2 py-1 rounded transition-colors flex items-center gap-1"
-                title="View comments"
+                title="View comments" aria-label="View comments"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
@@ -717,6 +719,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                   }`}
                   disabled={!user}
                   title={imageData.user_has_liked ? 'Unlike' : 'Like'}
+                aria-label={imageData.user_has_liked ? 'Unlike' : 'Like'}
                 >
                   <svg 
                     className={`w-5 h-5 ${imageData.user_has_liked ? 'fill-current' : ''}`} 
@@ -736,7 +739,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                 <button
                   onClick={handleSaveImage}
                   className="text-terracotta hover:text-[#974f30] text-sm px-3 py-1 rounded border border-terracotta hover:border-[#974f30] transition-colors flex items-center gap-1"
-                  title="Save image to device"
+                  title="Save image to device" aria-label="Save image to device"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -748,7 +751,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                     onClick={handleDeleteImage}
                     disabled={deleting}
                     className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded border border-red-500 hover:border-red-700 transition-colors disabled:opacity-50"
-                    title="Delete image"
+                    title="Delete image" aria-label="Delete image"
                   >
                     {deleting ? 'Deleting...' : 'Delete'}
                   </button>
