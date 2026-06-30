@@ -666,6 +666,7 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
             currentMediaType={mediaType}
             onSearchFilter={setSearchText}
             currentSearch={searchText}
+            onClose={() => setShowSearchBar(false)}
           />
         </div>
       )}
