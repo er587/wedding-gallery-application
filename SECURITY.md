@@ -20,7 +20,7 @@ The Wedding Gallery team takes security bugs seriously. We appreciate your effor
 Instead, please report them via one of the following methods:
 
 #### Email
-Send details to: **security@wedding-gallery.dev** (if available) or create a private security advisory on GitHub.
+Open a **private GitHub Security Advisory** on the repository (**Security → Report a vulnerability**). Please don't use a public issue.
 
 #### GitHub Security Advisories
 1. Go to the repository's Security tab
@@ -119,6 +119,48 @@ When contributing to Wedding Gallery:
 - **Vite**: Secure development and build process
 - **Input Validation**: Client-side validation (not security boundary)
 
+## Security Model
+
+The gallery is **invitation-only**. The trust boundaries to be aware of:
+
+### Private gallery
+- Viewing requires an authenticated session — image list, image detail, comments,
+  tags, and the photo count all require login (`IsAuthenticated`).
+- The only public endpoint is `/api/site-config/`, which returns landing-page text
+  (couple names, date, venue). It never returns a gallery photo to an anonymous
+  caller.
+
+### Protected media
+- Image bytes under `/media/` are **not** served directly. They go through an
+  auth-gated view that requires a logged-in session (authenticated via the session
+  cookie the browser sends with `<img>` requests), confines the path to
+  `MEDIA_ROOT` (no traversal), and — in production — hands the file to an internal
+  nginx location via `X-Accel-Redirect`. Files belonging to a soft-deleted photo
+  are not served.
+
+### AI labeling — agent-key trust model
+The labeling pipeline lets an external AI agent (or a staff member) propose
+captions/tags, but **nothing it submits reaches the live gallery without a staff
+member's approval**.
+
+- **Agent API keys** (`AgentApiKey`) are **issued by an admin** in the Django admin
+  and stored **hashed** (the plaintext key is shown once at creation and never
+  again). A client presents it in the `X-Agent-Key` request header.
+- A valid agent key (or a staff session) may **read** the labeling queue and
+  **submit** suggestions — but every suggestion is created with status `pending`.
+  It is inert until reviewed.
+- **Applying** a suggestion to a real image (`approve`) and rejecting one are
+  **staff-only** (`IsAdminUser`). The approval step is the trust gate; an agent can
+  never write a title/tag onto a photo directly.
+- A suggestion's `source` (shown to reviewers) is attributed **server-side** from
+  the authenticated identity (the agent key's name, or `staff:<username>`); it is
+  not taken from client input, so an agent cannot label its own suggestion as
+  staff-vetted.
+
+### Provider API keys
+- AI provider keys (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY`) live
+  in server-side environment variables only and are never sent to the browser.
+
 ## Disclosure Policy
 
 - **Coordination**: We prefer coordinated disclosure
@@ -138,8 +180,7 @@ We recognize security researchers who help improve Wedding Gallery:
 
 For security-related questions and concerns:
 
-- **Security Email**: security@wedding-gallery.dev (if available)
-- **GitHub Security**: Use repository security advisory feature
+- **GitHub Security Advisory**: the repository's Security tab → "Report a vulnerability"
 - **General Contact**: See main README for project contact information
 
 ---
