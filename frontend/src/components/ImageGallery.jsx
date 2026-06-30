@@ -516,7 +516,7 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
             <button
               key={tab.key}
               onClick={tab.onClick}
-              className={`pb-[6px] transition-colors ${
+              className={`pt-3 pb-[6px] -mt-1 transition-colors ${
                 tab.active
                   ? 'text-ink border-b-[1.5px] border-terracotta'
                   : 'text-sand-dim hover:text-ink'

@@ -381,7 +381,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
         {/* Dismiss button in top left */}
         <button
           onClick={onClose}
-          className="absolute top-4 left-4 z-20 p-2 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-white transition-all shadow-md md:bg-white md:bg-opacity-80 md:hover:bg-opacity-100 md:text-sand-soft md:hover:text-ink"
+          className="absolute top-4 left-4 z-20 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 text-white transition-all shadow-md md:bg-white md:bg-opacity-80 md:hover:bg-opacity-100 md:text-sand-soft md:hover:text-ink"
           title="Close" aria-label="Close"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -543,7 +543,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
             <div className="flex items-center space-x-3 shrink-0">
               <button
                 onClick={handleLike}
-                className={`flex items-center space-x-1 px-2 py-1 rounded-md transition-colors ${
+                className={`flex items-center justify-center space-x-1 min-h-[44px] px-2 rounded-md transition-colors ${
                   imageData.user_has_liked 
                     ? 'text-red-400 hover:text-red-300' 
                     : 'text-white hover:text-red-400'
@@ -569,7 +569,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               </button>
               <button
                 onClick={handleSaveImage}
-                className="text-white hover:text-terracotta text-sm px-2 py-1 rounded transition-colors flex items-center gap-1"
+                className="text-white hover:text-terracotta text-sm min-h-[44px] min-w-[44px] justify-center rounded transition-colors flex items-center gap-1"
                 title="Save image to device" aria-label="Save image to device"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -578,7 +578,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               </button>
               <button
                 onClick={handleCopyLink}
-                className="text-white hover:text-terracotta text-sm px-2 py-1 rounded transition-colors flex items-center gap-1"
+                className="text-white hover:text-terracotta text-sm min-h-[44px] min-w-[44px] justify-center rounded transition-colors flex items-center gap-1"
                 title="Copy link" aria-label="Copy link"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -589,7 +589,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
                 <button
                   onClick={handleDeleteImage}
                   disabled={deleting}
-                  className="text-white hover:text-red-400 text-sm px-2 py-1 rounded transition-colors disabled:opacity-50"
+                  className="text-white hover:text-red-400 text-sm min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded transition-colors disabled:opacity-50"
                   title="Delete image" aria-label="Delete image"
                 >
                   {deleting ? '...' : '🗑️'}
@@ -597,7 +597,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               )}
               <button
                 onClick={() => setShowMobileComments(true)}
-                className="text-white hover:text-terracotta text-sm px-2 py-1 rounded transition-colors flex items-center gap-1"
+                className="text-white hover:text-terracotta text-sm min-h-[44px] min-w-[44px] justify-center rounded transition-colors flex items-center gap-1"
                 title="View comments" aria-label="View comments"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -712,7 +712,7 @@ export default function ImageViewer({ image, user, onClose, onImageDeleted, onTi
               <div className="flex items-center space-x-2 flex-wrap gap-y-2">
                 <button
                   onClick={handleLike}
-                  className={`flex items-center space-x-1 px-2 py-1 rounded-md transition-colors ${
+                  className={`flex items-center justify-center space-x-1 min-h-[44px] px-2 rounded-md transition-colors ${
                     imageData.user_has_liked 
                       ? 'text-red-600 hover:text-red-700' 
                       : 'text-sand-mute hover:text-red-500'
