@@ -80,13 +80,15 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
   const [showPeople, setShowPeople] = useState(false)
   const [showBackToTop, setShowBackToTop] = useState(false)
   const [totalImageCount, setTotalImageCount] = useState(0)
-  const [pagination, setPagination] = useState({
-    page: 1,
-    pageSize: 8, // Reduced from 12 to 8 for better CPU performance
-    hasMore: true,
-    loadingMore: false
-  })
-  
+  const PAGE_SIZE = 24
+  const [hasMore, setHasMore] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  // Refs mirror the values the infinite-scroll observer reads, so its callback
+  // never sees stale state.
+  const pageRef = useRef(1)
+  const hasMoreRef = useRef(true)
+  const fetchingRef = useRef(false) // any fetch in flight (initial or append)
+
   // Ref to track current fetch request ID to prevent stale responses
   const currentFetchIdRef = useRef(0)
 
@@ -99,146 +101,67 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
     }
   }
 
-  const fetchImages = async (isInitialLoad = false) => {
+  const buildParams = (page) => {
+    const effectiveMediaType = viewMode === 'videos' ? 'video' : mediaType
+    const params = { page, page_size: PAGE_SIZE }
+    if (selectedTags) params.tags = selectedTags
+    if (effectiveMediaType) params.media_type = effectiveMediaType
+    if (searchText) params.search = searchText
+    return params
+  }
+
+  // Fetch one page. replace=true resets the list (initial load / filter change);
+  // otherwise the page is appended (infinite scroll). Filters paginate the same
+  // way as the unfiltered gallery — no special-casing.
+  const fetchPage = async (page, { replace }) => {
+    const thisFetchId = ++currentFetchIdRef.current
+    fetchingRef.current = true
+    if (replace) setLoading(true)
+    else setLoadingMore(true)
     try {
-      // Increment fetch ID to invalidate any pending requests
-      const thisFetchId = ++currentFetchIdRef.current
-      
-      if (isInitialLoad) {
-        setLoading(true)
-        setImages([])
-        setPagination(prev => ({ ...prev, page: 1, hasMore: true, loadingMore: false }))
-      } else {
-        setPagination(prev => ({ ...prev, loadingMore: true }))
-      }
-      
-      // Build query parameters for tag filtering and media type
-      const currentPage = isInitialLoad ? 1 : pagination.page
-      
-      // When filtering by tags or media type, fetch ALL matching images
-      // Otherwise use normal pagination for better performance
-      const effectiveMediaType = viewMode === 'videos' ? 'video' : mediaType
-      const isFiltering = selectedTags || effectiveMediaType || searchText
-      const params = {
-        page: currentPage,
-        page_size: isFiltering ? 1000 : pagination.pageSize
-      }
-      if (selectedTags) params.tags = selectedTags
-      if (effectiveMediaType) params.media_type = effectiveMediaType
-      if (searchText) params.search = searchText
-
-      // Fetch from favorites endpoint or main gallery
       const response = viewMode === 'favorites' && user
-        ? await apiService.getLikedImages(currentPage)
-        : await apiService.getImages(params)
+        ? await apiService.getLikedImages(page)
+        : await apiService.getImages(buildParams(page))
 
-      // Save last visit time for "NEW" badge (only on first load of all-images mode)
-      if (isInitialLoad && viewMode === 'all') {
+      if (thisFetchId !== currentFetchIdRef.current) return // superseded by a newer request
+
+      if (replace && viewMode === 'all') {
         localStorage.setItem('lastGalleryVisit', new Date().toISOString())
       }
+      const newImages = response.data.results || response.data || []
+      const more = Boolean(response.data.next)
 
-      // Check if this response is stale (newer request started)
-      if (thisFetchId !== currentFetchIdRef.current) {
-        return // Discard stale response
-      }
-      
-      // Handle both paginated and non-paginated responses
-      const newImages = response.data.results || response.data
-      const hasMore = response.data.next ? true : false
-      
-      if (isInitialLoad) {
-        // When filtering, load all results but chunk them progressively to prevent CPU spikes
-        if (isFiltering && Array.isArray(newImages) && newImages.length > 8) {
-          // Load first batch immediately
-          const firstBatch = newImages.slice(0, 8)
-          setImages(firstBatch)
-          
-          // Disable pagination BEFORE starting progressive load
-          setPagination(prev => ({ 
-            ...prev, 
-            page: 2, 
-            hasMore: false,
-            loadingMore: false
-          }))
-          
-          // Load remaining images in chunks with delays
-          const remainingImages = newImages.slice(8)
-          const chunkSize = 8
-          
-          // Use setTimeout to avoid blocking the main thread
-          for (let i = 0; i < remainingImages.length; i += chunkSize) {
-            // Check if this request is still current
-            if (thisFetchId !== currentFetchIdRef.current) {
-              break // Abort if newer request started
-            }
-            
-            const chunk = remainingImages.slice(i, i + chunkSize)
-            await new Promise(resolve => setTimeout(resolve, 150))
-            
-            // Check again after delay
-            if (thisFetchId !== currentFetchIdRef.current) {
-              break // Abort if newer request started
-            }
-            
-            setImages(prev => [...prev, ...chunk])
-          }
-        } else {
-          // Normal initial load (not filtering or small result set)
-          setImages(Array.isArray(newImages) ? newImages : [])
-          
-          const shouldLoadMore = isFiltering ? false : (hasMore && newImages.length === pagination.pageSize)
-          
-          setPagination(prev => ({ 
-            ...prev, 
-            page: 2, 
-            hasMore: shouldLoadMore
-          }))
-        }
-      } else {
-        // Loading more (non-initial load)
-        // Add staggered loading delay to prevent CPU spike from decoding all images at once
-        if (Array.isArray(newImages) && newImages.length > 0) {
-          await new Promise(resolve => setTimeout(resolve, 100))
-          
-          // Check if this request is still current after delay
-          if (thisFetchId !== currentFetchIdRef.current) {
-            return // Discard stale load-more response
-          }
-          
-          // Filter out duplicates by checking existing image IDs
-          setImages(prev => {
-            const existingIds = new Set(prev.map(img => img.id))
-            const uniqueNewImages = newImages.filter(img => !existingIds.has(img.id))
-            return [...prev, ...uniqueNewImages]
-          })
-          setPagination(prev => ({ 
-            ...prev, 
-            page: prev.page + 1, 
-            hasMore: hasMore && newImages.length === pagination.pageSize
-          }))
-        } else {
-          // No more images to load
-          setPagination(prev => ({ ...prev, hasMore: false }))
-        }
-      }
+      setImages((prev) => {
+        if (replace) return newImages
+        const seen = new Set(prev.map((i) => i.id))
+        return [...prev, ...newImages.filter((i) => !seen.has(i.id))]
+      })
+      pageRef.current = page
+      hasMoreRef.current = more
+      setHasMore(more)
     } catch (error) {
       console.error('Error fetching images:', error)
-      if (isInitialLoad) {
-        setImages([])
-      }
-      // Stop trying to load more on error
-      setPagination(prev => ({ ...prev, hasMore: false }))
+      if (replace) setImages([])
+      hasMoreRef.current = false
+      setHasMore(false)
     } finally {
-      setLoading(false)
-      setPagination(prev => ({ ...prev, loadingMore: false }))
+      if (thisFetchId === currentFetchIdRef.current) {
+        setLoading(false)
+        setLoadingMore(false)
+        fetchingRef.current = false
+      }
     }
   }
 
-  const loadMoreImages = () => {
-    if (!pagination.loadingMore && pagination.hasMore) {
-      fetchImages(false)
-    }
+  // Load the next page — called by the infinite-scroll observer.
+  const loadNext = () => {
+    if (fetchingRef.current || !hasMoreRef.current) return
+    fetchPage(pageRef.current + 1, { replace: false })
   }
+  // Keep a ref to the latest loadNext so the (once-created) observer always calls
+  // a closure with the current filter state.
+  const loadNextRef = useRef(loadNext)
+  loadNextRef.current = loadNext
 
   const handleLike = async (imageId) => {
     if (!user) return
@@ -367,10 +290,13 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
   }
 
   useEffect(() => {
-    // Only fetch images if user is logged in
+    // Reset to page 1 whenever the filters/view change, then load page 1.
     if (user) {
-      fetchImages(true) // true means reset/initial load
-      fetchImageCount() // Fetch total image count
+      pageRef.current = 1
+      hasMoreRef.current = true
+      setHasMore(true)
+      fetchPage(1, { replace: true })
+      fetchImageCount()
     } else {
       setImages([])
       setLoading(false)
@@ -387,35 +313,19 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Add ref for intersection observer
-  const loadingTriggerRef = useRef(null)
-
+  // Infinite scroll: one observer on an always-present sentinel. The callback
+  // reads loadNextRef (latest closure) and loadNext itself guards on the refs,
+  // so it loads the next page only when there's more and nothing's in flight.
+  const sentinelRef = useRef(null)
   useEffect(() => {
-    // Use Intersection Observer for more reliable infinite scroll
     const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries
-        if (entry.isIntersecting && !pagination.loadingMore && pagination.hasMore) {
-          loadMoreImages()
-        }
-      },
-      {
-        root: null, // Use viewport as root
-        rootMargin: '200px', // Reduced from 800px to 200px to prevent aggressive pre-loading
-        threshold: 0
-      }
+      (entries) => { if (entries[0].isIntersecting) loadNextRef.current() },
+      { root: null, rootMargin: '600px', threshold: 0 }
     )
-
-    if (loadingTriggerRef.current) {
-      observer.observe(loadingTriggerRef.current)
-    }
-
-    return () => {
-      if (loadingTriggerRef.current) {
-        observer.unobserve(loadingTriggerRef.current)
-      }
-    }
-  }, [pagination.loadingMore, pagination.hasMore])
+    const el = sentinelRef.current
+    if (el) observer.observe(el)
+    return () => { if (el) observer.unobserve(el) }
+  }, [])
 
   const handleImageDeleted = (deletedImageId) => {
     // Remove the deleted image from the local state
@@ -911,14 +821,8 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
         </div>
       )}
 
-      {/* Invisible trigger for Intersection Observer */}
-      {images.length > 0 && pagination.hasMore && (
-        <div 
-          ref={loadingTriggerRef} 
-          className="h-1 w-full"
-          style={{ position: 'relative', bottom: '200px' }}
-        />
-      )}
+      {/* Infinite-scroll sentinel — always present so the observer stays attached */}
+      <div ref={sentinelRef} className="h-px w-full" aria-hidden="true" />
 
       {images.length === 0 && !loading && (
         <div className="text-center px-6 md:px-12 py-24">
@@ -943,26 +847,14 @@ export default function ImageGallery({ user, refresh, onUpload, config }) {
       )}
 
       {/* Loading More Indicator */}
-      {pagination.loadingMore && (
+      {loadingMore && (
         <div className="text-center py-10">
           <span className="font-serif italic text-[17px] text-sand-mute">Gathering more moments…</span>
         </div>
       )}
 
-      {/* Load More Button */}
-      {images.length > 0 && pagination.hasMore && !pagination.loadingMore && (
-        <div className="text-center pb-16">
-          <button
-            onClick={loadMoreImages}
-            className="text-[12px] tracking-[0.18em] uppercase text-terracotta border border-sand-edge px-8 py-3 transition-colors hover:bg-terracotta hover:text-white hover:border-terracotta"
-          >
-            Show more
-          </button>
-        </div>
-      )}
-
       {/* End of Results */}
-      {images.length > 0 && !pagination.hasMore && (
+      {images.length > 0 && !hasMore && !loadingMore && (
         <div className="text-center pb-16">
           <div className="flex items-center justify-center gap-[18px] mb-4">
             <span className="w-16 h-px bg-sand-rule"></span>
