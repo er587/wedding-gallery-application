@@ -181,8 +181,11 @@ def _encode_image(image):
         raise LabelingNotConfigured(f"Image {image.pk} has no file to read.")
     with source.open('rb') as fh:
         raw = fh.read()
-    im = PILImage.open(BytesIO(raw))
-    im = im.convert('RGB')
+    try:
+        im = PILImage.open(BytesIO(raw))
+        im = im.convert('RGB')
+    except Exception:
+        raise LabelingNotConfigured(f"Image {image.pk} could not be decoded.")
     im.thumbnail((MAX_DIM, MAX_DIM))
     buf = BytesIO()
     im.save(buf, format='JPEG', quality=85)
@@ -208,6 +211,11 @@ def generate_label_suggestion(image_id, model=None, max_tags=None, existing_tags
     if max_tags is None:
         try:
             max_tags = int(os.environ.get('ANTHROPIC_LABEL_MAX_TAGS', DEFAULT_MAX_TAGS))
+        except (TypeError, ValueError):
+            max_tags = DEFAULT_MAX_TAGS
+    else:
+        try:
+            max_tags = int(max_tags)
         except (TypeError, ValueError):
             max_tags = DEFAULT_MAX_TAGS
 

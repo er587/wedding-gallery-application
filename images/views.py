@@ -742,16 +742,35 @@ def serve_protected_media(request, path):
     if not request.user.is_authenticated:
         return HttpResponseForbidden('Authentication required.')
 
+    # Reject paths containing a NUL byte — os.path.realpath raises ValueError on them.
+    if '\x00' in path:
+        raise Http404('Not found')
+
     # Resolve the real path and confine it to MEDIA_ROOT (block path traversal).
     media_root = os.path.realpath(settings.MEDIA_ROOT)
-    full = os.path.realpath(os.path.join(media_root, path))
-    if not (full == media_root or full.startswith(media_root + os.sep)) or not os.path.isfile(full):
+    try:
+        full = os.path.realpath(os.path.join(media_root, path))
+        is_file = os.path.isfile(full)
+    except (ValueError, OSError):
         raise Http404('Not found')
+    if not (full == media_root or full.startswith(media_root + os.sep)) or not is_file:
+        raise Http404('Not found')
+
+    rel = os.path.relpath(full, media_root).replace(os.sep, '/')
+
+    # Don't serve the original/cover/thumbnail of a soft-deleted photo, even to a
+    # logged-in user who recorded the URL before deletion. Block only when the
+    # path is owned by image rows and every owner is deleted (derived CACHE/
+    # thumbnails and untracked files match nothing and are served normally).
+    if rel.startswith('images/'):
+        owners = list(Image.all_objects.filter(
+            Q(image_file=rel) | Q(cover_image=rel) | Q(thumbnail=rel)
+        ).values_list('is_deleted', flat=True))
+        if owners and all(owners):
+            raise Http404('Not found')
 
     if settings.DEBUG:
         return FileResponse(open(full, 'rb'))
-
-    rel = os.path.relpath(full, media_root).replace(os.sep, '/')
     response = HttpResponse(status=200)
     response['X-Accel-Redirect'] = settings.PROTECTED_MEDIA_INTERNAL + rel
     response['Content-Type'] = ''  # let nginx set the type from the served file
@@ -816,7 +835,7 @@ def labeling_queue(request):
     so re-running the agent doesn't double-queue them.
     """
     try:
-        limit = min(int(request.GET.get('limit', 50)), 200)
+        limit = max(1, min(int(request.GET.get('limit', 50)), 200))
     except (TypeError, ValueError):
         limit = 50
     try:
@@ -859,11 +878,16 @@ def create_label_suggestion(request, image_id):
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
 
-    # Attribute the suggestion: explicit source > agent key name > staff user.
+    # Attribute the suggestion from the authenticated identity only — never trust a
+    # client-supplied `source` (an agent could otherwise label its own suggestion
+    # "staff:admin" to look human-vetted in the review queue).
     agent_key = getattr(request, 'agent_key', None)
-    source = data.get('source') or (agent_key.name if agent_key else None)
-    if not source:
-        source = f'staff:{request.user.username}' if request.user.is_authenticated else 'agent'
+    if agent_key:
+        source = agent_key.name
+    elif request.user.is_authenticated:
+        source = f'staff:{request.user.username}'
+    else:
+        source = 'agent'
 
     suggestion = ImageLabelSuggestion.objects.create(
         image=image,
@@ -890,10 +914,10 @@ def list_label_suggestions(request):
     if status_filter:
         qs = qs.filter(status=status_filter)
     image_filter = request.GET.get('image')
-    if image_filter:
-        qs = qs.filter(image_id=image_filter)
+    if image_filter and str(image_filter).isdigit():
+        qs = qs.filter(image_id=int(image_filter))
     try:
-        limit = min(int(request.GET.get('limit', 100)), 500)
+        limit = max(1, min(int(request.GET.get('limit', 100)), 500))
     except (TypeError, ValueError):
         limit = 100
     data = ImageLabelSuggestionSerializer(qs[:limit], many=True, context={'request': request}).data
@@ -976,7 +1000,7 @@ def generate_labels_bulk(request, *args, **kwargs):
         return Response({'error': 'django-q is not installed.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
     try:
-        limit = min(int(request.GET.get('limit', 25)), 200)
+        limit = max(1, min(int(request.GET.get('limit', 25)), 200))
     except (TypeError, ValueError):
         limit = 25
     needs_label = request.GET.get('needs_label', 'true').lower() != 'false'
@@ -1018,7 +1042,7 @@ def _unhandled_image_qs(after_id=0):
 
 def _batch_params(request, default_limit, max_limit):
     try:
-        limit = min(int(request.GET.get('limit', default_limit)), max_limit)
+        limit = max(1, min(int(request.GET.get('limit', default_limit)), max_limit))
     except (TypeError, ValueError):
         limit = default_limit
     try:
@@ -1144,8 +1168,11 @@ def match_people_batch(request):
         min_conf = 0.6
     model = request.data.get('model') or os.environ.get('ANTHROPIC_LABELING_MODEL', 'claude-opus-4-8')
 
-    reference_content, known, people = build_people_references(
-        refs_per_person=int(request.data.get('refs_per_person', 2)))
+    try:
+        refs_pp = int(request.data.get('refs_per_person', 2))
+    except (TypeError, ValueError):
+        refs_pp = 2
+    reference_content, known, people = build_people_references(refs_per_person=refs_pp)
     if not known:
         return Response({'error': 'No person-tagged reference photos. Tag people first '
                                   '(set a tag\'s kind to "Person").'},
