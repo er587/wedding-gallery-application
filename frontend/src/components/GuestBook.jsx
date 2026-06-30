@@ -98,7 +98,7 @@ export default function GuestBook({ user, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div>
-            <h2 className="text-2xl font-bold text-ink">Guest Book</h2>
+            <h2 className="font-serif font-medium text-[26px] text-ink">Guest Book</h2>
             <p className="text-sm text-sand-mute mt-1">{meta.count} message{meta.count !== 1 ? 's' : ''}</p>
           </div>
           <button
@@ -140,7 +140,7 @@ export default function GuestBook({ user, onClose }) {
           {entries.length === 0 && !loading ? (
             <div className="text-center py-12">
               <div className="text-5xl mb-4">📖</div>
-              <h3 className="text-lg font-semibold text-ink">No messages yet</h3>
+              <h3 className="font-serif text-[18px] text-ink">No messages yet</h3>
               <p className="text-sand-faint text-sm mt-1">Be the first to sign the guest book!</p>
             </div>
           ) : (

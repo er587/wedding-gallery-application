@@ -38,7 +38,7 @@ export default function EmailVerification() {
         {isVerifying && (
           <>
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-terracotta mx-auto mb-4"></div>
-            <h1 className="text-2xl font-bold text-ink mb-2">Verifying Your Email</h1>
+            <h1 className="font-serif font-medium text-[26px] text-ink mb-2">Verifying Your Email</h1>
             <p className="text-sand-soft">Please wait...</p>
           </>
         )}
@@ -50,7 +50,7 @@ export default function EmailVerification() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-ink mb-2">Email Verified!</h1>
+            <h1 className="font-serif font-medium text-[26px] text-ink mb-2">Email Verified!</h1>
             <p className="text-sand-soft mb-4">Your email has been successfully verified.</p>
             <p className="text-sm text-sand-mute">You will be redirected to the home page shortly...</p>
             <button
@@ -69,7 +69,7 @@ export default function EmailVerification() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-ink mb-2">Verification Failed</h1>
+            <h1 className="font-serif font-medium text-[26px] text-ink mb-2">Verification Failed</h1>
             <p className="text-sand-soft mb-4">{errorMessage}</p>
             <button
               onClick={() => navigate('/')}
