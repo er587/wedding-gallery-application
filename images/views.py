@@ -250,22 +250,14 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
         denied = self._check_update_permission(request)
         if denied:
             return denied
-        try:
-            return super().update(request, *args, **kwargs)
-        except Exception as e:
-            logger.error("Image update failed for image %s: %s", kwargs.get('pk'), e, exc_info=True)
-            return Response({"error": "Update failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # No try/except: DRF renders ValidationError as 400 and anything else
+        # as 500 with the exception logged.
+        return super().update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
         denied = self._check_update_permission(request)
         if denied:
             return denied
-        try:
-            return super().partial_update(request, *args, **kwargs)
-        except Exception as e:
-            logger.error("Image partial update failed for image %s: %s", kwargs.get('pk'), e, exc_info=True)
-            return Response({"error": "Update failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
         return super().partial_update(request, *args, **kwargs)
     
     def perform_destroy(self, instance):
