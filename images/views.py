@@ -758,13 +758,19 @@ def serve_protected_media(request, path):
 
     rel = os.path.relpath(full, media_root).replace(os.sep, '/')
 
-    # Don't serve the original/cover/thumbnail of a soft-deleted photo, even to a
-    # logged-in user who recorded the URL before deletion. Block only when the
-    # path is owned by image rows and every owner is deleted (derived CACHE/
-    # thumbnails and untracked files match nothing and are served normally).
-    if rel.startswith('images/'):
+    # Don't serve the original/cover/thumbnail of a soft-deleted photo, nor its
+    # easy_thumbnails derivatives, even to a logged-in user who recorded the URL
+    # before deletion. A derivative lives at
+    # <THUMBNAIL_BASEDIR>/<source path>.<opts>.<ext>, so strip the basedir and
+    # try every dot-boundary prefix as a candidate source path. Block only when
+    # the path is owned by image rows and every owner is deleted (untracked
+    # files match nothing and are served normally).
+    src = rel.removeprefix(settings.THUMBNAIL_BASEDIR.strip('/') + '/')
+    if src.startswith('images/'):
+        parts = src.split('.')
+        candidates = ['.'.join(parts[:i]) for i in range(1, len(parts) + 1)]
         owners = list(Image.all_objects.filter(
-            Q(image_file=rel) | Q(cover_image=rel) | Q(thumbnail=rel)
+            Q(image_file__in=candidates) | Q(cover_image__in=candidates) | Q(thumbnail__in=candidates)
         ).values_list('is_deleted', flat=True))
         if owners and all(owners):
             raise Http404('Not found')
