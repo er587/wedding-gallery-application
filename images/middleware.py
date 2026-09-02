@@ -1,61 +1,26 @@
 """
-Middleware for media file caching and performance optimization
+Cache headers for media files.
+
+The gallery is invitation-only, so media must never be marked ``public``:
+a shared proxy or CDN would store and re-serve private photos to anyone.
+``private`` keeps the browser cache benefit and nothing else.
+
+No ETag is set here. In production the Django response body is empty
+(nginx serves the bytes via X-Accel-Redirect), so hashing it produced one
+constant ETag for every file and browsers rendered the wrong photo on a
+304. nginx emits a correct ETag from the file itself.
 """
 from django.utils.cache import patch_cache_control
 from django.conf import settings
-import re
 
 
 class MediaCacheMiddleware:
-    """
-    Add caching headers to media and thumbnail files for better performance.
-    
-    This middleware sets appropriate cache-control headers for:
-    - Original media files: 1 year cache (immutable)
-    - Thumbnail files: 1 year cache (immutable)
-    - Other requests: No caching
-    """
-    
     def __init__(self, get_response):
         self.get_response = get_response
-        self.media_url = settings.MEDIA_URL.rstrip('/')
-        
+        self.media_url = settings.MEDIA_URL.rstrip('/') + '/'
+
     def __call__(self, request):
         response = self.get_response(request)
-        
-        # Only process successful responses
-        if response.status_code != 200:
-            return response
-        
-        # Check if this is a media file request
-        if request.path.startswith(self.media_url):
-            # Determine if this is a thumbnail or original image
-            if '/thumbnails/' in request.path or '.thumbnail.' in request.path:
-                # Thumbnails: Aggressive caching (1 year, immutable)
-                patch_cache_control(
-                    response,
-                    public=True,
-                    max_age=31536000,  # 1 year
-                    immutable=True
-                )
-            elif re.search(r'\.(jpg|jpeg|png|gif|webp)$', request.path, re.IGNORECASE):
-                # Original images: Long-term caching (1 year)
-                patch_cache_control(
-                    response,
-                    public=True,
-                    max_age=31536000,  # 1 year
-                    immutable=True
-                )
-            
-            # Add ETag support for conditional requests
-            if not response.has_header('ETag') and hasattr(response, 'content'):
-                from hashlib import md5
-                etag = md5(response.content).hexdigest()
-                response['ETag'] = f'"{etag}"'
-                
-                # Handle If-None-Match for 304 responses
-                if request.META.get('HTTP_IF_NONE_MATCH') == response['ETag']:
-                    response.status_code = 304
-                    response.content = b''
-        
+        if response.status_code == 200 and request.path.startswith(self.media_url):
+            patch_cache_control(response, private=True, max_age=31536000, immutable=True)
         return response
