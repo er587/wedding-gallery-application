@@ -348,11 +348,15 @@ def bulk_download(request):
     import zipfile
     from django.http import StreamingHttpResponse
 
-    image_ids = request.data.get('image_ids', [])
-    if not image_ids:
-        return Response({'error': 'No images selected'}, status=status.HTTP_400_BAD_REQUEST)
-    if len(image_ids) > 100:
-        return Response({'error': 'Maximum 100 images per download'}, status=status.HTTP_400_BAD_REQUEST)
+    from rest_framework import serializers as drf
+
+    try:
+        image_ids = drf.ListField(
+            child=drf.IntegerField(min_value=1), min_length=1, max_length=100,
+        ).run_validation(request.data.get('image_ids'))
+    except drf.ValidationError as e:
+        return Response({'error': 'image_ids must be 1-100 integer ids', 'detail': e.detail},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     images = Image.objects.filter(id__in=image_ids, image_file__isnull=False)
     if not images.exists():
