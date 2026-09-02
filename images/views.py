@@ -73,7 +73,9 @@ class ImageListCreateView(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         """Cache list responses using a versioned key so only image caches are invalidated"""
         version = cache.get(IMAGE_CACHE_VERSION_KEY, 0)
-        cache_key = f'image_list_v{version}_{request.get_full_path()}'
+        # Per-user: the payload carries user_has_liked, so a shared key would
+        # serve one guest's like state to everyone.
+        cache_key = f'image_list_v{version}_u{request.user.pk}_{request.get_full_path()}'
         cached = cache.get(cache_key)
         if cached is not None:
             return Response(cached)
