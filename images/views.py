@@ -73,7 +73,9 @@ class ImageListCreateView(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         """Cache list responses using a versioned key so only image caches are invalidated"""
         version = cache.get(IMAGE_CACHE_VERSION_KEY, 0)
-        cache_key = f'image_list_v{version}_{request.get_full_path()}'
+        # Per-user: the payload carries user_has_liked, so a shared key would
+        # serve one guest's like state to everyone.
+        cache_key = f'image_list_v{version}_u{request.user.pk}_{request.get_full_path()}'
         cached = cache.get(cache_key)
         if cached is not None:
             return Response(cached)
@@ -248,22 +250,14 @@ class ImageDetailView(generics.RetrieveUpdateDestroyAPIView):
         denied = self._check_update_permission(request)
         if denied:
             return denied
-        try:
-            return super().update(request, *args, **kwargs)
-        except Exception as e:
-            logger.error("Image update failed for image %s: %s", kwargs.get('pk'), e, exc_info=True)
-            return Response({"error": "Update failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # No try/except: DRF renders ValidationError as 400 and anything else
+        # as 500 with the exception logged.
+        return super().update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
         denied = self._check_update_permission(request)
         if denied:
             return denied
-        try:
-            return super().partial_update(request, *args, **kwargs)
-        except Exception as e:
-            logger.error("Image partial update failed for image %s: %s", kwargs.get('pk'), e, exc_info=True)
-            return Response({"error": "Update failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
         return super().partial_update(request, *args, **kwargs)
     
     def perform_destroy(self, instance):
@@ -354,11 +348,15 @@ def bulk_download(request):
     import zipfile
     from django.http import StreamingHttpResponse
 
-    image_ids = request.data.get('image_ids', [])
-    if not image_ids:
-        return Response({'error': 'No images selected'}, status=status.HTTP_400_BAD_REQUEST)
-    if len(image_ids) > 100:
-        return Response({'error': 'Maximum 100 images per download'}, status=status.HTTP_400_BAD_REQUEST)
+    from rest_framework import serializers as drf
+
+    try:
+        image_ids = drf.ListField(
+            child=drf.IntegerField(min_value=1), min_length=1, max_length=100,
+        ).run_validation(request.data.get('image_ids'))
+    except drf.ValidationError as e:
+        return Response({'error': 'image_ids must be 1-100 integer ids', 'detail': e.detail},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     images = Image.objects.filter(id__in=image_ids, image_file__isnull=False)
     if not images.exists():
@@ -758,13 +756,19 @@ def serve_protected_media(request, path):
 
     rel = os.path.relpath(full, media_root).replace(os.sep, '/')
 
-    # Don't serve the original/cover/thumbnail of a soft-deleted photo, even to a
-    # logged-in user who recorded the URL before deletion. Block only when the
-    # path is owned by image rows and every owner is deleted (derived CACHE/
-    # thumbnails and untracked files match nothing and are served normally).
-    if rel.startswith('images/'):
+    # Don't serve the original/cover/thumbnail of a soft-deleted photo, nor its
+    # easy_thumbnails derivatives, even to a logged-in user who recorded the URL
+    # before deletion. A derivative lives at
+    # <THUMBNAIL_BASEDIR>/<source path>.<opts>.<ext>, so strip the basedir and
+    # try every dot-boundary prefix as a candidate source path. Block only when
+    # the path is owned by image rows and every owner is deleted (untracked
+    # files match nothing and are served normally).
+    src = rel.removeprefix(settings.THUMBNAIL_BASEDIR.strip('/') + '/')
+    if src.startswith('images/'):
+        parts = src.split('.')
+        candidates = ['.'.join(parts[:i]) for i in range(1, len(parts) + 1)]
         owners = list(Image.all_objects.filter(
-            Q(image_file=rel) | Q(cover_image=rel) | Q(thumbnail=rel)
+            Q(image_file__in=candidates) | Q(cover_image__in=candidates) | Q(thumbnail__in=candidates)
         ).values_list('is_deleted', flat=True))
         if owners and all(owners):
             raise Http404('Not found')

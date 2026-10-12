@@ -149,8 +149,13 @@ class ImageListSerializer(serializers.ModelSerializer):
             # Staff may create brand-new tags inline; everyone else can only
             # apply tags that already exist (unknown names are ignored).
             request = self.context.get('request')
-            can_create = bool(request and request.user and request.user.is_staff)
-            instance.tags.clear()
+            user = getattr(request, 'user', None)
+            can_create = bool(user and user.is_staff)
+            # Only the uploader or staff may remove tags. Any other full user
+            # may add tags, so an empty or partial list from them must not
+            # wipe what is already there.
+            if user and (user.is_staff or user == instance.uploader):
+                instance.tags.clear()
             for tag_name in tag_names:
                 tag_name = tag_name.strip().lower()[:50]
                 if not tag_name:
