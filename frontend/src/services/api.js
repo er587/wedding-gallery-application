@@ -141,7 +141,14 @@ function getCookie(name) {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // DRF SessionAuthentication answers a missing/expired session with 403
+    // (not 401) and this exact detail; a real permission denial carries a
+    // different message, so only this one means "session gone".
+    const { status, data } = error.response || {}
+    const sessionGone =
+      status === 401 ||
+      (status === 403 && data?.detail === 'Authentication credentials were not provided.')
+    if (sessionGone) {
       // Only force-redirect if the user WAS logged in (session expired).
       // Without this check, unauthenticated page loads cause an infinite reload loop.
       const wasAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
